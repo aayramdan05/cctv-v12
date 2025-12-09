@@ -1,0 +1,271 @@
+<x-app-layout>
+    <main id="main-content" class="pt-20 p-6 md:p-8">
+        <div id="breadcrumb" class="mb-6">
+            <div class="flex items-center space-x-2 text-sm">
+                <i class="fas fa-home text-cyan-500"></i>
+                <span class="text-slate-400">/</span>
+                <a href="{{ route('cctv.index') }}" class="text-slate-500 hover:text-cyan-600">Kamera CCTV</a>
+                <span class="text-slate-400">/</span>
+                <span class="text-slate-800 font-medium">Tambah Baru</span>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-effect rounded-2xl p-8 border border-cyan-100 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full blur-2xl"></div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 relative z-10">Input Perangkat CCTV</h2>
+
+                <form action="{{ route('cctv.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    @csrf
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung</label>
+                        <select name="building_id" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required>
+                            <option value="" disabled selected>Pilih Gedung...</option>
+                            @foreach($buildings as $building)
+                                <option value="{{ $building->id }}">{{ $building->nama_gedung }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Kode CCTV</label>
+                        <input type="text" name="kode_cctv" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="CAM-001" required>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Kamera</label>
+                        <input type="text" name="nama_cctv" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Lobi Utama" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Server Perekam (Node)</label>
+                        <select name="server_id" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200">
+                            <option value="">-- Master Server (Lokal) --</option>
+                            @foreach($servers as $server)
+                                <option value="{{ $server->id }}" 
+                                    {{ (isset($cctv) && $cctv->server_id == $server->id) ? 'selected' : '' }}>
+                                    {{ $server->name }} ({{ $server->ip_address }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-slate-400 mt-1">Pilih server fisik yang akan menangani kamera ini.</p>
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 border-t border-slate-100">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">Konfigurasi Stream</h3>
+                    </div>
+                    
+                    <div class="md:col-span-2 bg-cyan-50/50 p-4 rounded-xl border border-cyan-100">
+                        <h3 class="text-sm font-bold text-cyan-700 mb-4 uppercase tracking-wider">Bantuan Input Otomatis</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Merk Kamera</label>
+                                <select id="brand_select" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-300" onchange="generateUrl()">
+                                    <option value="manual">-- Manual / Lainnya --</option>
+                                    <option value="hikvision">Hikvision / HiLook</option>
+                                    <option value="dahua">Dahua / G-Lenz / SPC</option>
+                                    <option value="uniview">Uniview (UNV)</option>
+                                    <option value="axis">Axis Communications</option>
+                                    <option value="panasonic">Panasonic / i-Pro</option> 
+                                    <option value="onvif">Standard ONVIF</option>
+                                </select>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">IP Address</label>
+                                <input type="text" name="ip" id="ip_input" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-300" placeholder="192.168.1.64" oninput="generateUrl()">
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">Channel</label>
+                                    <input type="number" id="channel_input" value="1" min="1" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm" oninput="generateUrl()">
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">Tipe</label>
+                                    <select id="stream_type" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm" onchange="generateUrl()">
+                                        <option value="sub">Sub (Ringan)</option>
+                                        <option value="main">Main (HD)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 border-t border-slate-100 mt-2">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-video text-slate-400"></i> Konfigurasi Stream
+                        </h3>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">RTSP / HTTP URL</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="rtsp_url" id="rtsp_url_input" 
+                                   class="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 font-mono text-sm text-slate-600 focus:bg-white transition-all" 
+                                   placeholder="rtsp://..." required>
+                            
+                            <button type="button" onclick="testConnection()" id="btn-test"
+                                    class="px-5 py-2 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-700 transition-all flex items-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                                <i class="fas fa-plug"></i> Test
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1 ml-1">Pastikan URL valid sebelum menyimpan.</p>
+                    </div>
+
+                    <div id="test-result" class="md:col-span-2 hidden transition-all duration-300">
+                        <div class="p-4 rounded-xl border flex items-start gap-4" id="test-result-box">
+                            <div class="w-32 h-20 bg-slate-200 rounded-lg overflow-hidden shrink-0 border border-slate-300 relative">
+                                <img id="test-snapshot" src="" class="w-full h-full object-cover hidden">
+                                <div id="test-loading" class="absolute inset-0 flex items-center justify-center text-slate-400 bg-slate-100">
+                                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm mb-1" id="test-status-title">Testing...</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed" id="test-status-msg">Sedang menghubungi kamera...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">RTSP User</label>
+                        <input type="text" name="rtsp_user" id="rtsp_user_input" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:bg-white transition-all" placeholder="admin">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">RTSP Password</label>
+                        <input type="password" name="rtsp_password" id="rtsp_password_input" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="••••••">
+                    </div>
+
+                    <div class="md:col-span-2 flex justify-end space-x-4 pt-6 border-t border-slate-100 mt-4">
+                        <a href="{{ route('cctv.index') }}" class="px-6 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 font-medium transition-colors">Batal</a>
+                        <button type="submit" class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all duration-300">
+                            Simpan Kamera
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    @push('scripts')
+    <script>
+        // 1. URL GENERATOR LOGIC
+        function generateUrl() {
+            const brand = document.getElementById('brand_select').value;
+            const ip = document.getElementById('ip_input').value || '192.168.1.x';
+            const channel = document.getElementById('channel_input').value || '1';
+            const type = document.getElementById('stream_type').value; 
+            const urlInput = document.getElementById('rtsp_url_input');
+
+            if (brand === 'manual') return;
+
+            let url = '';
+
+            if (brand === 'hikvision') {
+                let streamCode = (type === 'main') ? '01' : '02';
+                url = `rtsp://${ip}:554/Streaming/Channels/${channel}${streamCode}`;
+            } 
+            else if (brand === 'dahua') {
+                let subtype = (type === 'main') ? '0' : '1';
+                url = `rtsp://${ip}:554/cam/realmonitor?channel=${channel}&subtype=${subtype}`;
+            } 
+            else if (brand === 'uniview') {
+                let videoStream = (type === 'main') ? '1' : '2';
+                url = `rtsp://${ip}:554/media/video${videoStream}`;
+            }
+            else if (brand === 'axis') {
+                // Axis H.264 Specific
+                url = `rtsp://${ip}:554/axis-media/media.amp?videocodec=h264`;
+                if (type === 'sub') url += '&resolution=640x480&compression=30';
+                else url += '&resolution=1280x720';
+                if (channel > 1) url += `&camera=${channel}`;
+            }
+            else if (brand === 'panasonic') {
+                // Panasonic HTTP MJPEG (Sesuai request)
+                // Format: http://IP/axis-cgi/mjpg/video.cgi?camera=1
+                url = `rtsp://${ip}:554/cam/realmonitor?channel=${channel}&subtype=${subtype}`;
+                if (type === 'sub') url += '&resolution=640x480';
+                else url += '&resolution=1280x720';
+            }
+            else if (brand === 'onvif') {
+                url = `rtsp://${ip}:554/live/ch${channel}`;
+            }
+
+            urlInput.value = url;
+        }
+
+        // 2. TEST CONNECTION LOGIC (AJAX)
+        function testConnection() {
+            const url = document.getElementById('rtsp_url_input').value;
+            // AMBIL USER & PASS
+            const user = document.getElementById('rtsp_user_input').value;
+            const pass = document.getElementById('rtsp_password_input').value;
+            const btn = document.getElementById('btn-test');
+            const resultArea = document.getElementById('test-result');
+            const resultBox = document.getElementById('test-result-box');
+            const img = document.getElementById('test-snapshot');
+            const loading = document.getElementById('test-loading');
+            const title = document.getElementById('test-status-title');
+            const msg = document.getElementById('test-status-msg');
+
+            if (!url) { alert("Harap isi URL RTSP terlebih dahulu!"); return; }
+
+            resultArea.classList.remove('hidden');
+            resultBox.className = "p-4 rounded-xl border flex items-start gap-4 bg-slate-50 border-slate-200";
+            img.classList.add('hidden');
+            loading.classList.remove('hidden');
+            title.innerText = "Menghubungkan...";
+            title.className = "font-bold text-sm mb-1 text-slate-700";
+            msg.innerText = "Mencoba mengambil snapshot dari kamera...";
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+
+            fetch("{{ route('cctv.test') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": "{{ csrf_token() }}" },
+                
+                // KIRIM DATA LENGKAP
+                body: JSON.stringify({ 
+                    rtsp_url: url,
+                    rtsp_user: user,
+                    rtsp_password: pass
+                })
+            })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plug"></i> Test';
+                loading.classList.add('hidden');
+
+                if (res.status === 200) {
+                    resultBox.className = "p-4 rounded-xl border flex items-start gap-4 bg-green-50 border-green-200";
+                    title.innerText = "Koneksi Berhasil!";
+                    title.className = "font-bold text-sm mb-1 text-green-700";
+                    msg.innerText = res.body.message;
+                    if(res.body.snapshot_url) {
+                        img.src = res.body.snapshot_url;
+                        img.classList.remove('hidden');
+                    }
+                } else {
+                    throw new Error(res.body.message || "Gagal terhubung.");
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plug"></i> Test';
+                loading.classList.add('hidden');
+                resultBox.className = "p-4 rounded-xl border flex items-start gap-4 bg-red-50 border-red-200";
+                title.innerText = "Koneksi Gagal";
+                title.className = "font-bold text-sm mb-1 text-red-700";
+                msg.innerText = error.message;
+            });
+        }
+    </script>
+    @endpush
+</x-app-layout>

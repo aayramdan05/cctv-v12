@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Server;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
+
+class ServerController extends Controller
+{
+    public function index(): View
+    {
+        // Tampilkan list server beserta jumlah kameranya
+        $servers = Server::withCount('cctvs')->latest()->paginate(10);
+        return view('servers.index', compact('servers'));
+    }
+
+    public function create(): View
+    {
+        return view('servers.create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'ip_address' => 'required|ipv4|unique:servers,ip_address',
+            'location' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        // Default is_active true jika tidak dikirim
+        $validated['is_active'] = $request->has('is_active');
+
+        Server::create($validated);
+
+        return redirect()->route('servers.index')->with('success', 'Server node berhasil ditambahkan.');
+    }
+
+    public function edit(Server $server): View
+    {
+        return view('servers.edit', compact('server'));
+    }
+
+    public function update(Request $request, Server $server): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'ip_address' => 'required|ipv4|unique:servers,ip_address,' . $server->id,
+            'location' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        // Handle checkbox toggle
+        $validated['is_active'] = $request->has('is_active');
+
+        $server->update($validated);
+
+        return redirect()->route('servers.index')->with('success', 'Data server berhasil diperbarui.');
+    }
+
+    public function destroy(Server $server): RedirectResponse
+    {
+        // Cek apakah masih ada kamera yang nyantol di server ini
+        if ($server->cctvs()->count() > 0) {
+            return back()->with('error', 'Gagal hapus! Masih ada kamera yang terhubung ke server ini. Pindahkan dulu kameranya.');
+        }
+
+        $server->delete();
+        return redirect()->route('servers.index')->with('success', 'Server node dihapus.');
+    }
+}
