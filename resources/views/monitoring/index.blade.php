@@ -74,21 +74,30 @@
                                 </div>
 
                                 <template x-if="activeSlots[i]">
-                                    <div class="w-full h-full relative bg-black">
+                                    <!-- CONTAINER VIDEO -->
+                                    <div class="w-full h-full relative bg-black overflow-hidden flex items-center justify-center"
+                                         @wheel.prevent="handleWheel($event, i)"
+                                         @mousedown.prevent="startPan($event, i)"
+                                         @mousemove.prevent="doPan($event, i)"
+                                         @mouseup.prevent="endPan(i)"
+                                         @mouseleave.prevent="endPan(i)"
+                                         :class="(activeSlots[i].zoom > 1) ? 'cursor-move' : ''">
                                         
                                         <!-- A. IFRAME LIVE (MSE/WebRTC) -->
+                                        <!-- FIX: Hapus :style binding dari Alpine untuk mencegah re-render saat zoom -->
                                         <iframe 
                                             :id="'iframe-live-' + i"
                                             x-show="activeSlots[i].mode === 'live'"
-                                            class="w-full h-full object-cover border-none pointer-events-none"
+                                            class="absolute w-full h-full object-contain border-none pointer-events-none transition-transform duration-75 ease-out origin-center"
                                             allowfullscreen>
                                         </iframe>
 
                                         <!-- B. VIDEO TAG (PLAYBACK MP4) -->
+                                        <!-- FIX: Hapus :style binding dari Alpine -->
                                         <video 
                                             :id="'video-playback-' + i"
                                             x-show="activeSlots[i].mode === 'playback'"
-                                            class="w-full h-full object-contain" 
+                                            class="absolute w-full h-full object-contain transition-transform duration-75 ease-out origin-center" 
                                             autoplay 
                                             controlsList="nodownload noremoteplayback" 
                                             oncontextmenu="return false;"
@@ -98,6 +107,12 @@
                                             @ratechange="syncControls()"
                                             @ended="handleVideoEnded(i)">
                                         </video>
+
+                                        <!-- Zoom Indicator Overlay -->
+                                        <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
+                                             x-show="activeSlots[i].zoom > 1">
+                                            <span class="text-[10px] font-bold text-white font-mono" x-text="Math.round(activeSlots[i].zoom * 100) + '%'"></span>
+                                        </div>
 
                                         <!-- Overlay Info -->
                                         <div class="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 backdrop-blur flex items-center gap-2 z-20 pointer-events-none">
@@ -132,7 +147,6 @@
                         </div>
                         
                         <!-- CENTER: CONTROLS (TRANSPARENT & CLEANER) -->
-                        <!-- FIX: Menggunakan ikon standar fa-play/fa-pause agar tidak error -->
                         <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 z-50" 
                              x-show="activeSlots[selectedSlot]?.mode === 'playback'"
                              x-transition:enter="transition ease-out duration-200"
@@ -147,7 +161,7 @@
                                 <i class="fas fa-undo text-sm pointer-events-none"></i>
                             </button>
 
-                            <!-- Play/Pause (Icon Fixed) -->
+                            <!-- Play/Pause -->
                             <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95">
                                 <i class="fas text-3xl pointer-events-none" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
                             </button>
@@ -157,25 +171,42 @@
                                 <i class="fas fa-redo text-sm pointer-events-none"></i>
                             </button>
 
-                            <!-- Speed Control (Minimalist Text) -->
-                            <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
-                                <button @click.stop.prevent="speedOpen = !speedOpen" 
-                                        class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95">
-                                    <span x-text="playbackSpeed + 'x'" class="pointer-events-none"></span>
-                                </button>
-                                
-                                <div x-show="speedOpen" 
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="opacity-0 transform scale-95 translate-y-1"
-                                     x-transition:enter-end="opacity-100 transform scale-100 translate-y-0"
-                                     class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
-                                    <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
-                                        <button @click.stop="setSpeed(speed); speedOpen = false" 
-                                                class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition border-b border-slate-50 last:border-none"
-                                                :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
-                                                x-text="speed + 'x'">
-                                        </button>
-                                    </template>
+                            <!-- Speed & Zoom Group -->
+                            <div class="flex items-center gap-3 border-l border-slate-200 pl-3">
+                                <!-- Speed Control -->
+                                <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
+                                    <button @click.stop.prevent="speedOpen = !speedOpen" 
+                                            class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95" title="Playback Speed">
+                                        <span x-text="playbackSpeed + 'x'" class="pointer-events-none"></span>
+                                    </button>
+                                    <div x-show="speedOpen" 
+                                         class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
+                                        <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
+                                            <button @click.stop="setSpeed(speed); speedOpen = false" 
+                                                    class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition border-b border-slate-50 last:border-none"
+                                                    :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
+                                                    x-text="speed + 'x'">
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Zoom Control -->
+                                <div class="relative" x-data="{ zoomOpen: false }" @click.outside="zoomOpen = false">
+                                    <button @click.stop.prevent="zoomOpen = !zoomOpen" 
+                                            class="flex items-center gap-0.5 text-slate-500 hover:text-cyan-600 transition active:scale-95" title="Digital Zoom">
+                                        <i class="fas fa-search-plus text-xs pointer-events-none"></i>
+                                    </button>
+                                    <div x-show="zoomOpen" 
+                                         class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
+                                        <template x-for="z in [1.0, 1.5, 2.0, 3.0]">
+                                            <button @click.stop="setZoom(z); zoomOpen = false" 
+                                                    class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition"
+                                                    :class="activeSlots[selectedSlot]?.zoom == z ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
+                                                    x-text="z + 'x'">
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -198,7 +229,7 @@
                          @mouseleave="hoverPercent = -100"
                          @click="handleTimelineClick($event)">
                         
-                        <!-- Background Stripes (Jam) -->
+                        <!-- Background Stripes -->
                         <div class="absolute inset-0 top-2 bottom-0 bg-slate-200 rounded overflow-hidden">
                             <div class="absolute inset-0 flex pointer-events-none z-0">
                                 <template x-for="h in 25">
@@ -275,6 +306,8 @@
                 // CONTROL STATE
                 isPlaying: true,
                 playbackSpeed: 1.0,
+                // Panning State
+                panning: false, panSlot: null, startX: 0, startY: 0,
 
                 get isToday() {
                     const today = new Date().toISOString().split('T')[0];
@@ -370,6 +403,72 @@
                     }
                 },
 
+                // Set Zoom (Digital)
+                setZoom(zoom) {
+                    if(!this.selectedSlot) return;
+                    this.activeSlots[this.selectedSlot].zoom = zoom;
+                    if(zoom === 1) {
+                        this.activeSlots[this.selectedSlot].x = 0;
+                        this.activeSlots[this.selectedSlot].y = 0;
+                    }
+                    this.applyTransform(this.selectedSlot); // Apply manual style
+                },
+
+                // --- NEW: APPLY MANUAL TRANSFORM (FIX FOR IFRAME RELOAD) ---
+                applyTransform(index) {
+                    const slot = this.activeSlots[index];
+                    if(!slot) return;
+                    const transform = `translate(${slot.x || 0}px, ${slot.y || 0}px) scale(${slot.zoom || 1})`;
+                    
+                    const iframe = document.getElementById('iframe-live-' + index);
+                    if(iframe) iframe.style.transform = transform;
+                    
+                    const video = document.getElementById('video-playback-' + index);
+                    if(video) video.style.transform = transform;
+                },
+
+                // --- NEW: HANDLE WHEEL ZOOM (MOUSE SCROLL) ---
+                handleWheel(e, index) {
+                    if (!this.activeSlots[index]) return;
+                    let slot = this.activeSlots[index];
+                    let currentZoom = slot.zoom || 1;
+                    
+                    // Zoom In/Out based on scroll direction
+                    if (e.deltaY < 0) currentZoom += 0.1;
+                    else currentZoom -= 0.1;
+
+                    // Limit Zoom
+                    currentZoom = Math.min(Math.max(currentZoom, 1), 5);
+                    slot.zoom = currentZoom;
+                    
+                    if(currentZoom === 1) { slot.x = 0; slot.y = 0; }
+                    this.applyTransform(index); // Apply manual style
+                },
+
+                // --- NEW: PANNING LOGIC (GESER VIDEO SAAT ZOOM) ---
+                startPan(e, index) {
+                    let slot = this.activeSlots[index];
+                    if(!slot || (slot.zoom || 1) <= 1) return;
+                    
+                    this.panning = true;
+                    this.panSlot = index;
+                    this.startX = e.clientX - (slot.x || 0);
+                    this.startY = e.clientY - (slot.y || 0);
+                },
+                
+                doPan(e, index) {
+                    if(!this.panning || this.panSlot !== index) return;
+                    let slot = this.activeSlots[index];
+                    slot.x = e.clientX - this.startX;
+                    slot.y = e.clientY - this.startY;
+                    this.applyTransform(index); // Apply manual style
+                },
+                
+                endPan(index) {
+                    this.panning = false;
+                    this.panSlot = null;
+                },
+
                 // Deprecated (Left for fallback if needed)
                 changeSpeed() {
                     this.setSpeed(this.playbackSpeed);
@@ -414,6 +513,10 @@
                     if(!this.isToday) { this.selectedDate = new Date().toISOString().split('T')[0]; this.refreshTimeline(); }
 
                     slot.mode = 'live';
+                    slot.zoom = 1; // Reset zoom saat kembali ke live
+                    slot.x = 0; slot.y = 0;
+                    this.applyTransform(index);
+
                     const videoEl = document.getElementById('video-playback-' + index);
                     if(videoEl) videoEl.pause();
 
@@ -427,6 +530,9 @@
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
                     slot.recordStartOffset = startTs; 
+                    slot.zoom = 1; // Reset zoom saat ganti video
+                    slot.x = 0; slot.y = 0;
+                    this.applyTransform(index);
                     
                     const iframe = document.getElementById('iframe-live-' + index);
                     if(iframe) iframe.src = 'about:blank'; // Kosongkan iframe
@@ -493,7 +599,8 @@
                     this.activeSlots[index] = { 
                         id: cam.id, name: cam.name, building: cam.building, faculty: cam.faculty, 
                         mode: 'live', timestampDisplay: '', hlsInstance: null,
-                        liveUrl: cam.liveUrl // <-- SIMPAN DISINI
+                        liveUrl: cam.liveUrl, // <-- SIMPAN DISINI
+                        zoom: 1, x: 0, y: 0
                     }; 
                     this.selectSlot(index);
                     this.$nextTick(() => { this.playLive(index); });
