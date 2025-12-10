@@ -48,10 +48,10 @@ class RecordCamera extends Command
         // --- 1. PROSES REKAMAN (LOOPING) ---
         $partCounter = 1;
 
-        // --- KONFIGURASI FRAME RATE & GOP ---
-        $FRAME_RATE = 15; // Set Frame Rate ke 15 FPS
-        $GOP_SIZE = 15;   // GOP Size HARUS sama dengan Frame Rate agar Keyframe 1 detik
-        // ------------------------------------
+        // --- PENGATURAN GOP/FPS DINONAKTIFKAN (Menggunakan -c copy) ---
+        // $FRAME_RATE = 15; 
+        // $GOP_SIZE = 15;   
+        // --------------------------------------------------------------
 
         while (Carbon::now()->lessThan($endTime)) {
             $remainingSeconds = Carbon::now()->diffInSeconds($endTime, false);
@@ -61,7 +61,7 @@ class RecordCamera extends Command
             $tempFilename = "temp_{$partCounter}_" . uniqid() . ".ts";
             $tempPath = "{$folderPath}/{$tempFilename}";
 
-            $this->line("⏺️ Merekam part {$partCounter} (Target: {$remainingSeconds}s, FPS: {$FRAME_RATE})...");
+            $this->line("⏺️ Merekam part {$partCounter} (Target: {$remainingSeconds}s, Mode: COPY)..."); // Updated log message
             
             $command = [
                 'ffmpeg', '-y', 
@@ -74,19 +74,11 @@ class RecordCamera extends Command
                 '-t', $remainingSeconds,
                 '-f', 'mpegts',
                 
-                // --- PENGATURAN TRANSCODING KHUSUS GOP/FPS ---
-                '-r', $FRAME_RATE,      // Set frame rate output
-                '-c:v', 'libx264',
-                '-preset', 'veryfast', 
-                '-crf', '23',          
-                '-g', $GOP_SIZE,        // FORCE KEYFRAME 
-                '-sc_threshold', '0', 
-                // ---------------------------------------------
-                
-                // Audio
-                '-c:a', 'copy',
+                // --- PENGATURAN KODEK: KEMBALI KE -c copy (CPU RENDAH) ---
+                '-c', 'copy', 
                 '-map', '0:v:0', 
                 '-map', '0:a?', 
+                // ---------------------------------------------------------
                 
                 $tempPath
             ];
@@ -127,7 +119,7 @@ class RecordCamera extends Command
 
         // Command Concat dan Convert ke MP4
         $concatCmd = [
-            'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
+            'ffmpeg', '-y', '-hide_banner', '-\loglevel', 'error',
             '-f', 'concat',
             '-safe', '0',
             '-i', $listTxtPath,
