@@ -119,7 +119,7 @@ class RecordCamera extends Command
 
         // Command Concat dan Convert ke MP4
         $concatCmd = [
-            'ffmpeg', '-y', '-hide_banner', '-\loglevel', 'error',
+            'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
             '-f', 'concat',
             '-safe', '0',
             '-i', $listTxtPath,
