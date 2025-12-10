@@ -63,10 +63,10 @@
                         
                         <template x-for="i in gridSize">
                             <div class="relative border border-slate-800 bg-black group overflow-hidden cursor-pointer"
-                                 :class="{'ring-2 ring-cyan-400 z-20': selectedSlot === i}"
-                                 @click="selectSlot(i)"
-                                 @dragover.prevent @drop="handleDrop($event, i)"
-                                 oncontextmenu="return false;"> 
+                                :class="{'ring-2 ring-cyan-400 z-20': selectedSlot === i}"
+                                @click="selectSlot(i)"
+                                @dragover.prevent @drop="handleDrop($event, i)"
+                                oncontextmenu="return false;"> 
                                 
                                 <div x-show="!activeSlots[i]" class="absolute inset-0 flex flex-col items-center justify-center text-slate-700 pointer-events-none">
                                     <i class="fas fa-plus text-3xl mb-2 opacity-20"></i>
@@ -76,15 +76,14 @@
                                 <template x-if="activeSlots[i]">
                                     <!-- CONTAINER VIDEO -->
                                     <div class="w-full h-full relative bg-black overflow-hidden flex items-center justify-center"
-                                         @wheel.prevent="handleWheel($event, i)"
-                                         @mousedown.prevent="startPan($event, i)"
-                                         @mousemove.prevent="doPan($event, i)"
-                                         @mouseup.prevent="endPan(i)"
-                                         @mouseleave.prevent="endPan(i)"
-                                         :class="(activeSlots[i].zoom > 1) ? 'cursor-move' : ''">
+                                            @wheel.prevent="handleWheel($event, i)"
+                                            @mousedown.prevent="startPan($event, i)"
+                                            @mousemove.prevent="doPan($event, i)"
+                                            @mouseup.prevent="endPan(i)"
+                                            @mouseleave.prevent="endPan(i)"
+                                            :class="(activeSlots[i].zoom > 1) ? 'cursor-move' : ''">
                                         
                                         <!-- A. IFRAME LIVE (MSE/WebRTC) -->
-                                        <!-- FIX: Hapus :style binding dari Alpine untuk mencegah re-render saat zoom -->
                                         <iframe 
                                             :id="'iframe-live-' + i"
                                             x-show="activeSlots[i].mode === 'live'"
@@ -93,7 +92,7 @@
                                         </iframe>
 
                                         <!-- B. VIDEO TAG (PLAYBACK MP4) -->
-                                        <!-- FIX: Hapus :style binding dari Alpine -->
+                                        <!-- Tambahkan Event Listener WAITING dan PLAYING untuk Buffering Check -->
                                         <video 
                                             :id="'video-playback-' + i"
                                             x-show="activeSlots[i].mode === 'playback'"
@@ -102,15 +101,24 @@
                                             controlsList="nodownload noremoteplayback" 
                                             oncontextmenu="return false;"
                                             playsinline
-                                            @play="syncControls()"
-                                            @pause="syncControls()"
-                                            @ratechange="syncControls()"
+                                            @play="handlePlaybackEvents(i, 'play')"
+                                            @pause="handlePlaybackEvents(i, 'pause')"
+                                            @ratechange="handlePlaybackEvents(i, 'ratechange')"
+                                            @waiting="handlePlaybackEvents(i, 'waiting')" 
+                                            @playing="handlePlaybackEvents(i, 'playing')" 
                                             @ended="handleVideoEnded(i)">
                                         </video>
 
+                                        <!-- Status Buffering Overlay -->
+                                        <div x-show="activeSlots[i].isBuffering"
+                                             class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-30 transition-opacity duration-300">
+                                            <i class="fas fa-sync-alt fa-spin text-3xl text-cyan-400 mb-3"></i>
+                                            <span class="text-white text-xs font-mono">Buffering at <span x-text="playbackSpeed + 'x'"></span> speed...</span>
+                                        </div>
+
                                         <!-- Zoom Indicator Overlay -->
                                         <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
-                                             x-show="activeSlots[i].zoom > 1">
+                                                x-show="activeSlots[i].zoom > 1">
                                             <span class="text-[10px] font-bold text-white font-mono" x-text="Math.round(activeSlots[i].zoom * 100) + '%'"></span>
                                         </div>
 
@@ -132,8 +140,8 @@
 
                 <!-- 2. TIMELINE BAR & CONTROLS -->
                 <div class="h-24 bg-white border border-slate-300 p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-lg relative"
-                     x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
-                     x-transition>
+                        x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
+                        x-transition>
                     
                     <!-- HEADER: FIXED HEIGHT (h-10) AGAR LAYOUT STABIL -->
                     <div class="flex justify-between items-center px-1 mb-2 relative z-40 h-10">
@@ -148,13 +156,13 @@
                         
                         <!-- CENTER: CONTROLS (TRANSPARENT & CLEANER) -->
                         <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 z-50" 
-                             x-show="activeSlots[selectedSlot]?.mode === 'playback'"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 scale-95"
-                             x-transition:enter-end="opacity-100 scale-100"
-                             x-transition:leave="transition ease-in duration-100"
-                             x-transition:leave-start="opacity-100 scale-100"
-                             x-transition:leave-end="opacity-0 scale-95">
+                                x-show="activeSlots[selectedSlot]?.mode === 'playback'"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-100"
+                                x-transition:leave-start="opacity-100 scale-100"
+                                x-transition:leave-end="opacity-0 scale-95">
                             
                             <!-- Previous (-10s) -->
                             <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Mundur 10 Detik">
@@ -180,7 +188,7 @@
                                         <span x-text="playbackSpeed + 'x'" class="pointer-events-none"></span>
                                     </button>
                                     <div x-show="speedOpen" 
-                                         class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
+                                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
                                         <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
                                             <button @click.stop="setSpeed(speed); speedOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition border-b border-slate-50 last:border-none"
@@ -198,7 +206,7 @@
                                         <i class="fas fa-search-plus text-xs pointer-events-none"></i>
                                     </button>
                                     <div x-show="zoomOpen" 
-                                         class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
+                                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] overflow-hidden py-0.5">
                                         <template x-for="z in [1.0, 1.5, 2.0, 3.0]">
                                             <button @click.stop="setZoom(z); zoomOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition"
@@ -224,10 +232,10 @@
 
                     <!-- Timeline Slider -->
                     <div class="relative h-12 w-full select-none cursor-pointer group bg-slate-800 rounded border border-slate-600 z-10"
-                         id="global-timeline"
-                         @mousemove="handleTimelineHover($event)"
-                         @mouseleave="hoverPercent = -100"
-                         @click="handleTimelineClick($event)">
+                            id="global-timeline"
+                            @mousemove="handleTimelineHover($event)"
+                            @mouseleave="hoverPercent = -100"
+                            @click="handleTimelineClick($event)">
                         
                         <!-- Background Stripes -->
                         <div class="absolute inset-0 top-2 bottom-0 bg-slate-200 rounded overflow-hidden">
@@ -242,28 +250,28 @@
                             <!-- Data Segments -->
                             <template x-for="seg in currentTimelineData">
                                 <div class="absolute top-0 bottom-0 z-10 cursor-pointer transition-all border-r border-black/10"
-                                    :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) 
-                                            ? 'bg-red-500/90 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
-                                            : 'bg-green-500 hover:bg-green-400'"
+                                     :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) 
+                                             ? 'bg-red-500/90 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
+                                             : 'bg-green-500 hover:bg-green-400'"
 
-                                    :style="'left: ' + (seg.start / 86400 * 100) + '%; width: calc(' + (seg.duration / 86400 * 100) + '% + 2px); min-width: 5px;'"
-                                    
-                                    :title="'Rekaman: ' + seg.human_start"
-                                    @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
+                                     :style="'left: ' + (seg.start / 86400 * 100) + '%; width: calc(' + (seg.duration / 86400 * 100) + '% + 2px); min-width: 5px;'"
+                                     
+                                     :title="'Rekaman: ' + seg.human_start"
+                                     @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
                                 </div>
                             </template>
                         </div>
 
                         <!-- Playhead -->
                         <div class="absolute top-0 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-100"
-                             :style="'left: ' + currentPlayheadPercent + '%'">
+                                :style="'left: ' + currentPlayheadPercent + '%'">
                              <div class="w-2.5 h-2.5 -ml-1 bg-red-600 rounded-full shadow border border-white relative top-0"></div>
                         </div>
                         
                         <!-- Hover Tooltip -->
                         <div class="absolute top-0 transform -translate-x-1/2 -translate-y-full pb-1 z-50 pointer-events-none"
-                             :style="'left: ' + hoverPercent + '%'"
-                             x-show="hoverPercent > 0 && hoverPercent < 100">
+                                :style="'left: ' + hoverPercent + '%'"
+                                x-show="hoverPercent > 0 && hoverPercent < 100">
                              <div class="bg-slate-800 text-white text-[10px] font-mono font-bold px-2 py-1 rounded shadow-lg flex flex-col items-center border border-slate-600">
                                 <span x-text="hoverTimeDisplay"></span>
                                 <div class="w-2 h-2 bg-slate-800 transform rotate-45 -mt-1"></div>
@@ -275,16 +283,16 @@
 
             <!-- KANAN: LIST -->
             <div class="w-72 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30"
-                 x-show="showSidebar && !isFullscreen">
-                 <div class="p-3 border-b border-slate-100 bg-slate-50 rounded-t-2xl font-bold text-slate-700 text-sm flex justify-between items-center">
+                    x-show="showSidebar && !isFullscreen">
+                <div class="p-3 border-b border-slate-100 bg-slate-50 rounded-t-2xl font-bold text-slate-700 text-sm flex justify-between items-center">
                     <span>Camera List</span><span class="text-xs text-slate-400 bg-white border px-2 py-0.5 rounded-full">{{ $cctvs->count() }}</span>
                 </div>
                 <div class="p-2 border-b border-slate-100"><input type="text" x-model="search" placeholder="Cari..." class="w-full px-3 py-1.5 text-xs rounded border"></div>
                 <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                     @foreach($cctvs as $cctv)
                     <div class="bg-white p-2 rounded border hover:border-cyan-400 cursor-grab flex items-center gap-3 shadow-sm hover:shadow-md transition select-none"
-                         draggable="true" 
-                         @dragstart="handleDragStart($event, {{ $cctv->id }}, '{{ $cctv->nama_cctv }}', '{{ $cctv->building->nama_gedung ?? '-' }}', '{{ $cctv->building->fakultas ?? '-' }}', '{{ $cctv->live_stream_url }}')">
+                        draggable="true" 
+                        @dragstart="handleDragStart($event, {{ $cctv->id }}, '{{ $cctv->nama_cctv }}', '{{ $cctv->building->nama_gedung ?? '-' }}', '{{ $cctv->building->fakultas ?? '-' }}', '{{ $cctv->live_stream_url }}')">
                         <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400"><i class="fas fa-video"></i></div>
                         <div class="min-w-0"><p class="text-xs font-bold text-slate-700 truncate">{{ $cctv->nama_cctv }}</p><p class="text-[9px] text-slate-500 truncate">{{ $cctv->building->nama_gedung ?? '-' }}</p></div>
                     </div>
@@ -306,6 +314,7 @@
                 // CONTROL STATE
                 isPlaying: true,
                 playbackSpeed: 1.0,
+                
                 // Panning State
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
@@ -338,6 +347,39 @@
                     }, 1000);
                 },
 
+                // --- NEW: EVENT HANDLER UNTUK PLAYBACK RATE DAN BUFFERING ---
+                handlePlaybackEvents(index, eventType) {
+                    this.syncControls(); // Selalu update UI control
+                    
+                    if (!this.activeSlots[index] || this.activeSlots[index].mode !== 'playback') return;
+                    
+                    const slot = this.activeSlots[index];
+                    const vid = document.getElementById('video-playback-' + index);
+
+                    switch (eventType) {
+                        case 'waiting':
+                            // Video kehabisan buffer dan membeku. Tampilkan overlay loading.
+                            slot.isBuffering = true;
+                            break;
+                        case 'playing':
+                            // Buffer sudah cukup dan video mulai diputar lagi.
+                            slot.isBuffering = false;
+                            // Kembalikan ke kecepatan yang diinginkan
+                            vid.playbackRate = parseFloat(this.playbackSpeed); 
+                            break;
+                        case 'play':
+                        case 'pause':
+                            // ...
+                            break;
+                        case 'ratechange':
+                            // ...
+                            break;
+                    }
+
+                    // Tambahkan debounce / throttle jika diperlukan
+                },
+                // -------------------------------------------------------------
+
                 refreshTimeline() {
                     if(this.selectedSlot) {
                         this.selectSlot(this.selectedSlot);
@@ -352,7 +394,9 @@
 
                     const slot = this.activeSlots[index];
                     if(slot) {
-                        fetch(`/monitoring/timeline/${slot.id}?date=${this.selectedDate}`)
+                        // FIX: Tambahkan Anti-Cache di URL fetch untuk Timeline
+                        const antiCache = new Date().getTime();
+                        fetch(`/monitoring/timeline/${slot.id}?date=${this.selectedDate}&_=${antiCache}`)
                             .then(res => res.json())
                             .then(data => { this.currentTimelineData = data; })
                             .catch(e => this.currentTimelineData = []);
@@ -361,7 +405,6 @@
                     }
                 },
 
-                // --- NEW: CUSTOM CONTROLS LOGIC ---
                 syncControls() {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
@@ -384,7 +427,6 @@
                     }
                 },
 
-                // Fungsi Seek (-10s / +10s)
                 seek(seconds) {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
@@ -400,10 +442,11 @@
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         vid.playbackRate = parseFloat(speed);
+                        // Trigger ratechange event secara manual jika diperlukan
+                        this.handlePlaybackEvents(this.selectedSlot, 'ratechange'); 
                     }
                 },
 
-                // Set Zoom (Digital)
                 setZoom(zoom) {
                     if(!this.selectedSlot) return;
                     this.activeSlots[this.selectedSlot].zoom = zoom;
@@ -414,7 +457,6 @@
                     this.applyTransform(this.selectedSlot); // Apply manual style
                 },
 
-                // --- NEW: APPLY MANUAL TRANSFORM (FIX FOR IFRAME RELOAD) ---
                 applyTransform(index) {
                     const slot = this.activeSlots[index];
                     if(!slot) return;
@@ -427,7 +469,6 @@
                     if(video) video.style.transform = transform;
                 },
 
-                // --- NEW: HANDLE WHEEL ZOOM (MOUSE SCROLL) ---
                 handleWheel(e, index) {
                     if (!this.activeSlots[index]) return;
                     let slot = this.activeSlots[index];
@@ -445,7 +486,6 @@
                     this.applyTransform(index); // Apply manual style
                 },
 
-                // --- NEW: PANNING LOGIC (GESER VIDEO SAAT ZOOM) ---
                 startPan(e, index) {
                     let slot = this.activeSlots[index];
                     if(!slot || (slot.zoom || 1) <= 1) return;
@@ -469,7 +509,6 @@
                     this.panSlot = null;
                 },
 
-                // Deprecated (Left for fallback if needed)
                 changeSpeed() {
                     this.setSpeed(this.playbackSpeed);
                 },
@@ -515,6 +554,7 @@
                     slot.mode = 'live';
                     slot.zoom = 1; // Reset zoom saat kembali ke live
                     slot.x = 0; slot.y = 0;
+                    slot.isBuffering = false; // Reset buffering state
                     this.applyTransform(index);
 
                     const videoEl = document.getElementById('video-playback-' + index);
@@ -532,6 +572,10 @@
                     slot.recordStartOffset = startTs; 
                     slot.zoom = 1; // Reset zoom saat ganti video
                     slot.x = 0; slot.y = 0;
+                    
+                    // Tambahkan isBuffering state di slot
+                    slot.isBuffering = true; // Anggap buffering di awal load
+                    
                     this.applyTransform(index);
                     
                     const iframe = document.getElementById('iframe-live-' + index);
@@ -540,6 +584,8 @@
                     this.$nextTick(() => {
                         const video = document.getElementById('video-playback-' + index);
                         if(video) {
+                            // Kosongkan src dulu untuk memaksa reload buffer
+                            video.src = ''; 
                             video.src = fileUrl;
                             video.currentTime = offsetSeconds;
                             video.playbackRate = parseFloat(this.playbackSpeed); // Terapkan speed yang dipilih
@@ -563,7 +609,7 @@
                     if (segment) {
                         const offset = clickedSeconds - segment.start;
                         this.playRecord(this.selectedSlot, segment.url, offset, segment.start);
-                    } else { alert("Tidak ada rekaman pada jam ini."); }
+                    } else { /* alert() diganti dengan console log untuk UX */ console.log("Tidak ada rekaman pada jam ini."); }
                 },
 
                 toggleFullscreen() {
@@ -580,27 +626,25 @@
                 
                 // Helper Functions (Lainnya)
                 loadHls(video, url, slotIndex) { 
-                    // Fungsi ini sekarang tidak digunakan lagi
                     console.log("HLS Loader not used for Live View.");
                 },
                 formatTime(seconds) { const h = Math.floor(seconds / 3600).toString().padStart(2,'0'); const m = Math.floor((seconds % 3600) / 60).toString().padStart(2,'0'); const s = Math.floor(seconds % 60).toString().padStart(2,'0'); return `${h}:${m}:${s}`; },
                 goLive(index) { this.playLive(index); }, setGrid(n) { this.gridSize = n; if(this.selectedSlot > n) this.selectedSlot = null; }, clearAll() { this.activeSlots = {}; this.selectedSlot = null; }, removeCamera(i) { delete this.activeSlots[i]; if(this.selectedSlot === i) { this.selectedSlot = null; this.currentTimelineData = []; } }, matchSearch(name, building) { if (this.search === '') return true; return name.includes(this.search.toLowerCase()) || building.includes(this.search.toLowerCase()); },
                 
-                // --- DRAG START & DROP (Fix URL) ---
+                // --- DRAG START & DROP ---
                 handleDragStart(e, id, name, building, faculty, liveUrl) { 
-                    // TANGKAP URL LIVE STREAM DISINI
                     const camData = JSON.stringify({ id, name, building, faculty, liveUrl }); 
                     e.dataTransfer.setData('application/json', camData);
                     e.dataTransfer.effectAllowed = 'copy';
                 },
                 handleDrop(e, index) { 
                     const data = e.dataTransfer.getData('application/json'); if (!data) return; const cam = JSON.parse(data); 
-                    // Simpan data & URL Live yang sudah dirakit
                     this.activeSlots[index] = { 
                         id: cam.id, name: cam.name, building: cam.building, faculty: cam.faculty, 
                         mode: 'live', timestampDisplay: '', hlsInstance: null,
                         liveUrl: cam.liveUrl, // <-- SIMPAN DISINI
-                        zoom: 1, x: 0, y: 0
+                        zoom: 1, x: 0, y: 0,
+                        isBuffering: false // <-- TAMBAHKAN STATE INI
                     }; 
                     this.selectSlot(index);
                     this.$nextTick(() => { this.playLive(index); });
