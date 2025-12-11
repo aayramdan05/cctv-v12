@@ -52,32 +52,43 @@
         </div>
 
         <!-- MAIN AREA -->
-        <!-- Responsive Layout: Flex-Col di Mobile, Flex-Row di Desktop -->
-        <div class="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0 relative">
+        <!-- Responsive Layout: Flex-Col (Mobile) / Flex-Row (Desktop) -->
+        <div class="flex flex-col lg:flex-row flex-1 gap-6 overflow-hidden min-h-0 relative">
             
             <!-- KIRI: VIDEO WALL + TIMELINE -->
-            <!-- Flex-1 agar mengambil sisa ruang -->
+            <!-- min-h-0 penting untuk scrolling internal -->
             <div class="flex-1 flex flex-col min-w-0 gap-4 z-10 min-h-0">
                 
                 <!-- 1. GRID VIDEO -->
+                <!-- Mobile: min-h-[50vh] agar video tidak gepeng -->
                 <div class="flex-1 bg-slate-900 rounded-2xl overflow-hidden shadow-lg border border-slate-700 relative min-h-[50vh] lg:min-h-0">
                     <div class="grid h-full w-full gap-0.5 bg-black"
                         :class="{ 'grid-cols-1 grid-rows-1': gridSize === 1, 'grid-cols-2 grid-rows-2': gridSize === 4, 'grid-cols-3 grid-rows-3': gridSize === 9 }">
                         
                         <template x-for="i in gridSize">
+                            <!-- Slot Container -->
                             <div class="relative border border-slate-800 bg-black group overflow-hidden cursor-pointer"
                                 :class="{'ring-2 ring-cyan-400 z-20': selectedSlot === i}"
                                 @click="selectSlot(i)"
-                                @dragover.prevent @drop="handleDrop($event, i)"
                                 oncontextmenu="return false;"> 
                                 
+                                <!-- Placeholder Kosong -->
                                 <div x-show="!activeSlots[i]" class="absolute inset-0 flex flex-col items-center justify-center text-slate-700 pointer-events-none">
                                     <i class="fas fa-plus text-3xl mb-2 opacity-20"></i>
                                     <span class="text-xs font-mono text-slate-600">Slot <span x-text="i"></span></span>
                                 </div>
 
+                                <!-- Overlay Drag & Drop (Hanya muncul saat user drag kamera) -->
+                                <!-- Ini perbaikan kuncinya: Iframe bisa diklik, tapi saat drag, div ini muncul di atasnya -->
+                                <div x-show="isDragging" 
+                                     class="absolute inset-0 z-50 bg-cyan-500/20 border-2 border-dashed border-cyan-400 flex items-center justify-center text-white font-bold backdrop-blur-sm transition-opacity"
+                                     @dragover.prevent 
+                                     @drop="handleDrop($event, i)">
+                                    <span class="bg-black/50 px-2 py-1 rounded">Drop Here</span>
+                                </div>
+
                                 <template x-if="activeSlots[i]">
-                                    <!-- CONTAINER VIDEO -->
+                                    <!-- CONTAINER VIDEO CONTENT -->
                                     <div class="w-full h-full relative bg-black overflow-hidden flex items-center justify-center"
                                             @wheel.prevent="handleWheel($event, i)"
                                             @mousedown.prevent="startPan($event, i)"
@@ -87,12 +98,13 @@
                                             :class="(activeSlots[i].zoom > 1) ? 'cursor-move' : ''">
                                         
                                         <!-- A. IFRAME LIVE (MSE/WebRTC) -->
-                                        <!-- Update Attributes untuk Mobile Playback -->
+                                        <!-- Perbaikan: Hapus pointer-events-none agar bisa di-klik (play/unmute) -->
                                         <iframe 
                                             :id="'iframe-live-' + i"
                                             x-show="activeSlots[i].mode === 'live'"
-                                            class="absolute w-full h-full object-contain border-none pointer-events-none transition-transform duration-75 ease-out origin-center"
+                                            class="absolute w-full h-full object-contain border-none transition-transform duration-75 ease-out origin-center"
                                             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                                            playsinline
                                             allowfullscreen>
                                         </iframe>
 
@@ -118,22 +130,23 @@
                                         </div>
 
                                         <!-- Overlay Info & Controls -->
+                                        <!-- Pointer events auto agar tombol bisa diklik -->
                                         <div class="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 backdrop-blur flex items-center gap-2 z-20 pointer-events-auto">
                                             <div class="w-2 h-2 rounded-full" :class="activeSlots[i].mode === 'live' ? 'bg-red-500 animate-pulse' : 'bg-green-500'"></div>
                                             <span class="text-[10px] font-bold text-white uppercase" x-text="activeSlots[i].mode === 'live' ? 'LIVE' : 'REC'"></span>
                                             <span class="text-[10px] text-gray-300 border-l border-gray-600 pl-2 ml-1 truncate max-w-[100px]" x-text="activeSlots[i].name"></span>
                                             
-                                            <!-- Tombol Refresh Live (Khusus Mobile Pause Fix) -->
+                                            <!-- Tombol Refresh Live (Lebih Besar & Jelas) -->
                                             <button @click.stop="reconnectLive(i)" 
                                                     x-show="activeSlots[i].mode === 'live'"
-                                                    class="ml-1 text-gray-400 hover:text-white transition" 
-                                                    title="Reconnect Stream">
+                                                    class="ml-2 bg-slate-700 hover:bg-cyan-600 text-white w-6 h-6 rounded flex items-center justify-center transition shadow-sm" 
+                                                    title="Refresh Stream (Jika Pause)">
                                                 <i class="fas fa-sync-alt text-[10px]"></i>
                                             </button>
                                         </div>
 
                                         <!-- Tombol Close -->
-                                        <button @click.stop="removeCamera(i)" class="absolute top-2 right-2 w-6 h-6 bg-red-600/80 hover:bg-red-500 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-30"><i class="fas fa-times text-xs"></i></button>
+                                        <button @click.stop="removeCamera(i)" class="absolute top-2 right-2 w-6 h-6 bg-red-600/80 hover:bg-red-500 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-30 pointer-events-auto"><i class="fas fa-times text-xs"></i></button>
                                     </div>
                                 </template>
                             </div>
@@ -146,70 +159,45 @@
                         x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
                         x-transition>
                     
-                    <!-- HEADER: FIXED HEIGHT -->
+                    <!-- HEADER CONTROLS -->
                     <div class="flex justify-between items-center px-1 mb-2 relative z-40 h-10">
-                        
-                        <!-- Info Kiri -->
                         <div class="flex items-center gap-3 z-10">
-                            <span class="text-cyan-600 font-bold text-sm" x-text="activeSlots[selectedSlot]?.name"></span>
+                            <span class="text-cyan-600 font-bold text-sm truncate max-w-[100px] sm:max-w-xs" x-text="activeSlots[selectedSlot]?.name"></span>
                             <span class="text-gray-300">|</span>
                             <span class="text-slate-500 text-xs font-bold" x-text="selectedDate"></span>
                             <span class="text-white text-xs font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-600" x-text="timelineTimeDisplay"></span>
                         </div>
                         
-                        <!-- CENTER: CONTROLS -->
+                        <!-- PLAYBACK CONTROLS (Center) -->
                         <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 z-50" 
                                 x-show="activeSlots[selectedSlot]?.mode === 'playback'"
                                 x-transition:enter="transition ease-out duration-200"
                                 x-transition:enter-start="opacity-0 scale-95"
                                 x-transition:enter-end="opacity-100 scale-100">
                             
-                            <!-- Previous -->
-                            <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Mundur 10 Detik">
-                                <i class="fas fa-undo text-sm pointer-events-none"></i>
-                            </button>
-
-                            <!-- Play/Pause -->
-                            <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95">
-                                <i class="fas text-3xl pointer-events-none" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
-                            </button>
-
-                            <!-- Next -->
-                            <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Maju 10 Detik">
-                                <i class="fas fa-redo text-sm pointer-events-none"></i>
-                            </button>
+                            <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95"><i class="fas fa-undo text-sm"></i></button>
+                            <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95"><i class="fas text-3xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i></button>
+                            <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95"><i class="fas fa-redo text-sm"></i></button>
 
                             <!-- Speed & Zoom -->
-                            <div class="flex items-center gap-3 border-l border-slate-200 pl-3">
+                            <div class="hidden sm:flex items-center gap-3 border-l border-slate-200 pl-3">
                                 <!-- Speed -->
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
-                                    <button @click.stop.prevent="speedOpen = !speedOpen" 
-                                            class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95">
-                                        <span x-text="playbackSpeed + 'x'" class="pointer-events-none"></span>
+                                    <button @click.stop.prevent="speedOpen = !speedOpen" class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95">
+                                        <span x-text="playbackSpeed + 'x'"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
-                                            <button @click.stop="setSpeed(speed); speedOpen = false" 
-                                                    class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition border-b border-slate-50 last:border-none"
-                                                    :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
-                                                    x-text="speed + 'x'">
-                                            </button>
+                                            <button @click.stop="setSpeed(speed); speedOpen = false" class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50" :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'" x-text="speed + 'x'"></button>
                                         </template>
                                     </div>
                                 </div>
-
                                 <!-- Zoom -->
                                 <div class="relative" x-data="{ zoomOpen: false }" @click.outside="zoomOpen = false">
-                                    <button @click.stop.prevent="zoomOpen = !zoomOpen" class="flex items-center gap-0.5 text-slate-500 hover:text-cyan-600 transition active:scale-95">
-                                        <i class="fas fa-search-plus text-xs pointer-events-none"></i>
-                                    </button>
+                                    <button @click.stop.prevent="zoomOpen = !zoomOpen" class="flex items-center gap-0.5 text-slate-500 hover:text-cyan-600 transition active:scale-95"><i class="fas fa-search-plus text-xs"></i></button>
                                     <div x-show="zoomOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="z in [1.0, 1.5, 2.0, 3.0]">
-                                            <button @click.stop="setZoom(z); zoomOpen = false" 
-                                                    class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition"
-                                                    :class="activeSlots[selectedSlot]?.zoom == z ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
-                                                    x-text="z + 'x'">
-                                            </button>
+                                            <button @click.stop="setZoom(z); zoomOpen = false" class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50" :class="activeSlots[selectedSlot]?.zoom == z ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'" x-text="z + 'x'"></button>
                                         </template>
                                     </div>
                                 </div>
@@ -222,7 +210,7 @@
                                     :disabled="!isToday || activeSlots[selectedSlot]?.mode === 'live'"
                                     :class="(isToday && activeSlots[selectedSlot]?.mode === 'live') ? 'bg-slate-100 text-slate-400 cursor-default' : 'bg-red-600 text-white hover:bg-red-500 animate-pulse cursor-pointer'"
                                     class="px-3 py-1 rounded font-bold text-[10px] flex items-center gap-1 transition shadow-sm">
-                                <i class="fas fa-broadcast-tower pointer-events-none"></i> <span x-text="isToday ? 'REALTIME' : 'BACK TO TODAY'" class="pointer-events-none"></span>
+                                <i class="fas fa-broadcast-tower pointer-events-none"></i> <span x-text="isToday ? 'REALTIME' : 'BACK'" class="hidden sm:inline"></span>
                             </button>
                         </div>
                     </div>
@@ -242,6 +230,7 @@
                                     </div>
                                 </template>
                             </div>
+                            <!-- Segments -->
                             <template x-for="seg in currentTimelineData">
                                 <div class="absolute top-0 bottom-0 z-10 cursor-pointer transition-all border-r border-black/10"
                                      :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) ? 'bg-red-500/90 animate-pulse' : 'bg-green-500 hover:bg-green-400'"
@@ -251,10 +240,12 @@
                                 </div>
                             </template>
                         </div>
+                        <!-- Playhead -->
                         <div class="absolute top-0 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-100"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
                              <div class="w-2.5 h-2.5 -ml-1 bg-red-600 rounded-full shadow border border-white relative top-0"></div>
                         </div>
+                        <!-- Hover Tooltip -->
                         <div class="absolute top-0 transform -translate-x-1/2 -translate-y-full pb-1 z-50 pointer-events-none"
                                 :style="'left: ' + hoverPercent + '%'" x-show="hoverPercent > 0 && hoverPercent < 100">
                              <div class="bg-slate-800 text-white text-[10px] font-mono font-bold px-2 py-1 rounded shadow-lg flex flex-col items-center border border-slate-600">
@@ -267,7 +258,8 @@
             </div>
 
             <!-- KANAN: LIST -->
-            <!-- Responsive Sidebar: Width Full di Mobile (Stacked), Fixed Width di Desktop -->
+            <!-- Responsive Sidebar: Mobile (Height fixed), Desktop (Width fixed) -->
+            <!-- Perbaikan Gap: Sidebar sekarang memiliki jarak yang cukup -->
             <div class="w-full lg:w-80 xl:w-96 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30 h-64 lg:h-auto"
                     x-show="showSidebar && !isFullscreen"
                     :class="{'absolute top-0 right-0 h-full w-full lg:relative lg:w-80 xl:w-96': isFullscreen}">
@@ -277,12 +269,14 @@
                 <div class="p-2 border-b border-slate-100"><input type="text" x-model="search" placeholder="Cari..." class="w-full px-3 py-1.5 text-xs rounded border"></div>
                 <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                     @foreach($cctvs as $cctv)
-                    <div class="bg-white p-2 rounded border hover:border-cyan-400 cursor-pointer flex items-center gap-3 shadow-sm hover:shadow-md transition select-none"
+                    <div class="bg-white p-2 rounded border hover:border-cyan-400 cursor-pointer flex items-center gap-3 shadow-sm hover:shadow-md transition select-none group"
                         draggable="true" 
                         @dragstart="handleDragStart($event, {{ $cctv->id }}, '{{ $cctv->nama_cctv }}', '{{ $cctv->building->nama_gedung ?? '-' }}', '{{ $cctv->building->fakultas ?? '-' }}', '{{ $cctv->live_stream_url }}')"
+                        @dragend="isDragging = false"
                         @click.stop="addCameraOnClick({ id: {{ $cctv->id }}, name: '{{ $cctv->nama_cctv }}', building: '{{ $cctv->building->nama_gedung ?? '-' }}', faculty: '{{ $cctv->building->fakultas ?? '-' }}', liveUrl: '{{ $cctv->live_stream_url }}' })">
-                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400"><i class="fas fa-video"></i></div>
-                        <div class="min-w-0"><p class="text-xs font-bold text-slate-700 truncate">{{ $cctv->nama_cctv }}</p><p class="text-[9px] text-slate-500 truncate">{{ $cctv->building->nama_gedung ?? '-' }}</p></div>
+                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-500 transition"><i class="fas fa-video"></i></div>
+                        <div class="min-w-0"><p class="text-xs font-bold text-slate-700 truncate group-hover:text-cyan-600 transition">{{ $cctv->nama_cctv }}</p><p class="text-[9px] text-slate-500 truncate">{{ $cctv->building->nama_gedung ?? '-' }}</p></div>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition"><i class="fas fa-plus-circle text-cyan-400"></i></div>
                     </div>
                     @endforeach
                 </div>
@@ -295,6 +289,7 @@
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
                 search: '', currentHost: window.location.hostname, isFullscreen: false,
+                isDragging: false, // State untuk Drag Overlay
                 
                 selectedDate: new Date().toISOString().split('T')[0],
                 currentTimelineData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
@@ -322,7 +317,8 @@
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
                             this.currentPlayheadPercent = (sec / 86400) * 100;
-                            this.timelineTimeDisplay = "REALTIME " + now.toLocaleTimeString('en-GB');
+                            // Tambahkan 'CLOCK' agar user tahu ini jam sistem, bukan jam video jika video pause
+                            this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
                         } else if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'playback') {
                             const vid = document.getElementById('video-playback-' + this.selectedSlot);
                             if(vid && !vid.paused && this.activeSlots[this.selectedSlot].recordStartOffset) {
@@ -391,12 +387,16 @@
                         }
                     }
 
-                    if (targetSlot !== -1) {
-                        this.assignCameraToSlot(cam, targetSlot);
-                    } else {
-                        // Opsional: Beri peringatan jika semua slot penuh
-                        console.log("Semua slot penuh.");
+                    // Jika tidak ada slot kosong, ganti slot yang sedang dipilih
+                    if (targetSlot === -1 && this.selectedSlot) {
+                        targetSlot = this.selectedSlot;
                     }
+                    // Jika tidak ada yang dipilih dan penuh, timpa slot 1
+                    else if (targetSlot === -1) {
+                        targetSlot = 1;
+                    }
+
+                    this.assignCameraToSlot(cam, targetSlot);
                 },
 
 
@@ -640,11 +640,17 @@
                 
                 // --- DRAG START & DROP ---
                 handleDragStart(e, id, name, building, faculty, liveUrl) { 
+                    // Set flag isDragging = true
+                    this.isDragging = true;
+                    
                     const camData = JSON.stringify({ id, name, building, faculty, liveUrl }); 
                     e.dataTransfer.setData('application/json', camData);
                     e.dataTransfer.effectAllowed = 'copy';
                 },
                 handleDrop(e, index) { 
+                    // Reset flag
+                    this.isDragging = false;
+
                     const data = e.dataTransfer.getData('application/json'); 
                     if (!data) return; 
                     const cam = JSON.parse(data); 
