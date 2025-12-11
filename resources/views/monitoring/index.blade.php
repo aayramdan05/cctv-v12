@@ -51,7 +51,8 @@
         </div>
 
         <!-- MAIN AREA -->
-        <div class="flex flex-1 gap-4 overflow-hidden min-h-0 relative">
+        <!-- Perubahan: Mengganti gap-4 menjadi gap-6 untuk jarak yang lebih lega -->
+        <div class="flex flex-1 gap-6 overflow-hidden min-h-0 relative">
             
             <!-- KIRI: VIDEO WALL + TIMELINE -->
             <div class="flex-1 flex flex-col min-w-0 gap-4 z-10">
@@ -274,8 +275,10 @@
             </div>
 
             <!-- KANAN: LIST -->
-            <div class="w-72 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30"
-                    x-show="showSidebar && !isFullscreen">
+            <!-- Perubahan: w-72 diganti dengan dynamic width dan disembunyikan di mobile -->
+            <div class="w-full lg:w-80 xl:w-96 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30"
+                    x-show="showSidebar && !isFullscreen"
+                    :class="{'absolute top-0 right-0 h-full w-full lg:relative lg:w-80 xl:w-96': isFullscreen}">
                 <div class="p-3 border-b border-slate-100 bg-slate-50 rounded-t-2xl font-bold text-slate-700 text-sm flex justify-between items-center">
                     <span>Camera List</span><span class="text-xs text-slate-400 bg-white border px-2 py-0.5 rounded-full">{{ $cctvs->count() }}</span>
                 </div>
