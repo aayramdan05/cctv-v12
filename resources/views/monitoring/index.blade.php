@@ -98,11 +98,10 @@
                                                 @timeupdate="handleTimeUpdate(i)">
                                             </video>
 
-                                            <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-40 backdrop-blur-[2px]"
-                                                 x-show="isBuffering && activeSlots[i].mode === 'playback'">
-                                                <div class="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mb-2"></div>
-                                                <span class="text-white text-xs font-bold shadow-black drop-shadow-md">Downloading Video...</span>
-                                                <span class="text-gray-300 text-[9px] mt-1">Mohon tunggu, video sedang dimuat ke memori</span>
+                                            <div class="absolute top-2 right-10 px-2 py-0.5 bg-cyan-600/80 text-white text-[9px] rounded shadow z-30 pointer-events-none transition-opacity duration-500"
+                                                 x-show="isPrefetching" 
+                                                 x-transition.opacity.duration.500ms>
+                                                <i class="fas fa-cloud-download-alt mr-1"></i> Caching Next...
                                             </div>
 
                                             <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
@@ -156,8 +155,7 @@
                                 <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Mundur 10s"><i class="fas fa-undo text-sm"></i></button>
                                 
                                 <button @click.stop.prevent="togglePlayback()" 
-                                        :disabled="isBuffering"
-                                        class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                        class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center">
                                     <i class="fas text-2xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
                                 </button>
                                 
@@ -167,8 +165,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
                                     <button @click.stop.prevent="speedOpen = !speedOpen" 
-                                            :disabled="isBuffering"
-                                            class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-cyan-600 hover:border-cyan-300 transition active:scale-95 shadow-sm disabled:opacity-50">
+                                            class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-cyan-600 hover:border-cyan-300 transition active:scale-95 shadow-sm">
                                         <span x-text="playbackSpeed + 'x'"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
@@ -290,7 +287,8 @@
                 // CONTROL STATE
                 isPlaying: true,
                 playbackSpeed: 1.0,
-                isBuffering: false, // State Loading Download
+                isPrefetching: false, // State untuk UI
+                prefetchedUrl: null,  // Cache key sederhana
                 
                 // MONITORING STATE
                 lastTime: 0,
@@ -312,7 +310,7 @@
                     });
                     
                     setInterval(() => {
-                        // Logic jam Live (Bukan playback video)
+                        // Logic jam Live
                         if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.isToday) {
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
@@ -322,7 +320,7 @@
                     }, 1000);
                 },
 
-                // --- SMART MONITOR (Backup) ---
+                // --- SMART MONITOR (TOLERAN TERHADAP STREAMING) ---
                 startPlaybackMonitor(vid) {
                     if (this.checkInterval) {
                         clearInterval(this.checkInterval);
@@ -333,15 +331,19 @@
                     
                     this.checkInterval = setInterval(() => {
                         if (!vid || vid.paused) return;
-                        
-                        // Karena pakai BLOB (Local RAM), harusnya network state selalu ready.
-                        // Kita hanya cek jika logic decoder macet.
+
+                        // Jika browser memberi sinyal buffering, kita tunggu (jangan paksa play)
+                        if (vid.readyState < 3) {
+                            // console.log("Monitor: Buffering...");
+                            return; 
+                        }
+
                         const currentTime = vid.currentTime;
-                        if (currentTime === this.lastTime && this.isPlaying && !this.isBuffering) {
+                        if (currentTime === this.lastTime && this.isPlaying) {
                             stuckCounter++;
                             console.log(`Monitor: Stuck ${stuckCounter}/3`);
                             if (stuckCounter >= 3) {
-                                console.warn("Jump starting decoder...");
+                                console.warn("Monitor: Hard Stuck. Jump start...");
                                 vid.currentTime += 0.1; 
                                 vid.play().catch(e => {});
                                 stuckCounter = 0; 
@@ -351,6 +353,35 @@
                             this.lastTime = currentTime;
                         }
                     }, 500);
+                },
+
+                // --- BACKGROUND PREFETCHER (KUNCI PERBAIKAN) ---
+                prefetchNextSegment(currentUrl) {
+                    // Cari file berikutnya di playlist
+                    const idx = this.currentTimelineData.findIndex(s => currentUrl.includes(s.url) || currentUrl.endsWith(s.url));
+                    
+                    if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
+                        const nextUrl = this.currentTimelineData[idx + 1].url;
+                        
+                        // Cek apakah sudah didownload sebelumnya biar ga spam
+                        if (this.prefetchedUrl !== nextUrl) {
+                            console.log("Background Prefetch Start:", nextUrl);
+                            this.isPrefetching = true;
+                            
+                            // Gunakan fetch agar masuk ke Disk Cache Browser
+                            fetch(nextUrl, { priority: 'low' }) // Low priority agar tidak ganggu streaming utama
+                                .then(response => {
+                                    if(response.ok) {
+                                        console.log("Background Prefetch Done (Cached)");
+                                        this.prefetchedUrl = nextUrl;
+                                    }
+                                })
+                                .catch(err => console.log("Prefetch failed (ignore)", err))
+                                .finally(() => {
+                                    this.isPrefetching = false;
+                                });
+                        }
+                    }
                 },
 
                 handleTimeUpdate(index) {
@@ -419,7 +450,6 @@
                     }
                 },
 
-                // --- TOGGLE PLAYBACK ---
                 togglePlayback() {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
@@ -512,29 +542,17 @@
                     
                     if(this.checkInterval) clearInterval(this.checkInterval);
 
-                    // Revoke URL Blob lama jika ada (untuk hemat memori)
-                    if (vid.src.startsWith('blob:')) {
-                        URL.revokeObjectURL(vid.src);
-                    }
+                    // Hapus blob URL jika ada (sisa percobaan sebelumnya)
+                    if (vid.src.startsWith('blob:')) URL.revokeObjectURL(vid.src);
 
-                    // Cari video selanjutnya...
-                    // (Logika timeline data tetap sama, hanya beda di pemanggilan playRecord)
-                    // Disini kita perlu cek URL asli untuk dicocokkan dengan data timeline
-                    // Karena vid.src sekarang adalah 'blob:http...', kita tidak bisa pakai vid.src untuk lookup.
-                    // Jadi kita cari berdasarkan waktu playhead saat ini + 1 detik.
-                    
-                    const currentSec = (this.currentPlayheadPercent / 100) * 86400;
-                    
-                    // Cari segmen yang start-nya > currentSec
-                    const nextSeg = this.currentTimelineData.find(seg => seg.start > (currentSec - 5) && seg.start > this.activeSlots[index].recordStartOffset);
-                    
-                    if (nextSeg) {
+                    const currentSrc = decodeURIComponent(vid.src);
+                    const idx = this.currentTimelineData.findIndex(seg => currentSrc.includes(encodeURI(seg.url)) || currentSrc.includes(seg.url));
+
+                    if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
+                        const nextSeg = this.currentTimelineData[idx + 1];
                         console.log("Auto-playing next part:", nextSeg.human_start);
                         this.playRecord(index, nextSeg.url, 0, nextSeg.start);
                     } else {
-                        // Coba cara index array (Fallback)
-                        // Karena kita tidak menyimpan index aktif, ini agak sulit. 
-                        // Tapi logic 'start > offset' diatas sudah cukup robust.
                         this.isPlaying = false;
                         console.log("End of playback list.");
                     }
@@ -565,7 +583,7 @@
                     }
                 },
 
-                // --- CORE RECORD (DOWNLOAD BLOB STRATEGY) ---
+                // --- CORE RECORD (STREAMING + PREFETCH) ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
@@ -581,39 +599,24 @@
                         if(vid) {
                             if(this.checkInterval) clearInterval(this.checkInterval);
                             
-                            // Tampilkan indikator Loading
-                            this.isBuffering = true;
-                            console.log("Downloading video to RAM...");
+                            // Setup Handler
+                            vid.onplay = () => { this.isPlaying = true; };
+                            vid.onpause = () => { this.isPlaying = false; };
+                            vid.onended = () => { this.handleVideoEnded(index); };
+                            vid.onerror = (e) => { console.error("Video Error:", e); };
 
-                            // Fetch Video sebagai BLOB (Binary Large Object)
-                            fetch(fileUrl)
-                                .then(response => {
-                                    if (!response.ok) throw new Error("Gagal download video");
-                                    return response.blob();
-                                })
-                                .then(blob => {
-                                    const localUrl = URL.createObjectURL(blob);
-                                    console.log("Download selesai. Playing from RAM.");
-                                    
-                                    vid.src = localUrl;
-                                    vid.currentTime = offsetSeconds;
-                                    vid.playbackRate = parseFloat(this.playbackSpeed);
-                                    
-                                    vid.onplay = () => { this.isPlaying = true; };
-                                    vid.onpause = () => { this.isPlaying = false; };
-                                    vid.onended = () => { this.handleVideoEnded(index); };
-                                    vid.onerror = (e) => { console.error("Video error", e); };
-
-                                    this.isBuffering = false; // Matikan loading
-                                    
-                                    vid.play().catch(e => console.log("Auto-play prevented", e));
-                                    this.startPlaybackMonitor(vid);
-                                })
-                                .catch(err => {
-                                    console.error("Download failed:", err);
-                                    this.isBuffering = false;
-                                    alert("Gagal memuat video (Network Error). Coba refresh.");
-                                });
+                            // Mode Streaming Biasa (Cepat)
+                            vid.src = fileUrl;
+                            vid.currentTime = offsetSeconds;
+                            vid.playbackRate = parseFloat(this.playbackSpeed);
+                            
+                            vid.play().catch(e => console.log("Auto-play prevented:", e));
+                            
+                            // 1. Start Smart Monitor (Anti-Stuck)
+                            this.startPlaybackMonitor(vid);
+                            
+                            // 2. Start Background Prefetch (Untuk file selanjutnya)
+                            this.prefetchNextSegment(fileUrl);
                         }
                     });
                 },
