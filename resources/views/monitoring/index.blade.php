@@ -98,6 +98,11 @@
                                                 @timeupdate="handleTimeUpdate(i)">
                                             </video>
 
+                                            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-red-600/90 text-white text-[10px] rounded shadow-lg z-30 animate-pulse pointer-events-none"
+                                                 x-show="showSpeedWarning">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Koneksi Lambat: Speed Diturunkan
+                                            </div>
+
                                             <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
                                                  x-show="activeSlots[i].zoom > 1">
                                                 <span class="text-[10px] font-bold text-white font-mono" x-text="Math.round(activeSlots[i].zoom * 100) + '%'"></span>
@@ -280,6 +285,7 @@
                 // CONTROL STATE
                 isPlaying: true,
                 playbackSpeed: 1.0,
+                showSpeedWarning: false, // Untuk menampilkan notif
                 
                 // MONITORING STATE (Anti-Stuck)
                 lastTime: 0,
@@ -301,7 +307,6 @@
                     });
                     
                     setInterval(() => {
-                        // Logic jam Live (Bukan playback video)
                         if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.isToday) {
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
@@ -311,46 +316,54 @@
                     }, 1000);
                 },
 
-                // --- SMART MONITOR (ANTI-STUCK + DEBUG) ---
+                // --- SMART MONITOR (AUTO-DOWNGRADE) ---
                 startPlaybackMonitor(vid) {
                     if (this.checkInterval) {
                         clearInterval(this.checkInterval);
                         this.checkInterval = null;
                     }
                     this.lastTime = vid.currentTime;
-                    let stuckCounter = 0; // Counter toleransi
+                    let bufferingCount = 0; // Menghitung durasi stuck
                     
                     this.checkInterval = setInterval(() => {
-                        // 1. Validasi: Object ada dan tidak di-pause manual
                         if (!vid || vid.paused) return;
 
-                        // 2. Cek Network State (Waiting = Buffering Natural)
+                        // JIKA SEDANG BUFFERING (WAITING)
                         if (vid.readyState < 3) {
-                            // Video sedang menunggu data (buffering). Biarkan saja, jangan dipaksa play.
-                            // console.log("Monitor: Buffering data..."); 
+                            bufferingCount++;
+                            console.log(`[MONITOR] Buffering... (${bufferingCount})`);
+                            
+                            // Jika stuck buffering lebih dari 6x pengecekan (3 detik)
+                            // DAN kecepatan sedang tinggi (> 1x)
+                            if (bufferingCount > 6 && this.playbackSpeed > 1.0) {
+                                console.warn("[MONITOR] Internet tidak kuat. Menurunkan kecepatan...");
+                                
+                                // Turunkan Speed ke Normal
+                                this.setSpeed(1.0); 
+                                
+                                // Tampilkan notifikasi visual
+                                this.showSpeedWarning = true;
+                                setTimeout(() => { this.showSpeedWarning = false; }, 4000);
+                                
+                                bufferingCount = 0; // Reset counter
+                            }
                             return; 
                         }
 
-                        // 3. Deteksi Stuck (Data ada, tapi waktu tidak jalan)
+                        // JIKA DATA ADA TAPI MACET (HARD STUCK)
                         const currentTime = vid.currentTime;
-                        
-                        if (currentTime === this.lastTime) {
-                            stuckCounter++;
-                            console.log(`[MONITOR] Stuck Counter: ${stuckCounter}/3`);
-                            
-                            // Jika stuck 3x berturut-turut (1.5 detik), lakukan "CPR" (Jump Start)
-                            if (stuckCounter >= 3) {
-                                console.warn("[MONITOR] HARD STUCK! Forcing Jump Start...");
-                                vid.currentTime += 0.1; // Geser dikit biar decoder bangun
-                                vid.play().catch(e => console.error("Jump start failed:", e));
-                                stuckCounter = 0; 
-                            }
-                        } else {
-                            // Lancar
-                            stuckCounter = 0;
-                            this.lastTime = currentTime;
+                        if (currentTime === this.lastTime && vid.readyState >= 3) {
+                             // Coba paksa jalan (CPR)
+                             console.log("Stuck detected (Data OK). Jump starting...");
+                             vid.currentTime += 0.1;
+                             vid.play().catch(e => {});
                         }
-                    }, 500);
+                        
+                        this.lastTime = currentTime;
+                        // Reset counter buffering jika lancar
+                        if(vid.readyState >= 3) bufferingCount = 0;
+
+                    }, 500); // Cek setiap 0.5 detik
                 },
 
                 handleTimeUpdate(index) {
@@ -419,7 +432,7 @@
                     }
                 },
 
-                // --- TOGGLE PLAYBACK (AMAN) ---
+                // --- TOGGLE PLAYBACK ---
                 togglePlayback() {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
@@ -558,7 +571,7 @@
                     }
                 },
 
-                // --- CORE RECORD LOGIC (DENGAN DEBUG) ---
+                // --- CORE RECORD LOGIC ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
@@ -574,21 +587,15 @@
                         if(vid) {
                             if(this.checkInterval) clearInterval(this.checkInterval);
 
-                            // Setup Event Handler tanpa Clone
                             vid.onplay = () => { this.isPlaying = true; };
                             vid.onpause = () => { this.isPlaying = false; };
                             vid.onended = () => { this.handleVideoEnded(index); };
                             vid.onerror = (e) => { console.error("Video Error:", e); };
 
-                            // >>> DEBUG CONSOLE <<<
-                            // Hapus bagian ini jika sudah production
-                            const debugEvents = ['waiting', 'stalled', 'playing', 'seeked'];
-                            debugEvents.forEach(evt => {
-                                vid.addEventListener(evt, () => {
-                                    console.log(`[VIDEO-DEBUG] ${evt.toUpperCase()} | ReadyState: ${vid.readyState} | Network: ${vid.networkState}`);
-                                });
+                            // Debug Events (Boleh dihapus jika sudah production)
+                            ['waiting', 'stalled', 'playing'].forEach(evt => {
+                                vid.addEventListener(evt, () => console.log(`[VIDEO-DEBUG] ${evt.toUpperCase()} | Ready: ${vid.readyState}`));
                             });
-                            // >>> END DEBUG <<<
 
                             vid.src = fileUrl;
                             vid.currentTime = offsetSeconds;
