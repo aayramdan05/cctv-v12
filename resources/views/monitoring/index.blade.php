@@ -145,25 +145,30 @@
                              x-show="activeSlots[selectedSlot]?.mode === 'playback'"
                              x-transition>
                             
-                            <div class="flex items-center gap-4 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
-                                <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Mundur 10s"><i class="fas fa-undo text-sm"></i></button>
+                            <div class="relative z-50 flex items-center gap-4 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
                                 
-                                <button @click.stop.prevent="togglePlayback()" 
-                                        class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center">
-                                    <i class="fas text-2xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
+                                <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95 p-1" title="Mundur 10s">
+                                    <i class="fas fa-undo text-sm pointer-events-none"></i>
                                 </button>
                                 
-                                <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Maju 10s"><i class="fas fa-redo text-sm"></i></button>
+                                <button @click.stop.prevent="togglePlayback()" 
+                                        class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-10 h-10 flex items-center justify-center rounded-full hover:bg-cyan-50">
+                                    <i class="fas text-2xl pointer-events-none" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
+                                </button>
+                                
+                                <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95 p-1" title="Maju 10s">
+                                    <i class="fas fa-redo text-sm pointer-events-none"></i>
+                                </button>
                             </div>
 
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 relative z-50">
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
                                     <button @click.stop.prevent="speedOpen = !speedOpen" 
                                             class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-cyan-600 hover:border-cyan-300 transition active:scale-95 shadow-sm">
-                                        <span x-text="playbackSpeed + 'x'"></span>
+                                        <span x-text="playbackSpeed + 'x'" class="pointer-events-none"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
-                                        <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 6.0]">
+                                        <template x-for="speed in [1.0, 2.0, 3.0, 5.0]">
                                             <button @click.stop="setSpeed(speed); speedOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition border-b border-slate-50 last:border-none"
                                                     :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
@@ -175,7 +180,7 @@
                                 <div class="relative" x-data="{ zoomOpen: false }" @click.outside="zoomOpen = false">
                                     <button @click.stop.prevent="zoomOpen = !zoomOpen" 
                                             class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-cyan-600 hover:border-cyan-300 transition active:scale-95 shadow-sm">
-                                        <i class="fas fa-search-plus text-xs"></i>
+                                        <i class="fas fa-search-plus text-xs pointer-events-none"></i>
                                     </button>
                                     <div x-show="zoomOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="z in [1.0, 1.5, 2.0, 3.0]">
