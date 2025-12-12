@@ -158,7 +158,7 @@
                                 <span class="text-cyan-600 font-bold text-sm truncate max-w-[150px] sm:max-w-[200px]" x-text="activeSlots[selectedSlot]?.name"></span>
                                 <div class="hidden sm:flex items-center gap-2">
                                     <span class="text-gray-300">|</span>
-                                    <!-- <span class="text-slate-500 text-xs font-bold" x-text="selectedDate"></span> -->
+                                    <span class="text-slate-500 text-xs font-bold" x-text="selectedDate"></span>
                                 </div>
                             </div>
                             <span class="text-white text-xs font-mono bg-slate-800 px-2 py-1 rounded border border-slate-600 shrink-0" x-text="timelineTimeDisplay"></span>
@@ -215,7 +215,7 @@
                                     :class="(isToday && activeSlots[selectedSlot]?.mode === 'live') ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-red-600 text-white hover:bg-red-500 shadow-md animate-pulse cursor-pointer border border-red-700'"
                                     class="px-4 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition w-full md:w-auto">
                                 <i class="fas fa-broadcast-tower pointer-events-none"></i> 
-                                <span x-text="isToday ? 'REALTIME LIVE' : 'BACK TO TODAY'"></span>
+                                <span x-text="isToday ? 'LIVE' : 'BACK TO TODAY'"></span>
                             </button>
                         </div>
                     </div>
