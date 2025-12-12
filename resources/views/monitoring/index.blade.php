@@ -82,7 +82,7 @@
                                             <iframe 
                                                 :id="'iframe-live-' + i"
                                                 x-show="activeSlots[i].mode === 'live'"
-                                                class="absolute w-full h-full object-contain border-none transition-transform duration-75 ease-out origin-center"
+                                                class="absolute w-full h-full object-contain border-none transition-transform duration-75 ease-out origin-center pointer-events-none"
                                                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                                                 playsinline
                                                 allowfullscreen>
@@ -91,7 +91,7 @@
                                             <video 
                                                 :id="'video-playback-' + i"
                                                 x-show="activeSlots[i].mode === 'playback'"
-                                                class="absolute w-full h-full object-contain transition-transform duration-75 ease-out origin-center" 
+                                                class="absolute w-full h-full object-contain transition-transform duration-75 ease-out origin-center pointer-events-none" 
                                                 controlsList="nodownload noremoteplayback" 
                                                 oncontextmenu="return false;"
                                                 playsinline
