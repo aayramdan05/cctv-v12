@@ -14,7 +14,7 @@
                 <p class="text-xs text-slate-500 hidden md:block">WebRTC Realtime & Instant Playback.</p>
             </div>
 
-            <!-- Toolbar -->
+            <!-- Toolbar dengan Horizontal Scroll di Mobile -->
             <div class="flex gap-2 overflow-x-auto no-scrollbar py-1 shrink-0 max-w-full">
                 <!-- Date Picker -->
                 <div class="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm gap-2 shrink-0">
@@ -52,28 +52,34 @@
         </div>
 
         <!-- MAIN AREA -->
+        <!-- Responsive Layout: Flex-Col (Mobile) / Flex-Row (Desktop) -->
         <div class="flex flex-col lg:flex-row flex-1 gap-6 overflow-hidden min-h-0 relative">
             
             <!-- KIRI: VIDEO WALL + TIMELINE -->
+            <!-- min-h-0 penting untuk scrolling internal -->
             <div class="flex-1 flex flex-col min-w-0 gap-4 z-10 min-h-0">
                 
                 <!-- 1. GRID VIDEO -->
+                <!-- Mobile: min-h-[50vh] agar video tidak gepeng -->
                 <div class="flex-1 bg-slate-900 rounded-2xl overflow-hidden shadow-lg border border-slate-700 relative min-h-[50vh] lg:min-h-0">
                     <div class="grid h-full w-full gap-0.5 bg-black"
                         :class="{ 'grid-cols-1 grid-rows-1': gridSize === 1, 'grid-cols-2 grid-rows-2': gridSize === 4, 'grid-cols-3 grid-rows-3': gridSize === 9 }">
                         
                         <template x-for="i in gridSize">
+                            <!-- Slot Container -->
                             <div class="relative border border-slate-800 bg-black group overflow-hidden cursor-pointer"
                                 :class="{'ring-2 ring-cyan-400 z-20': selectedSlot === i}"
                                 @click="selectSlot(i)"
                                 oncontextmenu="return false;"> 
                                 
+                                <!-- Placeholder Kosong -->
                                 <div x-show="!activeSlots[i]" class="absolute inset-0 flex flex-col items-center justify-center text-slate-700 pointer-events-none">
                                     <i class="fas fa-plus text-3xl mb-2 opacity-20"></i>
                                     <span class="text-xs font-mono text-slate-600">Slot <span x-text="i"></span></span>
                                 </div>
 
-                                <!-- Overlay Drag & Drop -->
+                                <!-- Overlay Drag & Drop (Hanya muncul saat user drag kamera) -->
+                                <!-- Ini perbaikan kuncinya: Iframe bisa diklik, tapi saat drag, div ini muncul di atasnya -->
                                 <div x-show="isDragging" 
                                      class="absolute inset-0 z-50 bg-cyan-500/20 border-2 border-dashed border-cyan-400 flex items-center justify-center text-white font-bold backdrop-blur-sm transition-opacity"
                                      @dragover.prevent 
@@ -82,6 +88,7 @@
                                 </div>
 
                                 <template x-if="activeSlots[i]">
+                                    <!-- CONTAINER VIDEO CONTENT -->
                                     <div class="w-full h-full relative bg-black overflow-hidden flex items-center justify-center"
                                             @wheel.prevent="handleWheel($event, i)"
                                             @mousedown.prevent="startPan($event, i)"
@@ -90,7 +97,8 @@
                                             @mouseleave.prevent="endPan(i)"
                                             :class="(activeSlots[i].zoom > 1) ? 'cursor-move' : ''">
                                         
-                                        <!-- A. IFRAME LIVE -->
+                                        <!-- A. IFRAME LIVE (MSE/WebRTC) -->
+                                        <!-- Perbaikan: Hapus pointer-events-none agar bisa di-klik (play/unmute) -->
                                         <iframe 
                                             :id="'iframe-live-' + i"
                                             x-show="activeSlots[i].mode === 'live'"
@@ -101,7 +109,6 @@
                                         </iframe>
 
                                         <!-- B. VIDEO TAG (PLAYBACK MP4) -->
-                                        <!-- Perubahan: preload="metadata" agar tidak menyedot bandwidth saat idle -->
                                         <video 
                                             :id="'video-playback-' + i"
                                             x-show="activeSlots[i].mode === 'playback'"
@@ -110,41 +117,30 @@
                                             controlsList="nodownload noremoteplayback" 
                                             oncontextmenu="return false;"
                                             playsinline
-                                            preload="metadata"
                                             @play="syncControls()"
                                             @pause="syncControls()"
                                             @ratechange="syncControls()"
-                                            @waiting="handleWaiting(i)"
-                                            @playing="handlePlaying(i)"
-                                            @timeupdate="handleTimeUpdate(i)"
                                             @ended="handleVideoEnded(i)">
                                         </video>
 
-                                        <!-- Status Buffering Overlay -->
-                                        <div x-show="activeSlots[i].isBuffering"
-                                             class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-30 transition-opacity duration-300">
-                                            <i class="fas fa-sync-alt fa-spin text-3xl text-cyan-400 mb-3"></i>
-                                            <span class="text-white text-xs font-mono">Buffering...</span>
-                                            <span class="text-gray-400 text-[10px]" x-show="playbackSpeed > 1">Auto-recovering...</span>
-                                        </div>
-
-                                        <!-- Zoom Overlay -->
+                                        <!-- Zoom Indicator Overlay -->
                                         <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
                                                 x-show="activeSlots[i].zoom > 1">
                                             <span class="text-[10px] font-bold text-white font-mono" x-text="Math.round(activeSlots[i].zoom * 100) + '%'"></span>
                                         </div>
 
-                                        <!-- Info Overlay -->
+                                        <!-- Overlay Info & Controls -->
+                                        <!-- Pointer events auto agar tombol bisa diklik -->
                                         <div class="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 backdrop-blur flex items-center gap-2 z-20 pointer-events-auto">
                                             <div class="w-2 h-2 rounded-full" :class="activeSlots[i].mode === 'live' ? 'bg-red-500 animate-pulse' : 'bg-green-500'"></div>
                                             <span class="text-[10px] font-bold text-white uppercase" x-text="activeSlots[i].mode === 'live' ? 'LIVE' : 'REC'"></span>
                                             <span class="text-[10px] text-gray-300 border-l border-gray-600 pl-2 ml-1 truncate max-w-[100px]" x-text="activeSlots[i].name"></span>
                                             
-                                            <!-- Tombol Refresh Live -->
+                                            <!-- Tombol Refresh Live (Lebih Besar & Jelas) -->
                                             <button @click.stop="reconnectLive(i)" 
                                                     x-show="activeSlots[i].mode === 'live'"
                                                     class="ml-2 bg-slate-700 hover:bg-cyan-600 text-white w-6 h-6 rounded flex items-center justify-center transition shadow-sm" 
-                                                    title="Refresh Stream">
+                                                    title="Refresh Stream (Jika Pause)">
                                                 <i class="fas fa-sync-alt text-[10px]"></i>
                                             </button>
                                         </div>
@@ -158,12 +154,12 @@
                     </div>
                 </div>
 
-                <!-- 2. TIMELINE BAR -->
+                <!-- 2. TIMELINE BAR & CONTROLS -->
                 <div class="h-24 bg-white border border-slate-300 p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-lg relative"
                         x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
                         x-transition>
                     
-                    <!-- HEADER -->
+                    <!-- HEADER CONTROLS -->
                     <div class="flex justify-between items-center px-1 mb-2 relative z-40 h-10">
                         <div class="flex items-center gap-3 z-10">
                             <span class="text-cyan-600 font-bold text-sm truncate max-w-[100px] sm:max-w-xs" x-text="activeSlots[selectedSlot]?.name"></span>
@@ -172,30 +168,27 @@
                             <span class="text-white text-xs font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-600" x-text="timelineTimeDisplay"></span>
                         </div>
                         
-                        <!-- CONTROLS -->
+                        <!-- PLAYBACK CONTROLS (Center) -->
                         <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 z-50" 
                                 x-show="activeSlots[selectedSlot]?.mode === 'playback'"
-                                x-transition>
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100">
                             
                             <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95"><i class="fas fa-undo text-sm"></i></button>
                             <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95"><i class="fas text-3xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i></button>
                             <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95"><i class="fas fa-redo text-sm"></i></button>
 
+                            <!-- Speed & Zoom -->
                             <div class="hidden sm:flex items-center gap-3 border-l border-slate-200 pl-3">
                                 <!-- Speed -->
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
-                                    <button @click.stop.prevent="speedOpen = !speedOpen" 
-                                            class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95">
-                                        <!-- UI Tampilkan targetSpeed, bukan current playbackRate yang mungkin drop -->
-                                        <span x-text="targetSpeed + 'x'"></span>
+                                    <button @click.stop.prevent="speedOpen = !speedOpen" class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95">
+                                        <span x-text="playbackSpeed + 'x'"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
-                                            <button @click.stop="setSpeed(speed); speedOpen = false" 
-                                                    class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition border-b border-slate-50 last:border-none"
-                                                    :class="targetSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
-                                                    x-text="speed + 'x'">
-                                            </button>
+                                            <button @click.stop="setSpeed(speed); speedOpen = false" class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50" :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'" x-text="speed + 'x'"></button>
                                         </template>
                                     </div>
                                 </div>
@@ -204,17 +197,14 @@
                                     <button @click.stop.prevent="zoomOpen = !zoomOpen" class="flex items-center gap-0.5 text-slate-500 hover:text-cyan-600 transition active:scale-95"><i class="fas fa-search-plus text-xs"></i></button>
                                     <div x-show="zoomOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="z in [1.0, 1.5, 2.0, 3.0]">
-                                            <button @click.stop="setZoom(z); zoomOpen = false" 
-                                                    class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition"
-                                                    :class="activeSlots[selectedSlot]?.zoom == z ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
-                                                    x-text="z + 'x'">
-                                            </button>
+                                            <button @click.stop="setZoom(z); zoomOpen = false" class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50" :class="activeSlots[selectedSlot]?.zoom == z ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'" x-text="z + 'x'"></button>
                                         </template>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Realtime Button -->
                         <div class="z-10">
                             <button @click="goLive(selectedSlot)" 
                                     :disabled="!isToday || activeSlots[selectedSlot]?.mode === 'live'"
@@ -231,7 +221,7 @@
                             @mousemove="handleTimelineHover($event)"
                             @mouseleave="hoverPercent = -100"
                             @click="handleTimelineClick($event)">
-                        <!-- Stripes -->
+                        <!-- Background Stripes -->
                         <div class="absolute inset-0 top-2 bottom-0 bg-slate-200 rounded overflow-hidden">
                             <div class="absolute inset-0 flex pointer-events-none z-0">
                                 <template x-for="h in 25">
@@ -250,12 +240,12 @@
                                 </div>
                             </template>
                         </div>
-                        <!-- Playhead (NOW REACTIVE) -->
-                        <div class="absolute top-0 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"
+                        <!-- Playhead -->
+                        <div class="absolute top-0 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-100"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
                              <div class="w-2.5 h-2.5 -ml-1 bg-red-600 rounded-full shadow border border-white relative top-0"></div>
                         </div>
-                        <!-- Hover -->
+                        <!-- Hover Tooltip -->
                         <div class="absolute top-0 transform -translate-x-1/2 -translate-y-full pb-1 z-50 pointer-events-none"
                                 :style="'left: ' + hoverPercent + '%'" x-show="hoverPercent > 0 && hoverPercent < 100">
                              <div class="bg-slate-800 text-white text-[10px] font-mono font-bold px-2 py-1 rounded shadow-lg flex flex-col items-center border border-slate-600">
@@ -268,6 +258,8 @@
             </div>
 
             <!-- KANAN: LIST -->
+            <!-- Responsive Sidebar: Mobile (Height fixed), Desktop (Width fixed) -->
+            <!-- Perbaikan Gap: Sidebar sekarang memiliki jarak yang cukup -->
             <div class="w-full lg:w-80 xl:w-96 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30 h-64 lg:h-auto"
                     x-show="showSidebar && !isFullscreen"
                     :class="{'absolute top-0 right-0 h-full w-full lg:relative lg:w-80 xl:w-96': isFullscreen}">
@@ -297,16 +289,15 @@
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
                 search: '', currentHost: window.location.hostname, isFullscreen: false,
-                isDragging: false, 
+                isDragging: false, // State untuk Drag Overlay
                 
                 selectedDate: new Date().toISOString().split('T')[0],
                 currentTimelineData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
                 
+                // CONTROL STATE
                 isPlaying: true,
-                playbackSpeed: 1.0, 
-                targetSpeed: 1.0, 
-                
-                // preloader: null, // DIHAPUS (Bikin Berat)
+                playbackSpeed: 1.0,
+                // Panning State
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
                 get isToday() {
@@ -315,10 +306,6 @@
                 },
 
                 init() {
-                    // DIHAPUS: Inisialisasi Preloader
-                    // this.preloader = document.createElement('video');
-                    // this.preloader.preload = 'auto';
-
                     document.addEventListener('fullscreenchange', () => { 
                         this.isFullscreen = !!document.fullscreenElement; 
                         if(!this.isFullscreen) { this.showSidebar = true; this.showTimeline = true; }
@@ -330,18 +317,34 @@
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
                             this.currentPlayheadPercent = (sec / 86400) * 100;
+                            // Tambahkan 'CLOCK' agar user tahu ini jam sistem, bukan jam video jika video pause
                             this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
+                        } else if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'playback') {
+                            const vid = document.getElementById('video-playback-' + this.selectedSlot);
+                            if(vid && !vid.paused && this.activeSlots[this.selectedSlot].recordStartOffset) {
+                                const sec = this.activeSlots[this.selectedSlot].recordStartOffset + vid.currentTime;
+                                this.currentPlayheadPercent = (sec / 86400) * 100;
+                                this.timelineTimeDisplay = this.formatTime(sec);
+                            }
                         }
                     }, 1000);
                 },
 
-                refreshTimeline() { if(this.selectedSlot) this.selectSlot(this.selectedSlot); },
+                refreshTimeline() {
+                    if(this.selectedSlot) {
+                        this.selectSlot(this.selectedSlot);
+                    }
+                },
 
                 selectSlot(index) {
                     this.selectedSlot = index;
+                    
+                    // Reset controls UI ketika pindah slot
                     this.syncControls(); 
+
                     const slot = this.activeSlots[index];
                     if(slot) {
+                        // FIX: Tambahkan Anti-Cache di URL fetch untuk Timeline
                         const antiCache = new Date().getTime();
                         fetch(`/monitoring/timeline/${slot.id}?date=${this.selectedDate}&_=${antiCache}`)
                             .then(res => res.json())
@@ -352,96 +355,61 @@
                     }
                 },
 
-                // --- EVENT HANDLERS VIDEO (OPTIMIZED: NO PRELOAD) ---
-                handleTimeUpdate(index) {
-                    if (this.selectedSlot !== index) return;
-                    const slot = this.activeSlots[index];
-                    const vid = document.getElementById('video-playback-' + index);
-                    
-                    if (slot && vid) {
-                        if (slot.isBuffering) slot.isBuffering = false;
-
-                        if (!isNaN(vid.currentTime) && slot.recordStartOffset) {
-                            const currentSec = parseFloat(slot.recordStartOffset) + vid.currentTime;
-                            this.currentPlayheadPercent = (currentSec / 86400) * 100;
-                            this.timelineTimeDisplay = this.formatTime(currentSec);
-
-                            // DIHAPUS: Logika Preload Next Video
-                            /*
-                            const remaining = vid.duration - vid.currentTime;
-                            if (remaining < 60 && !slot.nextVideoPreloaded) {
-                                this.preloadNextVideo(index);
-                                slot.nextVideoPreloaded = true; 
-                            }
-                            */
-                        }
-                    }
-                },
-
-                handleWaiting(index) {
-                    const slot = this.activeSlots[index];
-                    if(!slot) return;
-                    
-                    const vid = document.getElementById('video-playback-' + index);
-                    if (vid && vid.readyState >= 3) {
-                         return; 
-                    }
-
-                    slot.isBuffering = true;
-                    
-                    if(vid && vid.playbackRate > 1.0) {
-                        console.log("Buffering... temporary drop speed to 1x");
-                        vid.playbackRate = 1.0; 
-                    }
-                },
-
-                handlePlaying(index) {
-                    const slot = this.activeSlots[index];
-                    if(slot) slot.isBuffering = false;
-
-                    const vid = document.getElementById('video-playback-' + index);
-                    if(vid && this.targetSpeed > 1.0 && vid.playbackRate !== this.targetSpeed) {
-                        console.log("Buffer recovered. Restoring speed to " + this.targetSpeed + "x");
-                        vid.playbackRate = parseFloat(this.targetSpeed);
-                        if(this.targetSpeed > 2) vid.muted = true;
-                    }
-                },
-
-                // DIHAPUS: preloadNextVideo() method
-
+                // --- NEW CORE FUNCTION: ASSIGN CAMERA TO SLOT (Unified Initialization) ---
                 assignCameraToSlot(cam, index) {
                     this.activeSlots[index] = { 
-                        id: cam.id, name: cam.name, building: cam.building, faculty: cam.faculty, 
-                        mode: 'live', timestampDisplay: '', hlsInstance: null, liveUrl: cam.liveUrl,
-                        // Removed nextVideoPreloaded flag
-                        zoom: 1, x: 0, y: 0, isBuffering: false
+                        id: cam.id, 
+                        name: cam.name, 
+                        building: cam.building, 
+                        faculty: cam.faculty, 
+                        mode: 'live', 
+                        timestampDisplay: '', 
+                        hlsInstance: null,
+                        liveUrl: cam.liveUrl,
+                        // Initialize Zoom/Pan State
+                        zoom: 1, 
+                        x: 0,    
+                        y: 0     
                     }; 
                     this.selectSlot(index);
                     this.$nextTick(() => { this.playLive(index); });
                 },
 
+                // --- NEW FUNCTION: ADD CAMERA VIA CLICK ---
                 addCameraOnClick(cam) {
                     let targetSlot = -1;
-                    for (let i = 1; i <= this.gridSize; i++) { if (!this.activeSlots[i]) { targetSlot = i; break; } }
-                    if (targetSlot === -1 && this.selectedSlot) targetSlot = this.selectedSlot;
-                    else if (targetSlot === -1) targetSlot = 1;
+                    
+                    // Cari slot kosong pertama (1 hingga gridSize)
+                    for (let i = 1; i <= this.gridSize; i++) {
+                        if (!this.activeSlots[i]) {
+                            targetSlot = i;
+                            break;
+                        }
+                    }
+
+                    // Jika tidak ada slot kosong, ganti slot yang sedang dipilih
+                    if (targetSlot === -1 && this.selectedSlot) {
+                        targetSlot = this.selectedSlot;
+                    }
+                    // Jika tidak ada yang dipilih dan penuh, timpa slot 1
+                    else if (targetSlot === -1) {
+                        targetSlot = 1;
+                    }
+
                     this.assignCameraToSlot(cam, targetSlot);
                 },
 
+
+                // --- NEW: CUSTOM CONTROLS LOGIC ---
                 syncControls() {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         this.isPlaying = !vid.paused;
-                        if(this.targetSpeed === 1.0) {
-                             this.playbackSpeed = vid.playbackRate;
-                        } else {
-                             this.playbackSpeed = this.targetSpeed;
-                        }
+                        this.playbackSpeed = vid.playbackRate;
                     } else {
                         this.isPlaying = false;
                         this.playbackSpeed = 1.0;
-                        this.targetSpeed = 1.0;
                     }
                 },
 
@@ -449,120 +417,188 @@
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
-                        if(vid.paused) vid.play().catch(e => {}); 
+                        if(vid.paused) vid.play().catch(e => {}); // Catch error if fast clicking
                         else vid.pause();
-                        this.isPlaying = !vid.paused;
+                        this.isPlaying = !vid.paused; // Update state immediately for UI response
                     }
                 },
 
+                // Fungsi Seek (-10s / +10s)
                 seek(seconds) {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
-                    if(vid) vid.currentTime += seconds;
+                    if(vid) {
+                        vid.currentTime += seconds;
+                    }
                 },
 
+                // Set Speed dari Custom Dropdown
                 setSpeed(speed) {
-                    this.targetSpeed = speed; 
                     this.playbackSpeed = speed;
-                    
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         vid.playbackRate = parseFloat(speed);
-                        vid.muted = (speed > 2.0);
-                        const slot = this.activeSlots[this.selectedSlot];
-                        if(slot) slot.isBuffering = false;
-                        if (vid.paused) vid.play().catch(e=>{});
                     }
                 },
 
+                // Set Zoom (Digital)
                 setZoom(zoom) {
                     if(!this.selectedSlot) return;
                     this.activeSlots[this.selectedSlot].zoom = zoom;
-                    if(zoom === 1) { this.activeSlots[this.selectedSlot].x = 0; this.activeSlots[this.selectedSlot].y = 0; }
-                    this.applyTransform(this.selectedSlot);
+                    if(zoom === 1) {
+                        this.activeSlots[this.selectedSlot].x = 0;
+                        this.activeSlots[this.selectedSlot].y = 0;
+                    }
+                    this.applyTransform(this.selectedSlot); // Apply manual style
                 },
 
+                // --- NEW: APPLY MANUAL TRANSFORM (FIX FOR IFRAME RELOAD) ---
                 applyTransform(index) {
-                    const slot = this.activeSlots[index]; if(!slot) return;
+                    const slot = this.activeSlots[index];
+                    if(!slot) return;
                     const transform = `translate(${slot.x || 0}px, ${slot.y || 0}px) scale(${slot.zoom || 1})`;
-                    const iframe = document.getElementById('iframe-live-' + index); if(iframe) iframe.style.transform = transform;
-                    const video = document.getElementById('video-playback-' + index); if(video) video.style.transform = transform;
+                    
+                    const iframe = document.getElementById('iframe-live-' + index);
+                    if(iframe) iframe.style.transform = transform;
+                    
+                    const video = document.getElementById('video-playback-' + index);
+                    if(video) video.style.transform = transform;
                 },
 
+                // --- NEW: HANDLE WHEEL ZOOM (MOUSE SCROLL) ---
                 handleWheel(e, index) {
                     if (!this.activeSlots[index]) return;
                     let slot = this.activeSlots[index];
                     let currentZoom = slot.zoom || 1;
-                    if (e.deltaY < 0) currentZoom += 0.1; else currentZoom -= 0.1;
+                    
+                    // Zoom In/Out based on scroll direction
+                    if (e.deltaY < 0) currentZoom += 0.1;
+                    else currentZoom -= 0.1;
+
+                    // Limit Zoom
                     currentZoom = Math.min(Math.max(currentZoom, 1), 5);
                     slot.zoom = currentZoom;
+                    
                     if(currentZoom === 1) { slot.x = 0; slot.y = 0; }
-                    this.applyTransform(index);
+                    this.applyTransform(index); // Apply manual style
                 },
 
+                // --- NEW: PANNING LOGIC (GESER VIDEO SAAT ZOOM) ---
                 startPan(e, index) {
-                    let slot = this.activeSlots[index]; if(!slot || (slot.zoom || 1) <= 1) return;
-                    this.panning = true; this.panSlot = index;
-                    this.startX = e.clientX - (slot.x || 0); this.startY = e.clientY - (slot.y || 0);
+                    let slot = this.activeSlots[index];
+                    if(!slot || (slot.zoom || 1) <= 1) return;
+                    
+                    this.panning = true;
+                    this.panSlot = index;
+                    this.startX = e.clientX - (slot.x || 0);
+                    this.startY = e.clientY - (slot.y || 0);
                 },
+                
                 doPan(e, index) {
                     if(!this.panning || this.panSlot !== index) return;
                     let slot = this.activeSlots[index];
-                    slot.x = e.clientX - this.startX; slot.y = e.clientY - this.startY;
-                    this.applyTransform(index);
+                    slot.x = e.clientX - this.startX;
+                    slot.y = e.clientY - this.startY;
+                    this.applyTransform(index); // Apply manual style
                 },
-                endPan(index) { this.panning = false; this.panSlot = null; },
+                
+                endPan(index) {
+                    this.panning = false;
+                    this.panSlot = null;
+                },
 
+                // Deprecated (Left for fallback if needed)
+                changeSpeed() {
+                    this.setSpeed(this.playbackSpeed);
+                },
+
+
+                // --- AUTO PLAY NEXT SEGMENT ---
                 handleVideoEnded(index) {
-                    if (index !== this.selectedSlot) { if(index === this.selectedSlot) this.isPlaying = false; return; }
-                    const vid = document.getElementById('video-playback-' + index); if(!vid) return;
+                    // Hanya jalankan jika slot ini yang sedang aktif datanya (Selected)
+                    if (index !== this.selectedSlot) {
+                        if(index === this.selectedSlot) this.isPlaying = false; 
+                        return; 
+                    }
+
+                    const vid = document.getElementById('video-playback-' + index);
+                    if(!vid) return;
+
+                    // Cari URL file yang baru saja selesai diputar
                     const currentSrc = decodeURIComponent(vid.src);
+                    
+                    // Cari index segment saat ini
                     const idx = this.currentTimelineData.findIndex(seg => currentSrc.includes(encodeURI(seg.url)) || currentSrc.includes(seg.url));
 
                     if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
+                        // Mainkan video selanjutnya
                         const nextSeg = this.currentTimelineData[idx + 1];
-                        console.log("Playing next part: " + nextSeg.human_start); // Log updated
+                        console.log("Auto-playing next part:", nextSeg.human_start);
                         this.playRecord(index, nextSeg.url, 0, nextSeg.start);
+                        // Pastikan status playing true
                         this.isPlaying = true;
                     } else {
+                        // Video terakhir selesai
                         this.isPlaying = false;
                         console.log("End of playback list.");
                     }
                 },
 
+
+                // --- CORE LOGIC: PLAY LIVE (MSE/WEBRTC) ---
                 playLive(index) {
-                    const slot = this.activeSlots[index]; if(!slot || !slot.id) return;
+                    const slot = this.activeSlots[index]; 
+                    if(!slot || !slot.id) return;
+                    
                     if(!this.isToday) { this.selectedDate = new Date().toISOString().split('T')[0]; this.refreshTimeline(); }
-                    slot.mode = 'live'; slot.zoom = 1; slot.x = 0; slot.y = 0;
+
+                    slot.mode = 'live';
+                    slot.zoom = 1; // Reset zoom saat kembali ke live
+                    slot.x = 0; slot.y = 0;
                     this.applyTransform(index);
-                    const videoEl = document.getElementById('video-playback-' + index); if(videoEl) videoEl.pause();
+
+                    const videoEl = document.getElementById('video-playback-' + index);
+                    if(videoEl) videoEl.pause();
+
+                    // URL Iframe diambil dari drag start data
                     const iframe = document.getElementById('iframe-live-' + index);
-                    if(iframe) { iframe.src = 'about:blank'; setTimeout(() => { iframe.src = slot.liveUrl; }, 50); }
+                    if(iframe) {
+                        // Force reload untuk mobile (menghindari cache/pause issue)
+                        iframe.src = 'about:blank';
+                        setTimeout(() => {
+                            iframe.src = slot.liveUrl; 
+                        }, 50);
+                    }
                 },
 
-                reconnectLive(index) { this.playLive(index); },
+                // --- NEW FUNCTION: MANUAL RECONNECT FOR MOBILE ---
+                reconnectLive(index) {
+                    console.log("Reconnecting live stream for slot " + index);
+                    this.playLive(index);
+                },
 
+                // --- CORE LOGIC: PLAY RECORD (MP4) ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
-                    slot.recordStartOffset = parseFloat(startTs);
-                    // Removed nextVideoPreloaded initialization
-                    slot.zoom = 1; slot.x = 0; slot.y = 0;
+                    slot.recordStartOffset = startTs; 
+                    slot.zoom = 1; // Reset zoom saat ganti video
+                    slot.x = 0; slot.y = 0;
                     this.applyTransform(index);
                     
-                    const iframe = document.getElementById('iframe-live-' + index); if(iframe) iframe.src = 'about:blank';
+                    const iframe = document.getElementById('iframe-live-' + index);
+                    if(iframe) iframe.src = 'about:blank'; // Kosongkan iframe
 
                     this.$nextTick(() => {
                         const video = document.getElementById('video-playback-' + index);
                         if(video) {
                             video.src = fileUrl;
                             video.currentTime = offsetSeconds;
-                            
-                            video.playbackRate = parseFloat(this.targetSpeed);
-                            video.muted = (this.targetSpeed > 2.0);
-
-                            video.play().then(() => this.isPlaying = true).catch(e => console.log("Play error:", e));
+                            video.playbackRate = parseFloat(this.playbackSpeed); // Terapkan speed yang dipilih
+                            video.play()
+                                .then(() => this.isPlaying = true)
+                                .catch(e => console.log("Play error:", e));
                         }
                     });
                 },
@@ -572,6 +608,9 @@
                     const rect = document.getElementById('global-timeline').getBoundingClientRect();
                     const percent = ((e.clientX - rect.left) / rect.width) * 100;
                     const secondsInDay = 86400; const clickedSeconds = (percent / 100) * secondsInDay;
+                    const now = new Date(); const nowSeconds = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
+                    
+                    if (this.isToday && clickedSeconds >= (nowSeconds - 60)) { this.goLive(this.selectedSlot); return; }
                     
                     const segment = this.currentTimelineData.find(seg => clickedSeconds >= seg.start && clickedSeconds <= (seg.start + seg.duration));
                     if (segment) {
@@ -592,19 +631,31 @@
 
                 handleTimelineHover(e) { const rect = document.getElementById('global-timeline').getBoundingClientRect(); this.hoverPercent = ((e.clientX - rect.left) / rect.width) * 100; const seconds = (this.hoverPercent / 100) * 86400; this.hoverTimeDisplay = this.formatTime(seconds); },
                 
-                loadHls(video, url, slotIndex) { console.log("HLS Loader not used for Live View."); },
+                // Helper Functions (Lainnya)
+                loadHls(video, url, slotIndex) { 
+                    console.log("HLS Loader not used for Live View.");
+                },
                 formatTime(seconds) { const h = Math.floor(seconds / 3600).toString().padStart(2,'0'); const m = Math.floor((seconds % 3600) / 60).toString().padStart(2,'0'); const s = Math.floor(seconds % 60).toString().padStart(2,'0'); return `${h}:${m}:${s}`; },
                 goLive(index) { this.playLive(index); }, setGrid(n) { this.gridSize = n; if(this.selectedSlot > n) this.selectedSlot = null; }, clearAll() { this.activeSlots = {}; this.selectedSlot = null; }, removeCamera(i) { delete this.activeSlots[i]; if(this.selectedSlot === i) { this.selectedSlot = null; this.currentTimelineData = []; } }, matchSearch(name, building) { if (this.search === '') return true; return name.includes(this.search.toLowerCase()) || building.includes(this.search.toLowerCase()); },
                 
+                // --- DRAG START & DROP ---
                 handleDragStart(e, id, name, building, faculty, liveUrl) { 
+                    // Set flag isDragging = true
                     this.isDragging = true;
+                    
                     const camData = JSON.stringify({ id, name, building, faculty, liveUrl }); 
-                    e.dataTransfer.setData('application/json', camData); e.dataTransfer.effectAllowed = 'copy';
+                    e.dataTransfer.setData('application/json', camData);
+                    e.dataTransfer.effectAllowed = 'copy';
                 },
                 handleDrop(e, index) { 
+                    // Reset flag
                     this.isDragging = false;
-                    const data = e.dataTransfer.getData('application/json'); if (!data) return; 
-                    const cam = JSON.parse(data); this.assignCameraToSlot(cam, index);
+
+                    const data = e.dataTransfer.getData('application/json'); 
+                    if (!data) return; 
+                    const cam = JSON.parse(data); 
+                    // Menggunakan fungsi terpusat
+                    this.assignCameraToSlot(cam, index);
                 },
                 handleDragOver(e) {}, handleDragLeave(e) {}
             }
