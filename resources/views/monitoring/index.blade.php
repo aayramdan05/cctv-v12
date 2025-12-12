@@ -147,7 +147,11 @@
                             
                             <div class="flex items-center gap-4 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
                                 <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Mundur 10s"><i class="fas fa-undo text-sm"></i></button>
-                                <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center"><i class="fas text-2xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i></button>
+                                
+                                <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center">
+                                    <i class="fas text-2xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
+                                </button>
+                                
                                 <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Maju 10s"><i class="fas fa-redo text-sm"></i></button>
                             </div>
 
@@ -158,7 +162,7 @@
                                         <span x-text="playbackSpeed + 'x'"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
-                                        <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
+                                        <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 6.0]">
                                             <button @click.stop="setSpeed(speed); speedOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 hover:text-cyan-600 transition border-b border-slate-50 last:border-none"
                                                     :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
@@ -191,7 +195,7 @@
                                     :class="(isToday && activeSlots[selectedSlot]?.mode === 'live') ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-red-600 text-white hover:bg-red-500 shadow-md animate-pulse cursor-pointer border border-red-700'"
                                     class="px-4 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition w-full md:w-auto">
                                 <i class="fas fa-broadcast-tower pointer-events-none"></i> 
-                                <span x-text="isToday ? 'REALTIME LIVE' : 'BACK TO TODAY'"></span>
+                                <span x-text="isToday ? 'LIVE' : 'BACK TO TODAY'"></span>
                             </button>
                         </div>
                     </div>
@@ -210,7 +214,6 @@
                                     </div>
                                 </template>
                             </div>
-
                             <template x-for="seg in currentTimelineData">
                                 <div class="absolute top-0 bottom-0 z-10 cursor-pointer transition-all border-r border-black/10"
                                      :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) 
@@ -222,7 +225,7 @@
                                 </div>
                             </template>
                         </div>
-
+                        
                         <div class="absolute top-2 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
                              <div class="w-2.5 h-2.5 -ml-1 bg-red-600 rounded-full -mt-1.5 shadow border border-white"></div>
@@ -278,7 +281,7 @@
                 isPlaying: true,
                 playbackSpeed: 1.0,
                 
-                // MONITORING STATE (ANTI-STUCK)
+                // MONITORING STATE (Anti-Stuck)
                 lastTime: 0,
                 checkInterval: null,
                 
@@ -298,32 +301,40 @@
                     });
                     
                     setInterval(() => {
+                        // Logic jam Live (Bukan playback video)
                         if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.isToday) {
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
                             this.currentPlayheadPercent = (sec / 86400) * 100;
                             this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
                         }
-                        // Note: Untuk mode playback, time update ditangani via @timeupdate & startPlaybackMonitor
                     }, 1000);
                 },
 
-                // --- MONITORING (ANTI-STUCK) ---
+                // --- ANTI-STUCK MONITOR ---
                 startPlaybackMonitor(vid) {
                     if (this.checkInterval) {
                         clearInterval(this.checkInterval);
                         this.checkInterval = null;
                     }
                     this.lastTime = vid.currentTime;
+                    
+                    // Cek setiap 500ms
                     this.checkInterval = setInterval(() => {
-                        if (!vid.paused && vid.src && vid.readyState >= 3) { 
+                        // Pastikan video valid dan harusnya playing
+                        if (vid && !vid.paused && vid.src && vid.readyState >= 3) { 
                             const currentTime = vid.currentTime;
-                            // Jika waktu tidak bergerak tapi status playing
+                            
+                            // Jika waktu tidak berubah tapi statusnya playing -> STUCK
                             if (currentTime === this.lastTime && this.isPlaying) {
-                                console.log("Video Stuck Detected. Attempting Re-sync...");
+                                console.log("Video Stuck (Anti-Stuck Triggered). Auto Playing...");
                                 vid.play()
-                                   .then(() => { this.isPlaying = true; console.log("Re-sync success."); })
-                                   .catch(e => { this.isPlaying = false; });
+                                   .then(() => { 
+                                       this.isPlaying = true; 
+                                   })
+                                   .catch(e => { 
+                                       console.log("Re-sync retry..."); 
+                                   });
                             }
                             this.lastTime = currentTime;
                         }
@@ -396,17 +407,23 @@
                     }
                 },
 
+                // --- TOGGLE PLAYBACK (UPDATED) ---
                 togglePlayback() {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         if(vid.paused) {
                             vid.play()
-                               .then(() => { this.isPlaying = true; })
+                               .then(() => { 
+                                   this.isPlaying = true; 
+                                   this.startPlaybackMonitor(vid); // Mulai monitor lagi
+                               })
                                .catch(e => console.error("Play prevented", e));
                         } else {
                             vid.pause();
                             this.isPlaying = false;
+                            // Stop monitor saat manual pause
+                            if(this.checkInterval) clearInterval(this.checkInterval);
                         }
                     }
                 },
@@ -427,8 +444,8 @@
                         vid.defaultPlaybackRate = parseFloat(speed);
                         if(wasPlaying) {
                              vid.play().catch(e => {});
+                             this.startPlaybackMonitor(vid);
                         }
-                        this.startPlaybackMonitor(vid);
                     }
                 },
 
@@ -489,9 +506,12 @@
                 },
 
                 handleVideoEnded(index) {
-                    if (index !== this.selectedSlot) { if(index === this.selectedSlot) this.isPlaying = false; return; }
+                    if (index !== this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + index);
                     if(!vid) return;
+                    
+                    if(this.checkInterval) clearInterval(this.checkInterval);
+
                     const currentSrc = decodeURIComponent(vid.src);
                     const idx = this.currentTimelineData.findIndex(seg => currentSrc.includes(encodeURI(seg.url)) || currentSrc.includes(seg.url));
 
@@ -517,6 +537,8 @@
 
                     const videoEl = document.getElementById('video-playback-' + index);
                     if(videoEl) videoEl.pause();
+                    
+                    if(this.checkInterval) clearInterval(this.checkInterval);
 
                     const iframe = document.getElementById('iframe-live-' + index);
                     if(iframe) {
@@ -525,7 +547,7 @@
                     }
                 },
 
-                // --- CORE RECORD LOGIC (FIXED) ---
+                // --- CORE RECORD (NO CLONE NODE) ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
@@ -537,27 +559,24 @@
                     if(iframe) iframe.src = 'about:blank';
 
                     this.$nextTick(() => {
-                        const video = document.getElementById('video-playback-' + index);
-                        if(video) {
-                            // Hapus listener lama
-                            const newVideo = video.cloneNode(true);
-                            video.parentNode.replaceChild(newVideo, video);
-                            const vid = document.getElementById('video-playback-' + index);
-                            
-                            vid.src = fileUrl;
-                            vid.currentTime = offsetSeconds;
-                            vid.playbackRate = parseFloat(this.playbackSpeed);
-                            
-                            // Event Listeners Bersih
+                        const vid = document.getElementById('video-playback-' + index);
+                        if(vid) {
+                            // Hentikan monitor sesi sebelumnya
+                            if(this.checkInterval) clearInterval(this.checkInterval);
+
+                            // Langsung override event handler di element yg sama (NO CLONE)
                             vid.onplay = () => { this.isPlaying = true; };
                             vid.onpause = () => { this.isPlaying = false; };
                             vid.onended = () => { this.handleVideoEnded(index); };
                             vid.onerror = () => { console.log("Video Error, recovering..."); };
 
-                            vid.play()
-                               .catch(e => console.log("Auto-play prevented:", e));
+                            vid.src = fileUrl;
+                            vid.currentTime = offsetSeconds;
+                            vid.playbackRate = parseFloat(this.playbackSpeed);
                             
-                            // Start Monitoring
+                            vid.play().catch(e => console.log("Auto-play prevented:", e));
+                            
+                            // Mulai Monitor Anti-Stuck
                             this.startPlaybackMonitor(vid);
                         }
                     });
