@@ -7,7 +7,7 @@
           class="flex flex-col h-screen pt-20 p-4 gap-4 bg-slate-100 transition-all duration-300"
           :class="isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-0 pt-0' : ''">
         
-        <!-- HEADER & TOOLBAR (Sama seperti sebelumnya) -->
+        <!-- HEADER & TOOLBAR -->
         <div class="flex justify-between items-center shrink-0 h-12 gap-2" x-show="!isFullscreen" x-transition>
             <div class="flex items-center gap-4 min-w-0 shrink">
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 truncate">Live Monitoring</h2>
@@ -101,7 +101,6 @@
                                         </iframe>
 
                                         <!-- B. VIDEO TAG (PLAYBACK MP4) -->
-                                        <!-- preload="auto" PENTING untuk 8x speed -->
                                         <video 
                                             :id="'video-playback-' + i"
                                             x-show="activeSlots[i].mode === 'playback'"
@@ -125,7 +124,7 @@
                                              class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-30 transition-opacity duration-300">
                                             <i class="fas fa-sync-alt fa-spin text-3xl text-cyan-400 mb-3"></i>
                                             <span class="text-white text-xs font-mono">Buffering...</span>
-                                            <span class="text-gray-400 text-[10px]" x-show="playbackSpeed > 1">Auto-recovering speed...</span>
+                                            <span class="text-gray-400 text-[10px]" x-show="playbackSpeed > 1">Auto-recovering...</span>
                                         </div>
 
                                         <!-- Zoom Overlay -->
@@ -304,7 +303,7 @@
                 
                 isPlaying: true,
                 playbackSpeed: 1.0, 
-                targetSpeed: 1.0, // <-- VARIABLE BARU UNTUK PERSISTENSI KECEPATAN
+                targetSpeed: 1.0, 
                 
                 preloader: null, 
                 panning: false, panSlot: null, startX: 0, startY: 0,
@@ -329,7 +328,7 @@
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
                             this.currentPlayheadPercent = (sec / 86400) * 100;
-                            this.timelineTimeDisplay = "LIVE " + now.toLocaleTimeString('en-GB');
+                            this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
                         }
                     }, 1000);
                 },
@@ -351,21 +350,26 @@
                     }
                 },
 
-                // --- EVENT HANDLERS VIDEO ---
+                // --- EVENT HANDLERS VIDEO (UPDATED FOR BUFFERING STABILITY) ---
                 handleTimeUpdate(index) {
                     if (this.selectedSlot !== index) return;
                     const slot = this.activeSlots[index];
                     const vid = document.getElementById('video-playback-' + index);
                     
-                    if (slot && vid && !isNaN(vid.currentTime) && slot.recordStartOffset) {
-                        const currentSec = parseFloat(slot.recordStartOffset) + vid.currentTime;
-                        this.currentPlayheadPercent = (currentSec / 86400) * 100;
-                        this.timelineTimeDisplay = this.formatTime(currentSec);
+                    if (slot && vid) {
+                        // FIX KRITIS: Jika video bergerak, PASTI tidak buffering. Paksa false.
+                        if (slot.isBuffering) slot.isBuffering = false;
 
-                        const remaining = vid.duration - vid.currentTime;
-                        if (remaining < 60 && !slot.nextVideoPreloaded) {
-                            this.preloadNextVideo(index);
-                            slot.nextVideoPreloaded = true; 
+                        if (!isNaN(vid.currentTime) && slot.recordStartOffset) {
+                            const currentSec = parseFloat(slot.recordStartOffset) + vid.currentTime;
+                            this.currentPlayheadPercent = (currentSec / 86400) * 100;
+                            this.timelineTimeDisplay = this.formatTime(currentSec);
+
+                            const remaining = vid.duration - vid.currentTime;
+                            if (remaining < 60 && !slot.nextVideoPreloaded) {
+                                this.preloadNextVideo(index);
+                                slot.nextVideoPreloaded = true; 
+                            }
                         }
                     }
                 },
@@ -373,16 +377,22 @@
                 handleWaiting(index) {
                     const slot = this.activeSlots[index];
                     if(!slot) return;
+                    
+                    // FIX KRITIS: Jika readyState >= 3 (HAVE_FUTURE_DATA), abaikan buffering visual
+                    // Ini mencegah ikon loading muncul saat CPU lag tapi data ada.
+                    const vid = document.getElementById('video-playback-' + index);
+                    if (vid && vid.readyState >= 3) {
+                         console.log("Waiting event fired, but has enough data (CPU Lag?). Ignoring overlay.");
+                         return; 
+                    }
+
                     slot.isBuffering = true;
                     
                     // --- SMART RECOVERY ---
-                    // Jika buffering, turunkan speed actual video ke 1x agar buffer terisi
-                    // TAPI jangan ubah this.targetSpeed (agar bisa kembali ke 8x nanti)
-                    const vid = document.getElementById('video-playback-' + index);
                     if(vid && vid.playbackRate > 1.0) {
                         console.log("Buffering... temporary drop speed to 1x");
                         vid.playbackRate = 1.0; 
-                        // Note: this.playbackSpeed tidak diubah di sini agar UI tetap menunjukkan target
+                        // Note: this.playbackSpeed (UI) tidak diubah agar tetap menunjukkan target user
                     }
                 },
 
@@ -391,13 +401,10 @@
                     if(slot) slot.isBuffering = false;
 
                     // --- AUTO RESTORE SPEED ---
-                    // Begitu video jalan lagi, paksa kembali ke targetSpeed (misal 8x)
                     const vid = document.getElementById('video-playback-' + index);
                     if(vid && this.targetSpeed > 1.0 && vid.playbackRate !== this.targetSpeed) {
                         console.log("Buffer recovered. Restoring speed to " + this.targetSpeed + "x");
                         vid.playbackRate = parseFloat(this.targetSpeed);
-                        
-                        // Opsional: Matikan suara di high speed untuk performa
                         if(this.targetSpeed > 2) vid.muted = true;
                     }
                 },
@@ -438,12 +445,10 @@
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         this.isPlaying = !vid.paused;
-                        // HANYA update playbackSpeed jika targetnya 1x (normal), 
-                        // agar tidak flicker saat auto-drop speed terjadi.
+                        // HANYA update playbackSpeed jika targetnya 1x, agar tidak flicker
                         if(this.targetSpeed === 1.0) {
                              this.playbackSpeed = vid.playbackRate;
                         } else {
-                             // Jika target > 1, biarkan UI tetap menampilkan target
                              this.playbackSpeed = this.targetSpeed;
                         }
                     } else {
@@ -469,17 +474,22 @@
                     if(vid) vid.currentTime += seconds;
                 },
 
-                // UPDATE: Set Target Speed
+                // UPDATE: Set Target Speed (Manual Override)
                 setSpeed(speed) {
-                    this.targetSpeed = speed; // Simpan niat user
+                    this.targetSpeed = speed; 
                     this.playbackSpeed = speed;
                     
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         vid.playbackRate = parseFloat(speed);
-                        // Matikan suara jika speed tinggi
                         vid.muted = (speed > 2.0);
+                        
+                        // FIX KRITIS: Override manual menghapus status buffering
+                        const slot = this.activeSlots[this.selectedSlot];
+                        if(slot) slot.isBuffering = false;
+                        
+                        if (vid.paused) vid.play().catch(e=>{});
                     }
                 },
 
@@ -566,9 +576,9 @@
                             video.src = fileUrl;
                             video.currentTime = offsetSeconds;
                             
-                            // FORCE APPLY TARGET SPEED SAAT PINDAH SEGMENT
+                            // FORCE APPLY TARGET SPEED
                             video.playbackRate = parseFloat(this.targetSpeed);
-                            video.muted = (this.targetSpeed > 2.0); // Mute jika speed tinggi
+                            video.muted = (this.targetSpeed > 2.0);
 
                             video.play().then(() => this.isPlaying = true).catch(e => console.log("Play error:", e));
                         }
