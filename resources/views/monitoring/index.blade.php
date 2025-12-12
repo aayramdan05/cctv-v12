@@ -98,9 +98,11 @@
                                                 @timeupdate="handleTimeUpdate(i)">
                                             </video>
 
-                                            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-red-600/90 text-white text-[10px] rounded shadow-lg z-30 animate-pulse pointer-events-none"
-                                                 x-show="showSpeedWarning">
-                                                <i class="fas fa-exclamation-triangle mr-1"></i> Koneksi Lambat: Speed Diturunkan
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-40 backdrop-blur-[2px]"
+                                                 x-show="isBuffering && activeSlots[i].mode === 'playback'">
+                                                <div class="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mb-2"></div>
+                                                <span class="text-white text-xs font-bold shadow-black drop-shadow-md">Downloading Video...</span>
+                                                <span class="text-gray-300 text-[9px] mt-1">Mohon tunggu, video sedang dimuat ke memori</span>
                                             </div>
 
                                             <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
@@ -153,7 +155,9 @@
                             <div class="flex items-center gap-4 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
                                 <button @click.stop.prevent="seek(-10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95" title="Mundur 10s"><i class="fas fa-undo text-sm"></i></button>
                                 
-                                <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center">
+                                <button @click.stop.prevent="togglePlayback()" 
+                                        :disabled="isBuffering"
+                                        class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95 w-8 flex justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                                     <i class="fas text-2xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
                                 </button>
                                 
@@ -163,7 +167,8 @@
                             <div class="flex items-center gap-2">
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
                                     <button @click.stop.prevent="speedOpen = !speedOpen" 
-                                            class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-cyan-600 hover:border-cyan-300 transition active:scale-95 shadow-sm">
+                                            :disabled="isBuffering"
+                                            class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-cyan-600 hover:border-cyan-300 transition active:scale-95 shadow-sm disabled:opacity-50">
                                         <span x-text="playbackSpeed + 'x'"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
@@ -285,9 +290,9 @@
                 // CONTROL STATE
                 isPlaying: true,
                 playbackSpeed: 1.0,
-                showSpeedWarning: false, // Untuk menampilkan notif
+                isBuffering: false, // State Loading Download
                 
-                // MONITORING STATE (Anti-Stuck)
+                // MONITORING STATE
                 lastTime: 0,
                 checkInterval: null,
                 
@@ -307,6 +312,7 @@
                     });
                     
                     setInterval(() => {
+                        // Logic jam Live (Bukan playback video)
                         if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.isToday) {
                             const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
@@ -316,54 +322,35 @@
                     }, 1000);
                 },
 
-                // --- SMART MONITOR (AUTO-DOWNGRADE) ---
+                // --- SMART MONITOR (Backup) ---
                 startPlaybackMonitor(vid) {
                     if (this.checkInterval) {
                         clearInterval(this.checkInterval);
                         this.checkInterval = null;
                     }
                     this.lastTime = vid.currentTime;
-                    let bufferingCount = 0; // Menghitung durasi stuck
+                    let stuckCounter = 0;
                     
                     this.checkInterval = setInterval(() => {
                         if (!vid || vid.paused) return;
-
-                        // JIKA SEDANG BUFFERING (WAITING)
-                        if (vid.readyState < 3) {
-                            bufferingCount++;
-                            console.log(`[MONITOR] Buffering... (${bufferingCount})`);
-                            
-                            // Jika stuck buffering lebih dari 6x pengecekan (3 detik)
-                            // DAN kecepatan sedang tinggi (> 1x)
-                            if (bufferingCount > 6 && this.playbackSpeed > 1.0) {
-                                console.warn("[MONITOR] Internet tidak kuat. Menurunkan kecepatan...");
-                                
-                                // Turunkan Speed ke Normal
-                                this.setSpeed(1.0); 
-                                
-                                // Tampilkan notifikasi visual
-                                this.showSpeedWarning = true;
-                                setTimeout(() => { this.showSpeedWarning = false; }, 4000);
-                                
-                                bufferingCount = 0; // Reset counter
-                            }
-                            return; 
-                        }
-
-                        // JIKA DATA ADA TAPI MACET (HARD STUCK)
-                        const currentTime = vid.currentTime;
-                        if (currentTime === this.lastTime && vid.readyState >= 3) {
-                             // Coba paksa jalan (CPR)
-                             console.log("Stuck detected (Data OK). Jump starting...");
-                             vid.currentTime += 0.1;
-                             vid.play().catch(e => {});
-                        }
                         
-                        this.lastTime = currentTime;
-                        // Reset counter buffering jika lancar
-                        if(vid.readyState >= 3) bufferingCount = 0;
-
-                    }, 500); // Cek setiap 0.5 detik
+                        // Karena pakai BLOB (Local RAM), harusnya network state selalu ready.
+                        // Kita hanya cek jika logic decoder macet.
+                        const currentTime = vid.currentTime;
+                        if (currentTime === this.lastTime && this.isPlaying && !this.isBuffering) {
+                            stuckCounter++;
+                            console.log(`Monitor: Stuck ${stuckCounter}/3`);
+                            if (stuckCounter >= 3) {
+                                console.warn("Jump starting decoder...");
+                                vid.currentTime += 0.1; 
+                                vid.play().catch(e => {});
+                                stuckCounter = 0; 
+                            }
+                        } else {
+                            stuckCounter = 0;
+                            this.lastTime = currentTime;
+                        }
+                    }, 500);
                 },
 
                 handleTimeUpdate(index) {
@@ -438,16 +425,10 @@
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         if(vid.paused) {
-                            vid.play()
-                               .then(() => { 
-                                   this.isPlaying = true; 
-                                   this.startPlaybackMonitor(vid); 
-                               })
-                               .catch(e => console.error("Play prevented", e));
+                            vid.play().then(() => { this.isPlaying = true; }).catch(e => {});
                         } else {
                             vid.pause();
                             this.isPlaying = false;
-                            if(this.checkInterval) clearInterval(this.checkInterval);
                         }
                     }
                 },
@@ -463,13 +444,8 @@
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
-                        const wasPlaying = !vid.paused;
                         vid.playbackRate = parseFloat(speed);
                         vid.defaultPlaybackRate = parseFloat(speed);
-                        if(wasPlaying) {
-                             vid.play().catch(e => {});
-                             this.startPlaybackMonitor(vid);
-                        }
                     }
                 },
 
@@ -536,14 +512,29 @@
                     
                     if(this.checkInterval) clearInterval(this.checkInterval);
 
-                    const currentSrc = decodeURIComponent(vid.src);
-                    const idx = this.currentTimelineData.findIndex(seg => currentSrc.includes(encodeURI(seg.url)) || currentSrc.includes(seg.url));
+                    // Revoke URL Blob lama jika ada (untuk hemat memori)
+                    if (vid.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(vid.src);
+                    }
 
-                    if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
-                        const nextSeg = this.currentTimelineData[idx + 1];
+                    // Cari video selanjutnya...
+                    // (Logika timeline data tetap sama, hanya beda di pemanggilan playRecord)
+                    // Disini kita perlu cek URL asli untuk dicocokkan dengan data timeline
+                    // Karena vid.src sekarang adalah 'blob:http...', kita tidak bisa pakai vid.src untuk lookup.
+                    // Jadi kita cari berdasarkan waktu playhead saat ini + 1 detik.
+                    
+                    const currentSec = (this.currentPlayheadPercent / 100) * 86400;
+                    
+                    // Cari segmen yang start-nya > currentSec
+                    const nextSeg = this.currentTimelineData.find(seg => seg.start > (currentSec - 5) && seg.start > this.activeSlots[index].recordStartOffset);
+                    
+                    if (nextSeg) {
                         console.log("Auto-playing next part:", nextSeg.human_start);
                         this.playRecord(index, nextSeg.url, 0, nextSeg.start);
                     } else {
+                        // Coba cara index array (Fallback)
+                        // Karena kita tidak menyimpan index aktif, ini agak sulit. 
+                        // Tapi logic 'start > offset' diatas sudah cukup robust.
                         this.isPlaying = false;
                         console.log("End of playback list.");
                     }
@@ -560,7 +551,10 @@
                     this.applyTransform(index);
 
                     const videoEl = document.getElementById('video-playback-' + index);
-                    if(videoEl) videoEl.pause();
+                    if(videoEl) {
+                        videoEl.pause();
+                        if (videoEl.src.startsWith('blob:')) URL.revokeObjectURL(videoEl.src);
+                    }
                     
                     if(this.checkInterval) clearInterval(this.checkInterval);
 
@@ -571,7 +565,7 @@
                     }
                 },
 
-                // --- CORE RECORD LOGIC ---
+                // --- CORE RECORD (DOWNLOAD BLOB STRATEGY) ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
@@ -586,24 +580,40 @@
                         const vid = document.getElementById('video-playback-' + index);
                         if(vid) {
                             if(this.checkInterval) clearInterval(this.checkInterval);
-
-                            vid.onplay = () => { this.isPlaying = true; };
-                            vid.onpause = () => { this.isPlaying = false; };
-                            vid.onended = () => { this.handleVideoEnded(index); };
-                            vid.onerror = (e) => { console.error("Video Error:", e); };
-
-                            // Debug Events (Boleh dihapus jika sudah production)
-                            ['waiting', 'stalled', 'playing'].forEach(evt => {
-                                vid.addEventListener(evt, () => console.log(`[VIDEO-DEBUG] ${evt.toUpperCase()} | Ready: ${vid.readyState}`));
-                            });
-
-                            vid.src = fileUrl;
-                            vid.currentTime = offsetSeconds;
-                            vid.playbackRate = parseFloat(this.playbackSpeed);
                             
-                            vid.play().catch(e => console.log("Auto-play prevented:", e));
-                            
-                            this.startPlaybackMonitor(vid);
+                            // Tampilkan indikator Loading
+                            this.isBuffering = true;
+                            console.log("Downloading video to RAM...");
+
+                            // Fetch Video sebagai BLOB (Binary Large Object)
+                            fetch(fileUrl)
+                                .then(response => {
+                                    if (!response.ok) throw new Error("Gagal download video");
+                                    return response.blob();
+                                })
+                                .then(blob => {
+                                    const localUrl = URL.createObjectURL(blob);
+                                    console.log("Download selesai. Playing from RAM.");
+                                    
+                                    vid.src = localUrl;
+                                    vid.currentTime = offsetSeconds;
+                                    vid.playbackRate = parseFloat(this.playbackSpeed);
+                                    
+                                    vid.onplay = () => { this.isPlaying = true; };
+                                    vid.onpause = () => { this.isPlaying = false; };
+                                    vid.onended = () => { this.handleVideoEnded(index); };
+                                    vid.onerror = (e) => { console.error("Video error", e); };
+
+                                    this.isBuffering = false; // Matikan loading
+                                    
+                                    vid.play().catch(e => console.log("Auto-play prevented", e));
+                                    this.startPlaybackMonitor(vid);
+                                })
+                                .catch(err => {
+                                    console.error("Download failed:", err);
+                                    this.isBuffering = false;
+                                    alert("Gagal memuat video (Network Error). Coba refresh.");
+                                });
                         }
                     });
                 },
