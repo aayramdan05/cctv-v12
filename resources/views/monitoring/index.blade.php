@@ -98,12 +98,6 @@
                                                 @timeupdate="handleTimeUpdate(i)">
                                             </video>
 
-                                            <div class="absolute top-2 right-10 px-2 py-0.5 bg-cyan-600/80 text-white text-[9px] rounded shadow z-30 pointer-events-none transition-opacity duration-500"
-                                                 x-show="isPrefetching" 
-                                                 x-transition.opacity.duration.500ms>
-                                                <i class="fas fa-cloud-download-alt mr-1"></i> Caching Next...
-                                            </div>
-
                                             <div class="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 backdrop-blur z-20 pointer-events-none transition-opacity duration-300"
                                                  x-show="activeSlots[i].zoom > 1">
                                                 <span class="text-[10px] font-bold text-white font-mono" x-text="Math.round(activeSlots[i].zoom * 100) + '%'"></span>
@@ -287,8 +281,6 @@
                 // CONTROL STATE
                 isPlaying: true,
                 playbackSpeed: 1.0,
-                isPrefetching: false, // State untuk UI
-                prefetchedUrl: null,  // Cache key sederhana
                 
                 // MONITORING STATE
                 lastTime: 0,
@@ -320,7 +312,7 @@
                     }, 1000);
                 },
 
-                // --- SMART MONITOR (TOLERAN TERHADAP STREAMING) ---
+                // --- SMART MONITOR (TOLERAN TERHADAP BUFFERING) ---
                 startPlaybackMonitor(vid) {
                     if (this.checkInterval) {
                         clearInterval(this.checkInterval);
@@ -332,19 +324,16 @@
                     this.checkInterval = setInterval(() => {
                         if (!vid || vid.paused) return;
 
-                        // Jika browser memberi sinyal buffering, kita tunggu (jangan paksa play)
-                        if (vid.readyState < 3) {
-                            // console.log("Monitor: Buffering...");
-                            return; 
-                        }
+                        // Jika browser memberi sinyal buffering (readyState < 3), kita tunggu
+                        if (vid.readyState < 3) return; 
 
                         const currentTime = vid.currentTime;
                         if (currentTime === this.lastTime && this.isPlaying) {
                             stuckCounter++;
-                            console.log(`Monitor: Stuck ${stuckCounter}/3`);
+                            // Jika data ada tapi waktu tidak jalan selama 3x cek (1.5 detik)
                             if (stuckCounter >= 3) {
-                                console.warn("Monitor: Hard Stuck. Jump start...");
-                                vid.currentTime += 0.1; 
+                                console.log("Anti-Stuck: Jump starting...");
+                                vid.currentTime += 0.1; // Geser dikit
                                 vid.play().catch(e => {});
                                 stuckCounter = 0; 
                             }
@@ -353,35 +342,6 @@
                             this.lastTime = currentTime;
                         }
                     }, 500);
-                },
-
-                // --- BACKGROUND PREFETCHER (KUNCI PERBAIKAN) ---
-                prefetchNextSegment(currentUrl) {
-                    // Cari file berikutnya di playlist
-                    const idx = this.currentTimelineData.findIndex(s => currentUrl.includes(s.url) || currentUrl.endsWith(s.url));
-                    
-                    if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
-                        const nextUrl = this.currentTimelineData[idx + 1].url;
-                        
-                        // Cek apakah sudah didownload sebelumnya biar ga spam
-                        if (this.prefetchedUrl !== nextUrl) {
-                            console.log("Background Prefetch Start:", nextUrl);
-                            this.isPrefetching = true;
-                            
-                            // Gunakan fetch agar masuk ke Disk Cache Browser
-                            fetch(nextUrl, { priority: 'low' }) // Low priority agar tidak ganggu streaming utama
-                                .then(response => {
-                                    if(response.ok) {
-                                        console.log("Background Prefetch Done (Cached)");
-                                        this.prefetchedUrl = nextUrl;
-                                    }
-                                })
-                                .catch(err => console.log("Prefetch failed (ignore)", err))
-                                .finally(() => {
-                                    this.isPrefetching = false;
-                                });
-                        }
-                    }
                 },
 
                 handleTimeUpdate(index) {
@@ -542,9 +502,6 @@
                     
                     if(this.checkInterval) clearInterval(this.checkInterval);
 
-                    // Hapus blob URL jika ada (sisa percobaan sebelumnya)
-                    if (vid.src.startsWith('blob:')) URL.revokeObjectURL(vid.src);
-
                     const currentSrc = decodeURIComponent(vid.src);
                     const idx = this.currentTimelineData.findIndex(seg => currentSrc.includes(encodeURI(seg.url)) || currentSrc.includes(seg.url));
 
@@ -569,10 +526,7 @@
                     this.applyTransform(index);
 
                     const videoEl = document.getElementById('video-playback-' + index);
-                    if(videoEl) {
-                        videoEl.pause();
-                        if (videoEl.src.startsWith('blob:')) URL.revokeObjectURL(videoEl.src);
-                    }
+                    if(videoEl) videoEl.pause();
                     
                     if(this.checkInterval) clearInterval(this.checkInterval);
 
@@ -583,7 +537,7 @@
                     }
                 },
 
-                // --- CORE RECORD (STREAMING + PREFETCH) ---
+                // --- CORE RECORD (STREAMING STANDAR + MONITOR) ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
@@ -605,18 +559,15 @@
                             vid.onended = () => { this.handleVideoEnded(index); };
                             vid.onerror = (e) => { console.error("Video Error:", e); };
 
-                            // Mode Streaming Biasa (Cepat)
+                            // Mode Streaming Biasa
                             vid.src = fileUrl;
                             vid.currentTime = offsetSeconds;
                             vid.playbackRate = parseFloat(this.playbackSpeed);
                             
                             vid.play().catch(e => console.log("Auto-play prevented:", e));
                             
-                            // 1. Start Smart Monitor (Anti-Stuck)
+                            // Start Smart Monitor (Anti-Stuck)
                             this.startPlaybackMonitor(vid);
-                            
-                            // 2. Start Background Prefetch (Untuk file selanjutnya)
-                            this.prefetchNextSegment(fileUrl);
                         }
                     });
                 },
