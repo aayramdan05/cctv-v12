@@ -101,6 +101,7 @@
                                         </iframe>
 
                                         <!-- B. VIDEO TAG (PLAYBACK MP4) -->
+                                        <!-- Perubahan: preload="metadata" agar tidak menyedot bandwidth saat idle -->
                                         <video 
                                             :id="'video-playback-' + i"
                                             x-show="activeSlots[i].mode === 'playback'"
@@ -109,7 +110,7 @@
                                             controlsList="nodownload noremoteplayback" 
                                             oncontextmenu="return false;"
                                             playsinline
-                                            preload="auto"
+                                            preload="metadata"
                                             @play="syncControls()"
                                             @pause="syncControls()"
                                             @ratechange="syncControls()"
@@ -305,7 +306,7 @@
                 playbackSpeed: 1.0, 
                 targetSpeed: 1.0, 
                 
-                preloader: null, 
+                // preloader: null, // DIHAPUS (Bikin Berat)
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
                 get isToday() {
@@ -314,8 +315,9 @@
                 },
 
                 init() {
-                    this.preloader = document.createElement('video');
-                    this.preloader.preload = 'auto';
+                    // DIHAPUS: Inisialisasi Preloader
+                    // this.preloader = document.createElement('video');
+                    // this.preloader.preload = 'auto';
 
                     document.addEventListener('fullscreenchange', () => { 
                         this.isFullscreen = !!document.fullscreenElement; 
@@ -350,14 +352,13 @@
                     }
                 },
 
-                // --- EVENT HANDLERS VIDEO (UPDATED FOR BUFFERING STABILITY) ---
+                // --- EVENT HANDLERS VIDEO (OPTIMIZED: NO PRELOAD) ---
                 handleTimeUpdate(index) {
                     if (this.selectedSlot !== index) return;
                     const slot = this.activeSlots[index];
                     const vid = document.getElementById('video-playback-' + index);
                     
                     if (slot && vid) {
-                        // FIX KRITIS: Jika video bergerak, PASTI tidak buffering. Paksa false.
                         if (slot.isBuffering) slot.isBuffering = false;
 
                         if (!isNaN(vid.currentTime) && slot.recordStartOffset) {
@@ -365,11 +366,14 @@
                             this.currentPlayheadPercent = (currentSec / 86400) * 100;
                             this.timelineTimeDisplay = this.formatTime(currentSec);
 
+                            // DIHAPUS: Logika Preload Next Video
+                            /*
                             const remaining = vid.duration - vid.currentTime;
                             if (remaining < 60 && !slot.nextVideoPreloaded) {
                                 this.preloadNextVideo(index);
                                 slot.nextVideoPreloaded = true; 
                             }
+                            */
                         }
                     }
                 },
@@ -378,21 +382,16 @@
                     const slot = this.activeSlots[index];
                     if(!slot) return;
                     
-                    // FIX KRITIS: Jika readyState >= 3 (HAVE_FUTURE_DATA), abaikan buffering visual
-                    // Ini mencegah ikon loading muncul saat CPU lag tapi data ada.
                     const vid = document.getElementById('video-playback-' + index);
                     if (vid && vid.readyState >= 3) {
-                         console.log("Waiting event fired, but has enough data (CPU Lag?). Ignoring overlay.");
                          return; 
                     }
 
                     slot.isBuffering = true;
                     
-                    // --- SMART RECOVERY ---
                     if(vid && vid.playbackRate > 1.0) {
                         console.log("Buffering... temporary drop speed to 1x");
                         vid.playbackRate = 1.0; 
-                        // Note: this.playbackSpeed (UI) tidak diubah agar tetap menunjukkan target user
                     }
                 },
 
@@ -400,7 +399,6 @@
                     const slot = this.activeSlots[index];
                     if(slot) slot.isBuffering = false;
 
-                    // --- AUTO RESTORE SPEED ---
                     const vid = document.getElementById('video-playback-' + index);
                     if(vid && this.targetSpeed > 1.0 && vid.playbackRate !== this.targetSpeed) {
                         console.log("Buffer recovered. Restoring speed to " + this.targetSpeed + "x");
@@ -409,24 +407,14 @@
                     }
                 },
 
-                preloadNextVideo(index) {
-                    const vid = document.getElementById('video-playback-' + index);
-                    const currentSrc = decodeURIComponent(vid.src);
-                    const idx = this.currentTimelineData.findIndex(seg => currentSrc.includes(encodeURI(seg.url)) || currentSrc.includes(seg.url));
-                    
-                    if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
-                        const nextSeg = this.currentTimelineData[idx + 1];
-                        console.log("Preloading next: " + nextSeg.human_start);
-                        this.preloader.src = nextSeg.url;
-                        this.preloader.load();
-                    }
-                },
+                // DIHAPUS: preloadNextVideo() method
 
                 assignCameraToSlot(cam, index) {
                     this.activeSlots[index] = { 
                         id: cam.id, name: cam.name, building: cam.building, faculty: cam.faculty, 
                         mode: 'live', timestampDisplay: '', hlsInstance: null, liveUrl: cam.liveUrl,
-                        zoom: 1, x: 0, y: 0, isBuffering: false, nextVideoPreloaded: false
+                        // Removed nextVideoPreloaded flag
+                        zoom: 1, x: 0, y: 0, isBuffering: false
                     }; 
                     this.selectSlot(index);
                     this.$nextTick(() => { this.playLive(index); });
@@ -445,7 +433,6 @@
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         this.isPlaying = !vid.paused;
-                        // HANYA update playbackSpeed jika targetnya 1x, agar tidak flicker
                         if(this.targetSpeed === 1.0) {
                              this.playbackSpeed = vid.playbackRate;
                         } else {
@@ -474,7 +461,6 @@
                     if(vid) vid.currentTime += seconds;
                 },
 
-                // UPDATE: Set Target Speed (Manual Override)
                 setSpeed(speed) {
                     this.targetSpeed = speed; 
                     this.playbackSpeed = speed;
@@ -484,11 +470,8 @@
                     if(vid) {
                         vid.playbackRate = parseFloat(speed);
                         vid.muted = (speed > 2.0);
-                        
-                        // FIX KRITIS: Override manual menghapus status buffering
                         const slot = this.activeSlots[this.selectedSlot];
                         if(slot) slot.isBuffering = false;
-                        
                         if (vid.paused) vid.play().catch(e=>{});
                     }
                 },
@@ -539,7 +522,7 @@
 
                     if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
                         const nextSeg = this.currentTimelineData[idx + 1];
-                        console.log("Auto-playing next part:", nextSeg.human_start);
+                        console.log("Playing next part: " + nextSeg.human_start); // Log updated
                         this.playRecord(index, nextSeg.url, 0, nextSeg.start);
                         this.isPlaying = true;
                     } else {
@@ -564,7 +547,7 @@
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
                     slot.recordStartOffset = parseFloat(startTs);
-                    slot.nextVideoPreloaded = false;
+                    // Removed nextVideoPreloaded initialization
                     slot.zoom = 1; slot.x = 0; slot.y = 0;
                     this.applyTransform(index);
                     
@@ -576,7 +559,6 @@
                             video.src = fileUrl;
                             video.currentTime = offsetSeconds;
                             
-                            // FORCE APPLY TARGET SPEED
                             video.playbackRate = parseFloat(this.targetSpeed);
                             video.muted = (this.targetSpeed > 2.0);
 
