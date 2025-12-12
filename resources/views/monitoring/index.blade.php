@@ -11,7 +11,6 @@
         <div class="flex justify-between items-center shrink-0 h-12 gap-2" x-show="!isFullscreen" x-transition>
             <div class="flex items-center gap-4 min-w-0 shrink">
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 truncate">Live Monitoring</h2>
-                <p class="text-xs text-slate-500 hidden md:block">WebRTC Realtime & Instant Playback.</p>
             </div>
 
             <!-- Toolbar dengan Horizontal Scroll di Mobile -->
@@ -159,7 +158,7 @@
                                 <span class="text-cyan-600 font-bold text-sm truncate max-w-[150px] sm:max-w-[200px]" x-text="activeSlots[selectedSlot]?.name"></span>
                                 <div class="hidden sm:flex items-center gap-2">
                                     <span class="text-gray-300">|</span>
-                                    <span class="text-slate-500 text-xs font-bold" x-text="selectedDate"></span>
+                                    <!-- <span class="text-slate-500 text-xs font-bold" x-text="selectedDate"></span> -->
                                 </div>
                             </div>
                             <span class="text-white text-xs font-mono bg-slate-800 px-2 py-1 rounded border border-slate-600 shrink-0" x-text="timelineTimeDisplay"></span>
@@ -210,7 +209,7 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end w-full md:w-1/3 order-3">
+                        <div class="flex items-center justify-end w-auto md:w-1/3 order-3">
                             <button @click="goLive(selectedSlot)" 
                                     :disabled="!isToday || activeSlots[selectedSlot]?.mode === 'live'"
                                     :class="(isToday && activeSlots[selectedSlot]?.mode === 'live') ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-red-600 text-white hover:bg-red-500 shadow-md animate-pulse cursor-pointer border border-red-700'"
@@ -325,7 +324,7 @@
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
                             this.currentPlayheadPercent = (sec / 86400) * 100;
                             // Tambahkan 'CLOCK' agar user tahu ini jam sistem, bukan jam video jika video pause
-                            this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
+                            this.timelineTimeDisplay = now.toLocaleTimeString('en-GB');
                         } else if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'playback') {
                             // Fallback jika handleTimeUpdate tidak jalan (misal video pause)
                             const vid = document.getElementById('video-playback-' + this.selectedSlot);
