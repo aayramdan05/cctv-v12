@@ -128,7 +128,7 @@
                                             <span class="text-[10px] font-bold text-white uppercase" x-text="activeSlots[i].mode === 'live' ? 'LIVE' : 'REC'"></span>
                                             <span class="text-[10px] text-gray-300 border-l border-gray-600 pl-2 ml-1 truncate max-w-[100px]" x-text="activeSlots[i].name"></span>
                                             
-                                            <!-- Tombol Refresh Live (Khusus Mobile Pause Fix) -->
+                                            <!-- Tombol Refresh Live -->
                                             <button @click.stop="playLive(i)" 
                                                     x-show="activeSlots[i].mode === 'live'"
                                                     class="ml-1 bg-slate-700 hover:bg-cyan-600 text-white w-5 h-5 rounded flex items-center justify-center transition shadow-sm" 
@@ -147,26 +147,35 @@
                 </div>
 
                 <!-- 2. TIMELINE BAR & CONTROLS -->
-                <!-- Ubah h-24 jadi h-auto dan min-h agar flexibel di mobile -->
-                <div class="h-auto min-h-[6rem] bg-white border border-slate-300 p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-lg relative"
+                <!-- Pastikan tinggi cukup agar tidak bertabrakan -->
+                <div class="h-24 bg-white border border-slate-300 p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-lg relative"
                         x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
                         x-transition>
                     
-                    <!-- HEADER: Flex Wrap untuk Mobile -->
-                    <div class="flex flex-wrap justify-between items-center px-1 mb-3 gap-2 relative z-40 h-10">
+                    <!-- HEADER: Berisi Info Ruangan, Jam, dan Tombol Realtime -->
+                    <div class="flex justify-between items-center px-1 mb-2 relative z-40 h-10">
                         
-                        <!-- Info Kiri (Judul Kamera) -->
-                        <div class="flex items-center gap-3 z-10 w-full sm:w-auto justify-between sm:justify-start">
-                            <div class="flex items-center gap-2">
-                                <span class="text-cyan-600 font-bold text-sm truncate max-w-[150px]" x-text="activeSlots[selectedSlot]?.name"></span>
-                                <span class="text-gray-300 hidden sm:inline">|</span>
-                                <span class="text-slate-500 text-xs font-bold hidden sm:inline" x-text="selectedDate"></span>
-                            </div>
+                        <!-- KIRI: Info & Tombol Realtime Sejajar -->
+                        <div class="flex items-center gap-3 z-10 w-full sm:w-auto">
+                            <span class="text-cyan-600 font-bold text-sm truncate max-w-[120px] sm:max-w-xs" x-text="activeSlots[selectedSlot]?.name"></span>
+                            <span class="text-gray-300 hidden sm:inline">|</span>
+                            
+                            <!-- JAM (Tanpa Teks "LIVE CLOCK") -->
                             <span class="text-white text-xs font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-600" x-text="timelineTimeDisplay"></span>
+
+                            <!-- TOMBOL REALTIME (Di sini, sejajar dengan info) -->
+                            <button @click="goLive(selectedSlot)" 
+                                    :disabled="!isToday || activeSlots[selectedSlot]?.mode === 'live'"
+                                    x-show="isToday && activeSlots[selectedSlot]?.mode !== 'live'"
+                                    class="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold transition ml-2 border border-red-200"
+                                    title="Back to Live">
+                                <i class="fas fa-broadcast-tower"></i> <span>LIVE</span>
+                            </button>
+                             <span x-show="isToday && activeSlots[selectedSlot]?.mode === 'live'" class="ml-2 text-[10px] font-bold text-red-500 animate-pulse">• LIVE</span>
                         </div>
                         
-                        <!-- CENTER: CONTROLS -->
-                        <div class="flex items-center gap-4 z-50 w-full sm:w-auto justify-center sm:absolute sm:left-1/2 sm:top-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2" 
+                        <!-- TENGAH (Absolute): Playback Controls -->
+                        <div class="flex items-center gap-4 z-50 w-full sm:w-auto justify-center absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2" 
                                 x-show="activeSlots[selectedSlot]?.mode === 'playback'"
                                 x-transition>
                             
@@ -174,23 +183,15 @@
                             <button @click.stop.prevent="togglePlayback()" class="text-cyan-600 hover:text-cyan-500 transition transform hover:scale-110 active:scale-95"><i class="fas text-3xl" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i></button>
                             <button @click.stop.prevent="seek(10)" class="text-slate-400 hover:text-cyan-600 transition transform hover:scale-110 active:scale-95"><i class="fas fa-redo text-sm"></i></button>
 
-                            <!-- TOMBOL REALTIME SEJAJAR DENGAN PLAY CONTROLS -->
-                            <button @click="goLive(selectedSlot)" 
-                                    class="flex items-center gap-1 text-red-600 hover:text-red-500 font-bold text-[10px] transition active:scale-95 ml-2" 
-                                    title="Back to Realtime">
-                                <i class="fas fa-broadcast-tower"></i> <span class="font-bold">LIVE</span>
-                            </button>
-
-                            <!-- Speed & Zoom Group (Desktop Only to save space, or remove 'hidden sm:flex' to show on mobile) -->
+                            <!-- Speed & Zoom (Selalu Muncul) -->
                             <div class="flex items-center gap-3 border-l border-slate-200 pl-3">
-                                <!-- Speed Control -->
+                                <!-- Speed -->
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
                                     <button @click.stop.prevent="speedOpen = !speedOpen" 
                                             class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95" title="Playback Speed">
                                         <span x-text="playbackSpeed + 'x'"></span>
                                     </button>
-                                    <div x-show="speedOpen" 
-                                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
+                                    <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
                                             <button @click.stop="setSpeed(speed); speedOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition border-b border-slate-50 last:border-none"
@@ -200,15 +201,10 @@
                                         </template>
                                     </div>
                                 </div>
-
-                                <!-- Zoom Control -->
+                                <!-- Zoom -->
                                 <div class="relative" x-data="{ zoomOpen: false }" @click.outside="zoomOpen = false">
-                                    <button @click.stop.prevent="zoomOpen = !zoomOpen" 
-                                            class="flex items-center gap-0.5 text-slate-500 hover:text-cyan-600 transition active:scale-95" title="Digital Zoom">
-                                        <i class="fas fa-search-plus text-xs"></i>
-                                    </button>
-                                    <div x-show="zoomOpen" 
-                                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
+                                    <button @click.stop.prevent="zoomOpen = !zoomOpen" class="flex items-center gap-0.5 text-slate-500 hover:text-cyan-600 transition active:scale-95"><i class="fas fa-search-plus text-xs"></i></button>
+                                    <div x-show="zoomOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="z in [1.0, 1.5, 2.0, 3.0]">
                                             <button @click.stop="setZoom(z); zoomOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition"
@@ -220,6 +216,9 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- KANAN: Kosong atau Info Lain -->
+                         <div class="w-10"></div>
                     </div>
 
                     <!-- Timeline Slider -->
@@ -257,7 +256,7 @@
                         <!-- Playhead -->
                         <div class="absolute top-2 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
-                             <div class="w-2.5 h-2.5 -ml-1 bg-red-600 rounded-full -mt-1.5 shadow border border-white"></div>
+                             <div class="w-2.5 h-2.5 -ml-1 bg-red-600 rounded-full -mt-1.5 shadow border border-white relative top-0"></div>
                         </div>
                         
                         <!-- Hover Tooltip -->
@@ -304,15 +303,15 @@
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
                 search: '', currentHost: window.location.hostname, isFullscreen: false,
-                isDragging: false, // State untuk Drag Overlay
+                isDragging: false, 
                 
                 selectedDate: new Date().toISOString().split('T')[0],
                 currentTimelineData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
                 
-                // CONTROL STATE
                 isPlaying: true,
-                playbackSpeed: 1.0,
-                // Panning State
+                playbackSpeed: 1.0, 
+                targetSpeed: 1.0, 
+                
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
                 get isToday() {
@@ -335,10 +334,8 @@
                             // Hapus "LIVE CLOCK", hanya jam saja
                             this.timelineTimeDisplay = now.toLocaleTimeString('en-GB');
                         } else if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'playback') {
-                            // Fallback jika handleTimeUpdate tidak jalan (misal video pause)
                             const vid = document.getElementById('video-playback-' + this.selectedSlot);
                             if(vid && !vid.paused && this.activeSlots[this.selectedSlot].recordStartOffset) {
-                                // Fix: Gunakan parseFloat agar tidak error string concatenation
                                 const sec = parseFloat(this.activeSlots[this.selectedSlot].recordStartOffset) + vid.currentTime;
                                 this.currentPlayheadPercent = (sec / 86400) * 100;
                                 this.timelineTimeDisplay = this.formatTime(sec);
