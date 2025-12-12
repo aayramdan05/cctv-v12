@@ -1,7 +1,7 @@
 <x-app-layout>
-    <!-- Kita tetap load HLS.js untuk potensi pengembangan kedepan, walau sekarang pakai MP4 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
+    <!-- X-DATA HARUS BERADA DI WADAH UTAMA -->
     <main id="main-content" 
           x-data="hybridMonitoring()"
           class="flex flex-col h-screen pt-20 p-4 gap-4 bg-slate-100 transition-all duration-300"
@@ -125,7 +125,7 @@
                                              class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-30 transition-opacity duration-300">
                                             <i class="fas fa-sync-alt fa-spin text-3xl text-cyan-400 mb-3"></i>
                                             <span class="text-white text-xs font-mono">Buffering...</span>
-                                            <span class="text-gray-400 text-[10px]" x-show="playbackSpeed > 1">Menyesuaikan kecepatan...</span>
+                                            <span class="text-gray-400 text-[10px]" x-show="playbackSpeed > 1">Auto-recovering speed...</span>
                                         </div>
 
                                         <!-- Zoom Overlay -->
@@ -186,13 +186,14 @@
                                 <div class="relative" x-data="{ speedOpen: false }" @click.outside="speedOpen = false">
                                     <button @click.stop.prevent="speedOpen = !speedOpen" 
                                             class="flex items-center gap-0.5 text-xs font-bold text-slate-500 hover:text-cyan-600 transition active:scale-95">
-                                        <span x-text="playbackSpeed + 'x'"></span>
+                                        <!-- UI Tampilkan targetSpeed, bukan current playbackRate yang mungkin drop -->
+                                        <span x-text="targetSpeed + 'x'"></span>
                                     </button>
                                     <div x-show="speedOpen" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-12 bg-white border border-slate-200 rounded shadow-lg z-[100] py-0.5">
                                         <template x-for="speed in [0.5, 1.0, 2.0, 4.0, 8.0]">
                                             <button @click.stop="setSpeed(speed); speedOpen = false" 
                                                     class="block w-full text-center py-1.5 text-[10px] font-bold hover:bg-cyan-50 transition border-b border-slate-50 last:border-none"
-                                                    :class="playbackSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
+                                                    :class="targetSpeed == speed ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600'"
                                                     x-text="speed + 'x'">
                                             </button>
                                         </template>
@@ -302,10 +303,10 @@
                 currentTimelineData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
                 
                 isPlaying: true,
-                playbackSpeed: 1.0,
-                // Hidden preload element
+                playbackSpeed: 1.0, 
+                targetSpeed: 1.0, // <-- VARIABLE BARU UNTUK PERSISTENSI KECEPATAN
+                
                 preloader: null, 
-
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
                 get isToday() {
@@ -314,7 +315,7 @@
                 },
 
                 init() {
-                    this.preloader = document.createElement('video'); // Invisible video for caching
+                    this.preloader = document.createElement('video');
                     this.preloader.preload = 'auto';
 
                     document.addEventListener('fullscreenchange', () => { 
@@ -323,7 +324,6 @@
                         else { this.showTimeline = false; }
                     });
                     
-                    // Interval untuk Live Clock (System Time)
                     setInterval(() => {
                         if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.isToday) {
                             const now = new Date();
@@ -358,17 +358,14 @@
                     const vid = document.getElementById('video-playback-' + index);
                     
                     if (slot && vid && !isNaN(vid.currentTime) && slot.recordStartOffset) {
-                        // FIX: Memastikan kalkulasi Playhead akurat
                         const currentSec = parseFloat(slot.recordStartOffset) + vid.currentTime;
                         this.currentPlayheadPercent = (currentSec / 86400) * 100;
                         this.timelineTimeDisplay = this.formatTime(currentSec);
 
-                        // --- LOGIKA PRELOAD ---
-                        // Jika video tersisa < 60 detik (dan speed 8x), mulai preload video berikutnya
                         const remaining = vid.duration - vid.currentTime;
                         if (remaining < 60 && !slot.nextVideoPreloaded) {
                             this.preloadNextVideo(index);
-                            slot.nextVideoPreloaded = true; // Flag agar tidak fetch berkali-kali
+                            slot.nextVideoPreloaded = true; 
                         }
                     }
                 },
@@ -378,22 +375,33 @@
                     if(!slot) return;
                     slot.isBuffering = true;
                     
-                    // --- SMART SPEED DOWN ---
-                    // Jika buffering di speed tinggi, turunkan speed otomatis agar tidak stuck
+                    // --- SMART RECOVERY ---
+                    // Jika buffering, turunkan speed actual video ke 1x agar buffer terisi
+                    // TAPI jangan ubah this.targetSpeed (agar bisa kembali ke 8x nanti)
                     const vid = document.getElementById('video-playback-' + index);
                     if(vid && vid.playbackRate > 1.0) {
-                        console.log("Network slow, dropping speed to 1x");
+                        console.log("Buffering... temporary drop speed to 1x");
                         vid.playbackRate = 1.0; 
-                        this.playbackSpeed = 1.0;
+                        // Note: this.playbackSpeed tidak diubah di sini agar UI tetap menunjukkan target
                     }
                 },
 
                 handlePlaying(index) {
                     const slot = this.activeSlots[index];
                     if(slot) slot.isBuffering = false;
+
+                    // --- AUTO RESTORE SPEED ---
+                    // Begitu video jalan lagi, paksa kembali ke targetSpeed (misal 8x)
+                    const vid = document.getElementById('video-playback-' + index);
+                    if(vid && this.targetSpeed > 1.0 && vid.playbackRate !== this.targetSpeed) {
+                        console.log("Buffer recovered. Restoring speed to " + this.targetSpeed + "x");
+                        vid.playbackRate = parseFloat(this.targetSpeed);
+                        
+                        // Opsional: Matikan suara di high speed untuk performa
+                        if(this.targetSpeed > 2) vid.muted = true;
+                    }
                 },
 
-                // --- PRELOAD NEXT LOGIC ---
                 preloadNextVideo(index) {
                     const vid = document.getElementById('video-playback-' + index);
                     const currentSrc = decodeURIComponent(vid.src);
@@ -402,7 +410,6 @@
                     if (idx !== -1 && idx < this.currentTimelineData.length - 1) {
                         const nextSeg = this.currentTimelineData[idx + 1];
                         console.log("Preloading next: " + nextSeg.human_start);
-                        // Trik: Load ke hidden video tag agar browser meng-cache filenya
                         this.preloader.src = nextSeg.url;
                         this.preloader.load();
                     }
@@ -431,10 +438,18 @@
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
                     if(vid) {
                         this.isPlaying = !vid.paused;
-                        this.playbackSpeed = vid.playbackRate;
+                        // HANYA update playbackSpeed jika targetnya 1x (normal), 
+                        // agar tidak flicker saat auto-drop speed terjadi.
+                        if(this.targetSpeed === 1.0) {
+                             this.playbackSpeed = vid.playbackRate;
+                        } else {
+                             // Jika target > 1, biarkan UI tetap menampilkan target
+                             this.playbackSpeed = this.targetSpeed;
+                        }
                     } else {
                         this.isPlaying = false;
                         this.playbackSpeed = 1.0;
+                        this.targetSpeed = 1.0;
                     }
                 },
 
@@ -454,11 +469,18 @@
                     if(vid) vid.currentTime += seconds;
                 },
 
+                // UPDATE: Set Target Speed
                 setSpeed(speed) {
+                    this.targetSpeed = speed; // Simpan niat user
                     this.playbackSpeed = speed;
+                    
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
-                    if(vid) vid.playbackRate = parseFloat(speed);
+                    if(vid) {
+                        vid.playbackRate = parseFloat(speed);
+                        // Matikan suara jika speed tinggi
+                        vid.muted = (speed > 2.0);
+                    }
                 },
 
                 setZoom(zoom) {
@@ -531,8 +553,8 @@
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
-                    slot.recordStartOffset = parseFloat(startTs); // FIX: Pastikan Float
-                    slot.nextVideoPreloaded = false; // Reset preload flag
+                    slot.recordStartOffset = parseFloat(startTs);
+                    slot.nextVideoPreloaded = false;
                     slot.zoom = 1; slot.x = 0; slot.y = 0;
                     this.applyTransform(index);
                     
@@ -543,7 +565,11 @@
                         if(video) {
                             video.src = fileUrl;
                             video.currentTime = offsetSeconds;
-                            video.playbackRate = parseFloat(this.playbackSpeed);
+                            
+                            // FORCE APPLY TARGET SPEED SAAT PINDAH SEGMENT
+                            video.playbackRate = parseFloat(this.targetSpeed);
+                            video.muted = (this.targetSpeed > 2.0); // Mute jika speed tinggi
+
                             video.play().then(() => this.isPlaying = true).catch(e => console.log("Play error:", e));
                         }
                     });
@@ -554,9 +580,6 @@
                     const rect = document.getElementById('global-timeline').getBoundingClientRect();
                     const percent = ((e.clientX - rect.left) / rect.width) * 100;
                     const secondsInDay = 86400; const clickedSeconds = (percent / 100) * secondsInDay;
-                    const now = new Date(); const nowSeconds = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
-                    
-                    if (this.isToday && clickedSeconds >= (nowSeconds - 60)) { this.goLive(this.selectedSlot); return; }
                     
                     const segment = this.currentTimelineData.find(seg => clickedSeconds >= seg.start && clickedSeconds <= (seg.start + seg.duration));
                     if (segment) {
