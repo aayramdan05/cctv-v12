@@ -311,31 +311,43 @@
                     }, 1000);
                 },
 
-                // --- ANTI-STUCK MONITOR ---
+                // --- SMART MONITOR (ANTI-STUCK + DEBUG) ---
                 startPlaybackMonitor(vid) {
                     if (this.checkInterval) {
                         clearInterval(this.checkInterval);
                         this.checkInterval = null;
                     }
                     this.lastTime = vid.currentTime;
+                    let stuckCounter = 0; // Counter toleransi
                     
-                    // Cek setiap 500ms
                     this.checkInterval = setInterval(() => {
-                        // Pastikan video valid dan harusnya playing
-                        if (vid && !vid.paused && vid.src && vid.readyState >= 3) { 
-                            const currentTime = vid.currentTime;
+                        // 1. Validasi: Object ada dan tidak di-pause manual
+                        if (!vid || vid.paused) return;
+
+                        // 2. Cek Network State (Waiting = Buffering Natural)
+                        if (vid.readyState < 3) {
+                            // Video sedang menunggu data (buffering). Biarkan saja, jangan dipaksa play.
+                            // console.log("Monitor: Buffering data..."); 
+                            return; 
+                        }
+
+                        // 3. Deteksi Stuck (Data ada, tapi waktu tidak jalan)
+                        const currentTime = vid.currentTime;
+                        
+                        if (currentTime === this.lastTime) {
+                            stuckCounter++;
+                            console.log(`[MONITOR] Stuck Counter: ${stuckCounter}/3`);
                             
-                            // Jika waktu tidak berubah tapi statusnya playing -> STUCK
-                            if (currentTime === this.lastTime && this.isPlaying) {
-                                console.log("Video Stuck (Anti-Stuck Triggered). Auto Playing...");
-                                vid.play()
-                                   .then(() => { 
-                                       this.isPlaying = true; 
-                                   })
-                                   .catch(e => { 
-                                       console.log("Re-sync retry..."); 
-                                   });
+                            // Jika stuck 3x berturut-turut (1.5 detik), lakukan "CPR" (Jump Start)
+                            if (stuckCounter >= 3) {
+                                console.warn("[MONITOR] HARD STUCK! Forcing Jump Start...");
+                                vid.currentTime += 0.1; // Geser dikit biar decoder bangun
+                                vid.play().catch(e => console.error("Jump start failed:", e));
+                                stuckCounter = 0; 
                             }
+                        } else {
+                            // Lancar
+                            stuckCounter = 0;
                             this.lastTime = currentTime;
                         }
                     }, 500);
@@ -407,7 +419,7 @@
                     }
                 },
 
-                // --- TOGGLE PLAYBACK (UPDATED) ---
+                // --- TOGGLE PLAYBACK (AMAN) ---
                 togglePlayback() {
                     if(!this.selectedSlot) return;
                     const vid = document.getElementById('video-playback-' + this.selectedSlot);
@@ -416,13 +428,12 @@
                             vid.play()
                                .then(() => { 
                                    this.isPlaying = true; 
-                                   this.startPlaybackMonitor(vid); // Mulai monitor lagi
+                                   this.startPlaybackMonitor(vid); 
                                })
                                .catch(e => console.error("Play prevented", e));
                         } else {
                             vid.pause();
                             this.isPlaying = false;
-                            // Stop monitor saat manual pause
                             if(this.checkInterval) clearInterval(this.checkInterval);
                         }
                     }
@@ -547,7 +558,7 @@
                     }
                 },
 
-                // --- CORE RECORD (NO CLONE NODE) ---
+                // --- CORE RECORD LOGIC (DENGAN DEBUG) ---
                 playRecord(index, fileUrl, offsetSeconds, startTs) {
                     const slot = this.activeSlots[index];
                     slot.mode = 'playback';
@@ -561,14 +572,23 @@
                     this.$nextTick(() => {
                         const vid = document.getElementById('video-playback-' + index);
                         if(vid) {
-                            // Hentikan monitor sesi sebelumnya
                             if(this.checkInterval) clearInterval(this.checkInterval);
 
-                            // Langsung override event handler di element yg sama (NO CLONE)
+                            // Setup Event Handler tanpa Clone
                             vid.onplay = () => { this.isPlaying = true; };
                             vid.onpause = () => { this.isPlaying = false; };
                             vid.onended = () => { this.handleVideoEnded(index); };
-                            vid.onerror = () => { console.log("Video Error, recovering..."); };
+                            vid.onerror = (e) => { console.error("Video Error:", e); };
+
+                            // >>> DEBUG CONSOLE <<<
+                            // Hapus bagian ini jika sudah production
+                            const debugEvents = ['waiting', 'stalled', 'playing', 'seeked'];
+                            debugEvents.forEach(evt => {
+                                vid.addEventListener(evt, () => {
+                                    console.log(`[VIDEO-DEBUG] ${evt.toUpperCase()} | ReadyState: ${vid.readyState} | Network: ${vid.networkState}`);
+                                });
+                            });
+                            // >>> END DEBUG <<<
 
                             vid.src = fileUrl;
                             vid.currentTime = offsetSeconds;
@@ -576,7 +596,6 @@
                             
                             vid.play().catch(e => console.log("Auto-play prevented:", e));
                             
-                            // Mulai Monitor Anti-Stuck
                             this.startPlaybackMonitor(vid);
                         }
                     });
