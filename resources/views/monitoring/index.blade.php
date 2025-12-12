@@ -159,9 +159,10 @@
                                 <div class="hidden sm:flex items-center gap-2">
                                     <span class="text-gray-300">|</span>
                                     <span class="text-slate-500 text-xs font-bold" x-text="selectedDate"></span>
-                                </div>
+                                    <span class="text-white text-xs font-mono bg-slate-800 px-2 py-1 rounded border border-slate-600 shrink-0" x-text="timelineTimeDisplay"></span>
+                                  </div>
                             </div>
-                            <span class="text-white text-xs font-mono bg-slate-800 px-2 py-1 rounded border border-slate-600 shrink-0" x-text="timelineTimeDisplay"></span>
+
                         </div>
                         
                         <div class="flex items-center justify-center gap-4 w-full md:w-1/3 order-2" 
