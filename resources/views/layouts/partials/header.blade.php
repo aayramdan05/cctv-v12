@@ -1,8 +1,8 @@
 <header id="header" class="fixed top-0 left-0 right-0 h-16 glass-effect z-50 border-b border-cyan-100">
     <div class="h-full px-6 flex items-center justify-between">
         
+        <!-- Logo & Sidebar Toggle -->
         <div class="flex items-center space-x-4">
-            
             <button @click="sidebarOpen = !sidebarOpen" class="text-slate-500 hover:text-cyan-600 focus:outline-none transition-transform active:scale-95">
                 <i class="fas fa-bars text-xl"></i>
             </button>
@@ -16,12 +16,13 @@
             </div>
         </div>
         
+        <!-- Right Menu -->
         <div class="flex items-center space-x-4">
-            <button class="relative w-9 h-9 rounded-full bg-white border border-slate-100 flex items-center justify-center hover:bg-slate-50 hover:border-cyan-200 transition-all group">
-                <i class="fas fa-bell text-slate-400 group-hover:text-cyan-500 transition-colors"></i>
-                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
             
+            <!-- NOTIFIKASI DINAMIS (Menggantikan tombol statis lama) -->
+            <x-notification-dropdown />
+            
+            <!-- Profile Dropdown -->
             <div class="relative ml-3" x-data="{ open: false }">
                 <button @click="open = ! open" class="flex items-center space-x-3 focus:outline-none group">
                     <div class="hidden md:block text-right">

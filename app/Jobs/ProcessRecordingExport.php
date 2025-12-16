@@ -24,7 +24,7 @@ class ProcessRecordingExport implements ShouldQueue
     protected $startTimeStr;
     protected $endTimeStr;
 
-    // Timeout 1 jam (Cukup karena proses copy sangat cepat)
+    // Timeout 1 jam (Sangat cukup karena prosesnya cepat)
     public $timeout = 3600; 
 
     public function __construct(User $user, $cctvId, $date, $startTimeStr, $endTimeStr)
@@ -38,7 +38,6 @@ class ProcessRecordingExport implements ShouldQueue
 
     public function handle(): void
     {
-        // 1. Tentukan Range Waktu User
         $reqStart = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->startTimeStr}");
         $reqEnd = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->endTimeStr}");
 
@@ -46,7 +45,7 @@ class ProcessRecordingExport implements ShouldQueue
         
         if (!File::exists($path)) return;
 
-        // Folder temp khusus job ini
+        // Folder temp (hanya untuk menyimpan potongan awal/akhir)
         $jobId = $this->job ? $this->job->getJobId() : uniqid();
         $tempDir = storage_path("app/public/temp_export/{$jobId}");
         
@@ -55,6 +54,13 @@ class ProcessRecordingExport implements ShouldQueue
         }
 
         $files = File::files($path);
+        // Urutkan file agar di dalam ZIP rapi
+        usort($files, function($a, $b) {
+            return strcmp($a->getFilename(), $b->getFilename());
+        });
+
+        // Array untuk menyimpan path file yang akan di-zip
+        // Format: ['path' => '/real/path', 'name' => 'nama_di_zip.mp4']
         $filesToZip = [];
 
         foreach ($files as $file) {
@@ -66,38 +72,52 @@ class ProcessRecordingExport implements ShouldQueue
 
                 $timePart = str_replace('-', ':', $matches[3]);
                 $fileStart = Carbon::createFromFormat('Y-m-d H:i:s', "{$this->date} $timePart");
-                $fileEnd = $fileStart->copy()->addSeconds(900); // Asumsi file 15 menit
+                $fileEnd = $fileStart->copy()->addSeconds(900); // Asumsi 15 menit
 
                 // LOGIKA IRISAN WAKTU
                 $trimStart = $fileStart->max($reqStart);
                 $trimEnd = $fileEnd->min($reqEnd);
 
-                // Jika ada irisan waktu yang valid
+                // Jika ada irisan valid
                 if ($trimStart < $trimEnd) {
                     
-                    // Hitung Offset & Durasi
-                    $seekSeconds = $fileStart->diffInSeconds($trimStart);
-                    $durationSeconds = $trimStart->diffInSeconds($trimEnd);
+                    // CEK APAKAH PERLU DIPOTONG?
+                    // Jika waktu trim SAMA DENGAN waktu asli file, berarti file ini UTUH.
+                    // Tidak perlu FFmpeg, langsung ambil aslinya.
+                    $isFullSegment = ($trimStart->eq($fileStart) && $trimEnd->eq($fileEnd));
 
-                    $trimFilename = "Cut_" . $trimStart->format('H-i-s') . "_to_" . $trimEnd->format('H-i-s') . ".mp4";
-                    $outputPath = "{$tempDir}/{$trimFilename}";
+                    if ($isFullSegment) {
+                        // --- OPTIMASI: LANGSUNG MASUKKAN FILE ASLI ---
+                        $filesToZip[] = [
+                            'path' => $file->getPathname(),
+                            'name' => $filename // Gunakan nama asli
+                        ];
+                    } else {
+                        // --- PROSES POTONG (Hanya untuk awal/akhir) ---
+                        $seekSeconds = $fileStart->diffInSeconds($trimStart);
+                        $durationSeconds = $trimStart->diffInSeconds($trimEnd);
 
-                    // --- PROSES POTONG CEPAT (STREAM COPY) ---
-                    // -ss sebelum -i mempercepat seeking (input seeking)
-                    // -c copy memastikan tidak ada re-encoding (CPU ringan)
-                    $cmd = [
-                        'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
-                        '-ss', $seekSeconds,
-                        '-i', $file->getPathname(),
-                        '-t', $durationSeconds,
-                        '-c', 'copy', 
-                        $outputPath
-                    ];
+                        // Beri nama khusus agar admin tahu ini hasil potongan
+                        $trimFilename = "Trim_" . $trimStart->format('H-i-s') . "_" . $filename;
+                        $outputPath = "{$tempDir}/{$trimFilename}";
 
-                    Process::run($cmd);
+                        $cmd = [
+                            'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
+                            '-ss', $seekSeconds,
+                            '-i', $file->getPathname(),
+                            '-t', $durationSeconds,
+                            '-c', 'copy', 
+                            $outputPath
+                        ];
 
-                    if (File::exists($outputPath)) {
-                        $filesToZip[] = $outputPath;
+                        Process::run($cmd);
+
+                        if (File::exists($outputPath)) {
+                            $filesToZip[] = [
+                                'path' => $outputPath,
+                                'name' => $trimFilename
+                            ];
+                        }
                     }
                 }
             }
@@ -120,13 +140,15 @@ class ProcessRecordingExport implements ShouldQueue
 
         $zip = new ZipArchive;
         if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($filesToZip as $filePath) {
-                $zip->addFile($filePath, basename($filePath));
+            foreach ($filesToZip as $item) {
+                // Masukkan file ke zip dengan nama yang sudah ditentukan
+                $zip->addFile($item['path'], $item['name']);
             }
             $zip->close();
         }
 
-        // Cleanup temp files
+        // Cleanup temp folder (hapus potongan segmen)
+        // File asli di folder recordings tidak akan terhapus karena kita hanya baca
         File::deleteDirectory($tempDir);
 
         // Notify User
