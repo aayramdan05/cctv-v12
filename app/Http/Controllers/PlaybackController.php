@@ -9,6 +9,7 @@ use App\Models\Cctv;
 use App\Models\Building;
 use ZipArchive;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\ProcessRecordingExport;
 
 class PlaybackController extends Controller
 {
