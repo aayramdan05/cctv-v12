@@ -37,7 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Data Timeline & Playback
     Route::get('/playback', [PlaybackController::class, 'index'])->name('playback.index');
-    Route::get('/playback/data', [PlaybackController::class, 'getRecordings'])->name('playback.data')
+    Route::get('/playback/data', [PlaybackController::class, 'getRecordings'])->name('playback.data');
     Route::post('/playback/export', [PlaybackController::class, 'exportRecordings'])->name('playback.export');
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
     
