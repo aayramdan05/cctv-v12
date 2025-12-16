@@ -1,21 +1,38 @@
 <x-app-layout>
-    <main id="main-content" class="pt-20 p-6 md:p-8 h-screen flex flex-col">
+    <main id="main-content" class="pt-20 p-6 md:p-8 h-screen flex flex-col relative">
         
+        <!-- Pesan Error/Sukses (Flash Message) -->
+        @if(session('error'))
+            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <span class="block sm:inline">{{ session('error') }}</span>
+            </div>
+        @endif
+
         <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 gap-4 shrink-0">
             <div class="flex items-center gap-3">
                 <h2 class="text-2xl font-bold text-slate-800">Playback</h2>
                 <span class="px-3 py-1 bg-slate-100 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 hidden sm:inline-block">
                     {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d M Y') }}
                 </span>
+
+                <!-- TOMBOL EXPORT (ADMIN ONLY) -->
+                @if(auth()->user()->role === 'admin')
+                    <button onclick="document.getElementById('export-modal').classList.remove('hidden')" 
+                            class="ml-2 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                @endif
             </div>
             
+            <!-- FORM FILTER (KODE LAMA ANDA TETAP DISINI) -->
             <form method="GET" id="filter-form" class="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4 w-full xl:w-auto">
-                
-                @if(auth()->user()->role !== 'faculty_operator')
+                 {{-- ... (Isi form filter seperti kode anda sebelumnya: Fakultas, Gedung, CCTV, Date) ... --}}
+                 {{-- Copy paste form filter dari kode lama Anda disini --}}
+                 {{-- Pastikan input select CCTV memiliki id="cctv_selector" agar mudah diambil JS modal --}}
+                 @if(auth()->user()->role !== 'faculty_operator')
                     <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
                         <label class="text-[10px] font-bold text-slate-400 uppercase">Fakultas</label>
-                        <select name="faculty" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-32 truncate" 
-                                onchange="this.form.submit()">
+                        <select name="faculty" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-32 truncate" onchange="this.form.submit()">
                             <option value="">-- Semua --</option>
                             @foreach($faculties as $fac)
                                 <option value="{{ $fac }}" {{ $selectedFaculty == $fac ? 'selected' : '' }}>{{ $fac }}</option>
@@ -26,8 +43,7 @@
 
                 <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Gedung</label>
-                    <select name="building_id" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-32 truncate" 
-                            onchange="this.form.submit()">
+                    <select name="building_id" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-32 truncate" onchange="this.form.submit()">
                         <option value="">-- Semua --</option>
                         @foreach($buildings as $b)
                             <option value="{{ $b->id }}" {{ $selectedBuildingId == $b->id ? 'selected' : '' }}>{{ $b->nama_gedung }}</option>
@@ -37,12 +53,10 @@
 
                 <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
                     <i class="fas fa-video text-slate-400 text-xs"></i>
-                    <select name="cctv_id" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-40 truncate" 
-                            onchange="this.form.submit()">
+                    <!-- Saya tambah ID cctv_selector disini -->
+                    <select name="cctv_id" id="cctv_selector" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-40 truncate" onchange="this.form.submit()">
                         @forelse($cctvs as $cam)
-                            <option value="{{ $cam->id }}" {{ $selectedCctvId == $cam->id ? 'selected' : '' }}>
-                                {{ $cam->nama_cctv }}
-                            </option>
+                            <option value="{{ $cam->id }}" {{ $selectedCctvId == $cam->id ? 'selected' : '' }}>{{ $cam->nama_cctv }}</option>
                         @empty
                             <option disabled>Tidak ada kamera</option>
                         @endforelse
@@ -51,25 +65,20 @@
 
                 <div class="flex items-center gap-2">
                     <i class="fas fa-calendar text-slate-400 text-xs"></i>
-                    <input type="date" name="date" value="{{ $date }}" 
-                           class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0"
-                           onchange="this.form.submit()">
+                    <!-- Saya tambah ID date_selector disini -->
+                    <input type="date" name="date" id="date_selector" value="{{ $date }}" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0" onchange="this.form.submit()">
                 </div>
             </form>
         </div>
 
+        <!-- PLAYER & PLAYLIST CONTAINER (KODE LAMA TETAP SAMA) -->
         <div class="flex flex-1 gap-6 overflow-hidden min-h-0 flex-col lg:flex-row">
-            
+            {{-- ... (Area Video Player & Playlist Anda) ... --}}
+            {{-- Copy paste area div flex-1 player anda --}}
             <div class="flex-[3] flex flex-col bg-black rounded-2xl overflow-hidden shadow-xl relative group border border-slate-800 min-h-[300px]">
-                <video id="main-player" 
-                      class="w-full h-full object-contain" 
-                      controls 
-                      autoplay 
-                      controlsList="nodownload" 
-                      oncontextmenu="return false;">
+                <video id="main-player" class="w-full h-full object-contain" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
                     <source src="" type="video/mp4">
                 </video>
-                
                 <div class="absolute top-4 left-4 px-4 py-2 bg-black/70 backdrop-blur rounded-lg text-white border border-white/10 pointer-events-none">
                     <div id="current-video-info">
                         <h3 class="font-bold text-sm">Ready to Play</h3>
@@ -89,13 +98,14 @@
             </div>
         </div>
 
+        <!-- TIMELINE SLIDER (KODE LAMA TETAP SAMA) -->
         <div class="mt-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm select-none">
-            <div class="flex justify-between items-center mb-2 px-1">
+             {{-- ... (Kode Slider Timeline Anda) ... --}}
+             <div class="flex justify-between items-center mb-2 px-1">
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-search-minus text-slate-400 text-xs"></i>
-                        <input type="range" id="zoom-slider" min="1" max="10" value="1" step="0.5" 
-                               class="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                        <input type="range" id="zoom-slider" min="1" max="10" value="1" step="0.5" class="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500">
                         <i class="fas fa-search-plus text-slate-400 text-xs"></i>
                     </div>
                     <span class="text-xs text-slate-500 font-mono" id="zoom-level-text">24h View</span>
@@ -118,8 +128,64 @@
 
     </main>
 
+    <!-- ================= MODAL EXPORT ================= -->
+    <div id="export-modal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('export-modal').classList.add('hidden')"></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                    <form action="{{ route('playback.export') }}" method="POST">
+                        @csrf
+                        <!-- Hidden Inputs untuk data dari Filter Utama -->
+                        <input type="hidden" name="cctv_id" value="{{ $selectedCctvId }}">
+                        <input type="hidden" name="date" value="{{ $date }}">
+
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 sm:mx-0 sm:h-10 sm:w-10">
+                                    <i class="fas fa-file-export text-emerald-600"></i>
+                                </div>
+                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Export Rekaman</h3>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500">
+                                            Download rekaman untuk tanggal <span class="font-bold text-gray-700">{{ $date }}</span>.
+                                            File akan diunduh dalam format <b>.ZIP</b>.
+                                        </p>
+
+                                        <div class="mt-4 grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 mb-1">Jam Mulai</label>
+                                                <input type="time" name="start_time" required 
+                                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 mb-1">Jam Selesai</label>
+                                                <input type="time" name="end_time" required 
+                                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="submit" class="inline-flex w-full justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 sm:ml-3 sm:w-auto">Download ZIP</button>
+                            <button type="button" onclick="document.getElementById('export-modal').classList.add('hidden')" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ================= END MODAL ================= -->
+
+    {{-- Script JS lama Anda tetap dibawah sini --}}
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // ... (Kode Javascript yang sudah ada sebelumnya jangan dihapus) ...
             const dateParam = "{{ $date }}";
             const camIdParam = "{{ $selectedCctvId }}";
             
@@ -170,8 +236,6 @@
                     let isActive = index === currentIndex;
                     item.className = `p-3 rounded-lg cursor-pointer border transition flex justify-between items-center group ${isActive ? 'bg-cyan-50 border-cyan-200 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`;
                     
-                    // PERBAIKAN UTAMA: Pastikan rec.building_name tidak undefined
-                    // Kita pakai fallback 'Unknown' jika data kosong
                     let buildingName = rec.building_name || 'Unknown Building';
                     
                     item.innerHTML = `
@@ -221,7 +285,6 @@
                 player.src = rec.url;
                 player.play();
                 
-                // PERBAIKAN UTAMA: Handle undefined data saat update judul
                 let faculty = rec.faculty_name || 'FACULTY';
                 let building = rec.building_name || 'BUILDING';
                 let camName = rec.cctv_name || 'CAMERA';

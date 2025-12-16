@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 use App\Models\Cctv;
 use App\Models\Building;
+use ZipArchive;
+use Illuminate\Support\Facades\Storage;
 
 class PlaybackController extends Controller
 {
@@ -115,5 +117,88 @@ class PlaybackController extends Controller
         usort($data, fn($a, $b) => $a['start_ts'] <=> $b['start_ts']);
 
         return response()->json($data);
+    }
+
+    public function exportRecordings(Request $request)
+    {
+        // 1. KEAMANAN: Cek Role Admin
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'cctv_id' => 'required',
+            'date' => 'required|date',
+            'start_time' => 'required', // Format H:i
+            'end_time' => 'required',   // Format H:i
+        ]);
+
+        $cctvId = $request->input('cctv_id');
+        $date = $request->input('date');
+        $startTimeStr = $request->input('start_time'); // "08:00"
+        $endTimeStr = $request->input('end_time');     // "09:30"
+
+        // Konversi input ke Timestamp untuk perbandingan
+        $filterStart = Carbon::createFromFormat('Y-m-d H:i', "$date $startTimeStr");
+        $filterEnd = Carbon::createFromFormat('Y-m-d H:i', "$date $endTimeStr");
+
+        // Path folder rekaman
+        $path = storage_path("app/public/recordings/{$date}");
+        
+        if (!File::exists($path)) {
+            return back()->with('error', 'Folder rekaman tidak ditemukan.');
+        }
+
+        $files = File::files($path);
+        $filesToZip = [];
+
+        // 2. LOGIKA FILTER FILE
+        foreach ($files as $file) {
+            $filename = $file->getFilename();
+            // Regex match: cam_1_2025-12-16_08-15-00.mp4
+            if (preg_match('/cam_(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/', $filename, $matches)) {
+                $fileCamId = $matches[1];
+                
+                // Cek ID Kamera
+                if ($fileCamId != $cctvId) continue;
+
+                // Cek Waktu File
+                $timePart = str_replace('-', ':', $matches[3]); // 08:15:00
+                $fileStart = Carbon::createFromFormat('Y-m-d H:i:s', "$date $timePart");
+                // Asumsi durasi file 15 menit, kita cek apakah file ini beririsan dengan range filter
+                
+                // Logika: Ambil file jika Start Time file berada DI ANTARA Filter Start & End
+                if ($fileStart->between($filterStart, $filterEnd) || $fileStart->eq($filterStart)) {
+                    $filesToZip[] = $file->getPathname();
+                }
+            }
+        }
+
+        if (empty($filesToZip)) {
+            return back()->with('error', 'Tidak ada rekaman ditemukan pada rentang waktu tersebut.');
+        }
+
+        // 3. PROSES ZIP
+        $zipFileName = "Export_CAM{$cctvId}_{$date}_{$startTimeStr}-{$endTimeStr}.zip";
+        $zipPath = storage_path("app/public/temp/{$zipFileName}");
+        
+        // Pastikan folder temp ada
+        if (!File::exists(storage_path("app/public/temp"))) {
+            File::makeDirectory(storage_path("app/public/temp"), 0755, true);
+        }
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+            foreach ($filesToZip as $filePath) {
+                // Masukkan file ke zip dengan nama aslinya
+                $zip->addFile($filePath, basename($filePath));
+            }
+            $zip->close();
+        } else {
+            return back()->with('error', 'Gagal membuat file ZIP.');
+        }
+
+        // 4. DOWNLOAD & HAPUS ZIP SETELAH SELESAI
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 }
