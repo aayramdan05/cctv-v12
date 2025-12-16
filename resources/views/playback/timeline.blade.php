@@ -15,11 +15,11 @@
                     {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d M Y') }}
                 </span>
 
-                <!-- TOMBOL EXPORT (ADMIN ONLY) -->
+                <!-- TOMBOL EXPORT-->
                 @if(auth()->user()->role === 'admin')
                     <button onclick="document.getElementById('export-modal').classList.remove('hidden')" 
                             class="ml-2 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
-                        <i class="fas fa-download"></i> Export
+                        <i class="fas fa-file-export"></i> Export ZIP
                     </button>
                 @endif
             </div>
@@ -130,7 +130,6 @@
 
     <!-- ================= MODAL EXPORT ================= -->
     <div id="export-modal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <!-- Backdrop -->
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('export-modal').classList.add('hidden')"></div>
 
         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -138,41 +137,27 @@
                 <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                     <form action="{{ route('playback.export') }}" method="POST">
                         @csrf
-                        <!-- Hidden Inputs untuk data dari Filter Utama -->
+                        <!-- Hidden Inputs (Mengambil data dari filter yang sedang aktif) -->
                         <input type="hidden" name="cctv_id" value="{{ $selectedCctvId }}">
                         <input type="hidden" name="date" value="{{ $date }}">
 
                         <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                            <div class="sm:flex sm:items-start">
-                                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 sm:mx-0 sm:h-10 sm:w-10">
-                                    <i class="fas fa-file-export text-emerald-600"></i>
-                                </div>
-                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Export Rekaman</h3>
-                                    <div class="mt-2">
-                                        <p class="text-sm text-gray-500">
-                                            Download rekaman untuk tanggal <span class="font-bold text-gray-700">{{ $date }}</span>.
-                                            File akan diunduh dalam format <b>.ZIP</b>.
-                                        </p>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900 mb-2">Export Rekaman</h3>
+                            <p class="text-sm text-gray-500 mb-4">Pilih rentang waktu untuk tanggal <b>{{ $date }}</b>.</p>
 
-                                        <div class="mt-4 grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-xs font-bold text-gray-700 mb-1">Jam Mulai</label>
-                                                <input type="time" name="start_time" required 
-                                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6">
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-bold text-gray-700 mb-1">Jam Selesai</label>
-                                                <input type="time" name="end_time" required 
-                                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6">
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Jam Mulai</label>
+                                    <input type="time" name="start_time" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-emerald-600 sm:text-sm sm:leading-6">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Jam Selesai</label>
+                                    <input type="time" name="end_time" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-emerald-600 sm:text-sm sm:leading-6">
                                 </div>
                             </div>
                         </div>
                         <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                            <button type="submit" class="inline-flex w-full justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 sm:ml-3 sm:w-auto">Download ZIP</button>
+                            <button type="submit" class="inline-flex w-full justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 sm:ml-3 sm:w-auto">Proses di Background</button>
                             <button type="button" onclick="document.getElementById('export-modal').classList.add('hidden')" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
                         </div>
                     </form>

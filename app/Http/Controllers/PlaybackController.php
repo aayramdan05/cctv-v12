@@ -121,84 +121,43 @@ class PlaybackController extends Controller
 
     public function exportRecordings(Request $request)
     {
-        // 1. KEAMANAN: Cek Role Admin
+        // 1. Validasi
         if (auth()->user()->role !== 'admin') {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         $request->validate([
             'cctv_id' => 'required',
             'date' => 'required|date',
-            'start_time' => 'required', // Format H:i
-            'end_time' => 'required',   // Format H:i
+            'start_time' => 'required',
+            'end_time' => 'required',
         ]);
 
-        $cctvId = $request->input('cctv_id');
-        $date = $request->input('date');
-        $startTimeStr = $request->input('start_time'); // "08:00"
-        $endTimeStr = $request->input('end_time');     // "09:30"
+        // 2. DISPATCH JOB (Kirim tugas ke Worker)
+        // Controller langsung selesai dalam milidetik, tidak akan 502 Bad Gateway.
+        ProcessRecordingExport::dispatch(
+            auth()->user(),
+            $request->input('cctv_id'),
+            $request->input('date'),
+            $request->input('start_time'),
+            $request->input('end_time')
+        );
 
-        // Konversi input ke Timestamp untuk perbandingan
-        $filterStart = Carbon::createFromFormat('Y-m-d H:i', "$date $startTimeStr");
-        $filterEnd = Carbon::createFromFormat('Y-m-d H:i', "$date $endTimeStr");
+        // 3. Kembali ke halaman dengan pesan sukses
+        return back()->with('success', 'Permintaan Export sedang diproses di latar belakang. Silakan cek notifikasi nanti.');
+    }
 
-        // Path folder rekaman
-        $path = storage_path("app/public/recordings/{$date}");
-        
+    public function downloadExport($filename)
+    {
+        if (auth()->user()->role !== 'admin') { abort(403); }
+
+        // Download file yang sudah jadi di folder storage/app/public/exports
+        $path = storage_path("app/public/exports/{$filename}");
+
         if (!File::exists($path)) {
-            return back()->with('error', 'Folder rekaman tidak ditemukan.');
+            return back()->with('error', 'File belum siap atau sudah dihapus.');
         }
 
-        $files = File::files($path);
-        $filesToZip = [];
-
-        // 2. LOGIKA FILTER FILE
-        foreach ($files as $file) {
-            $filename = $file->getFilename();
-            // Regex match: cam_1_2025-12-16_08-15-00.mp4
-            if (preg_match('/cam_(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/', $filename, $matches)) {
-                $fileCamId = $matches[1];
-                
-                // Cek ID Kamera
-                if ($fileCamId != $cctvId) continue;
-
-                // Cek Waktu File
-                $timePart = str_replace('-', ':', $matches[3]); // 08:15:00
-                $fileStart = Carbon::createFromFormat('Y-m-d H:i:s', "$date $timePart");
-                // Asumsi durasi file 15 menit, kita cek apakah file ini beririsan dengan range filter
-                
-                // Logika: Ambil file jika Start Time file berada DI ANTARA Filter Start & End
-                if ($fileStart->between($filterStart, $filterEnd) || $fileStart->eq($filterStart)) {
-                    $filesToZip[] = $file->getPathname();
-                }
-            }
-        }
-
-        if (empty($filesToZip)) {
-            return back()->with('error', 'Tidak ada rekaman ditemukan pada rentang waktu tersebut.');
-        }
-
-        // 3. PROSES ZIP
-        $zipFileName = "Export_CAM{$cctvId}_{$date}_{$startTimeStr}-{$endTimeStr}.zip";
-        $zipPath = storage_path("app/public/temp/{$zipFileName}");
-        
-        // Pastikan folder temp ada
-        if (!File::exists(storage_path("app/public/temp"))) {
-            File::makeDirectory(storage_path("app/public/temp"), 0755, true);
-        }
-
-        $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($filesToZip as $filePath) {
-                // Masukkan file ke zip dengan nama aslinya
-                $zip->addFile($filePath, basename($filePath));
-            }
-            $zip->close();
-        } else {
-            return back()->with('error', 'Gagal membuat file ZIP.');
-        }
-
-        // 4. DOWNLOAD & HAPUS ZIP SETELAH SELESAI
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+        return response()->download($path);
     }
 }
