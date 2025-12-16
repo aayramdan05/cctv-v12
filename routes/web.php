@@ -16,7 +16,8 @@ use App\Http\Controllers\ServerController;
 use App\Http\Controllers\PlaybackController;   
 use App\Http\Controllers\FfmpegStatusController;
 use App\Http\Controllers\Api\TestCameraController;
-use App\Models\Cctv; // <--- Wajib untuk cek hak akses kamera
+use App\Models\Cctv; 
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
