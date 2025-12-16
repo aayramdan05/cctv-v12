@@ -40,6 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/playback/data', [PlaybackController::class, 'getRecordings'])->name('playback.data');
     Route::post('/playback/export', [PlaybackController::class, 'exportRecordings'])->name('playback.export');
     Route::get('/playback/download/{filename}', [PlaybackController::class, 'downloadExport'])->name('playback.download');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
     
     // Tools Streaming

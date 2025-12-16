@@ -65,7 +65,17 @@
                     <i class="fas fa-history w-5 {{ request()->routeIs('playback.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Recording</span>
                 </a>
-                
+                <a href="{{ route('notifications.index') }}" class="flex items-center gap-2 px-4 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition relative">
+                    <i class="fas fa-bell w-5"></i>
+                    <span>Notifikasi</span>
+                    
+                    <!-- Badge Counter (Merah) -->
+                    @if(auth()->user()->unreadNotifications->count() > 0)
+                        <span class="absolute right-2 top-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {{ auth()->user()->unreadNotifications->count() }}
+                        </span>
+                    @endif
+                </a>                
             </div>
 
         @endif
