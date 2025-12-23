@@ -21,3 +21,27 @@ Route::get('/node-config', function (Request $request) {
 
     return response()->json($cctvs);
 });
+
+// Endpoint Data CCTV (Protected by Sanctum)
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // 1. Get User Info
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    // 2. Get List CCTV
+    Route::get('/cctvs', function () {
+        // Return JSON daftar kamera
+        return Cctv::with('building')->get()->map(function($cam) {
+            return [
+                'id' => $cam->id,
+                'name' => $cam->nama_cctv,
+                'building' => $cam->building->nama_gedung ?? '-',
+                'stream_url' => $cam->live_stream_url, // Hati-hati mengekspos ini
+                'status' => 'online'
+            ];
+        });
+    });
+  });
+

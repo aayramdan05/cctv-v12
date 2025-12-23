@@ -18,6 +18,7 @@ use App\Http\Controllers\FfmpegStatusController;
 use App\Http\Controllers\Api\TestCameraController;
 use App\Models\Cctv; 
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ApiKeyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,7 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
-    
+    Route::get('/api-keys', [ApiKeyController::class, 'index'])->name('api.index');
+    Route::post('/api-keys', [ApiKeyController::class, 'store'])->name('api.store');
+    Route::delete('/api-keys/{id}', [ApiKeyController::class, 'destroy'])->name('api.destroy');
     // Tools Streaming
     Route::get('/stream/{cctv}', [StreamController::class, 'play'])->name('stream.play');
     Route::post('/cctv/test-connection', [TestCameraController::class, 'test'])->name('cctv.test');
