@@ -19,7 +19,7 @@ use App\Http\Controllers\Api\TestCameraController;
 use App\Models\Cctv; 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ApiKeyController;
-
+use App\Http\Controllers\StreamAuthController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -29,6 +29,8 @@ use App\Http\Controllers\ApiKeyController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/auth-stream-verify', [StreamAuthController::class, 'verify'])->name('stream.verify');
 
 // --- GROUP 1: USER, OPERATOR, ADMIN (Akses Umum) ---
 Route::middleware(['auth', 'verified'])->group(function () {

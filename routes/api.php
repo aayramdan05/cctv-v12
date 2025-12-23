@@ -24,24 +24,31 @@ Route::get('/node-config', function (Request $request) {
 
 // Endpoint Data CCTV (Protected by Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
-    
-    // 1. Get User Info
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
 
-    // 2. Get List CCTV
-    Route::get('/cctvs', function () {
-        // Return JSON daftar kamera
-        return Cctv::with('building')->get()->map(function($cam) {
+    Route::get('/cctvs', function (Request $request) {
+        
+        // Ambil token mentah yang sedang dipakai request ini
+        // (Token yang dikirim mobile app di header Authorization)
+        $currentToken = $request->bearerToken(); 
+
+        return Cctv::with('building')->get()->map(function($cam) use ($currentToken) {
+            
+            // Logika untuk menempelkan token ke URL
+            // Cek apakah URL asli sudah punya tanda tanya '?'
+            $separator = parse_url($cam->live_stream_url, PHP_URL_QUERY) ? '&' : '?';
+            
+            // Tempelkan token di ujung URL
+            // Contoh hasil: /node1/stream.html?src=camera_1&api_token=1|Xyz...
+            $signedUrl = $cam->live_stream_url . $separator . "api_token=" . $currentToken;
+
             return [
                 'id' => $cam->id,
                 'name' => $cam->nama_cctv,
                 'building' => $cam->building->nama_gedung ?? '-',
-                'stream_url' => $cam->live_stream_url, // Hati-hati mengekspos ini
+                'stream_url' => $signedUrl, // <--- URL SAKTI
                 'status' => 'online'
             ];
         });
     });
-  });
 
+});
