@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Cctv;
+use App\Models\Building;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -27,123 +28,96 @@ class UserController extends Controller
 
     public function create()
     {
-        $cctvs = Cctv::accessibleByAuth()->with('building')->get();
-        // Kita kirim list fakultas dari sini biar rapi
-        $faculties = \App\Models\Building::distinct()->pluck('fakultas')->filter();
+        // Pastikan variabel ini dikirim ke View
+        $cctvs = Cctv::orderBy('nama_cctv')->get();
+        $faculties = Building::distinct()->pluck('fakultas')->filter();
         
         return view('users.create', compact('cctvs', 'faculties'));
     }
 
     public function store(Request $request)
     {
-        $currentUser = auth()->user();
-
-        $rules = [
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:admin,operator,user,faculty_operator,api_viewer'],
-            'cctv_access' => ['array'],
-        ];
-
-        // PERBAIKAN DISINI:
-        // Cek jika user saat ini adalah Admin ATAU Operator Pusat
-        if (in_array($currentUser->role, ['admin', 'operator'])) {
-            // Jika mereka membuat 'faculty_operator' atau 'user', WAJIB isi fakultas
-            if (in_array($request->role, ['faculty_operator', 'user'])) {
-                $rules['faculty'] = ['required', 'string'];
-            }
-        }
-
-        $request->validate($rules);
-
-        $assignedFaculty = null;
-
-        if ($currentUser->role === 'faculty_operator') {
-            $assignedFaculty = $currentUser->faculty;
-        } else {
-            $assignedFaculty = $request->faculty;
-        }
+            'role' => ['required', 'string', 'in:admin,operator,faculty_operator,user,api_viewer'],
+            'faculty' => ['nullable', 'string'],
+            'cctv_access' => ['nullable', 'array'], // Validasi array checkbox
+            'cctv_access.*' => ['exists:cctvs,id'],
+        ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'faculty' => $assignedFaculty,
+            'faculty' => $request->role === 'faculty_operator' || $request->role === 'user' ? $request->faculty : null,
         ]);
 
-        if ($request->role === 'user' && $request->has('cctv_access')) {
-            $user->cctvs()->sync($request->cctv_access);
+        // --- FIX: SIMPAN RELASI CCTV ---
+        if (in_array($request->role, ['user', 'api_viewer'])) {
+            $user->cctvs()->sync($request->cctv_access ?? []);
         }
+        // -------------------------------
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
-    // ... (Method edit, update, destroy biarkan sama, sesuaikan logika validasinya saja) ...
     public function edit(User $user)
     {
-        $cctvs = Cctv::accessibleByAuth()->with('building')->get();
-        $assignedCctvs = $user->cctvs->pluck('id')->toArray();
-        $faculties = \App\Models\Building::distinct()->pluck('fakultas')->filter(); // Tambahkan ini
+        $cctvs = Cctv::orderBy('nama_cctv')->get();
+        $faculties = Building::distinct()->pluck('fakultas')->filter();
         
-        return view('users.edit', compact('user', 'cctvs', 'assignedCctvs', 'faculties'));
+        // --- FIX: KIRIM DATA CCTV YANG SUDAH DIPILIH ---
+        $assignedCctvs = $user->cctvs->pluck('id')->toArray();
+        // -----------------------------------------------
+
+        return view('users.edit', compact('user', 'cctvs', 'faculties', 'assignedCctvs'));
     }
-    
+
     public function update(Request $request, User $user)
     {
-         // Pastikan copy logika validasi & penentuan fakultas yang sama seperti store()
-         // ...
-         
-         // CONTOH UPDATE SINGKAT:
-         $currentUser = auth()->user();
-         $rules = [
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'in:admin,operator,user,faculty_operator'],
-         ];
-         
-         if (in_array($currentUser->role, ['admin', 'operator'])) {
-            if (in_array($request->role, ['faculty_operator', 'user'])) {
-                $rules['faculty'] = ['required', 'string'];
-            }
-         }
-         
-         $request->validate($rules);
-         
-         $data = [
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'role' => ['required', 'string', 'in:admin,operator,faculty_operator,user,api_viewer'],
+            'faculty' => ['nullable', 'string'],
+            'cctv_access' => ['nullable', 'array'],
+            'cctv_access.*' => ['exists:cctvs,id'],
+        ]);
+
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
-         ];
-         
-         if ($request->filled('password')) {
-            $request->validate(['password' => ['confirmed', Rules\Password::defaults()]]);
-            $data['password'] = Hash::make($request->password);
-         }
-         
-         // Update Fakultas Logic
-         if ($currentUser->role === 'faculty_operator') {
-            $data['faculty'] = $currentUser->faculty;
-         } else {
-            $data['faculty'] = $request->faculty;
-         }
+            'faculty' => $request->role === 'faculty_operator' || $request->role === 'user' ? $request->faculty : null,
+        ];
 
-         $user->update($data);
-         
-         if ($request->role === 'user') {
+        if ($request->filled('password')) {
+            $request->validate([
+                'password' => ['confirmed', Rules\Password::defaults()],
+            ]);
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        // --- FIX: UPDATE RELASI CCTV ---
+        if (in_array($request->role, ['user', 'api_viewer'])) {
             $user->cctvs()->sync($request->cctv_access ?? []);
-         } else {
+        } else {
+            // Jika role berubah jadi admin/operator, hapus relasi cctv karena mereka akses semua
             $user->cctvs()->detach();
-         }
-         
-         return redirect()->route('users.index')->with('success', 'User update berhasil.');
+        }
+        // -------------------------------
+
+        return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
-        if ($user->id === auth()->id()) return back()->with('error', 'Tidak bisa hapus diri sendiri');
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User dihapus.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 }

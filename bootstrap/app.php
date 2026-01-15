@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Daftarkan Middleware Manual (Gaya Lama)
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'dashboard.access' => \App\Http\Middleware\CheckDashboardAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

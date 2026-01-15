@@ -45,29 +45,34 @@ class Cctv extends Model
         return $this->belongsToMany(User::class);
     }
 
-    // --- SCOPES ---
-
     public function scopeAccessibleByAuth($query)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
-        if ($user->role === 'admin' || $user->role === 'operator') {
-            return $query;
+        if (!$user) {
+            return $query->whereRaw('1 = 0'); // Return kosong jika tidak login
         }
 
+        // 1. Admin & Operator Pusat: LIHAT SEMUA
+        if ($user->role === 'admin' || $user->role === 'operator') {
+            return $query; 
+        }
+
+        // 2. Operator Fakultas: LIHAT SESUAI FAKULTAS
         if ($user->role === 'faculty_operator') {
-            return $query->whereHas('building', function($q) use ($user) {
+            return $query->whereHas('building', function ($q) use ($user) {
                 $q->where('fakultas', $user->faculty);
             });
         }
 
-        if ($user->role === 'user') {
-            return $query->whereHas('users', function($q) use ($user) {
+        // 3. User Biasa & API Viewer: HANYA YANG DI-ASSIGN (PIVOT)
+        if ($user->role === 'user' || $user->role === 'api_viewer') {
+            return $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
         }
-        
-        return $query;
+
+        return $query->whereRaw('1 = 0'); // Default kosong
     }
 
     // --- ACCESSORS ---

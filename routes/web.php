@@ -33,7 +33,7 @@ Route::get('/', function () {
 Route::get('/auth-stream-verify', [StreamAuthController::class, 'verify'])->name('stream.verify');
 
 // --- GROUP 1: USER, OPERATOR, ADMIN (Akses Umum) ---
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     
     // Dashboard & Monitoring
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
