@@ -7,7 +7,8 @@
                     <h2 class="text-2xl font-bold text-slate-800">API Management</h2>
                     <p class="text-sm text-slate-500">Kelola akses token untuk aplikasi pihak ketiga.</p>
                 </div>
-                <a href="{{ route('users.create') }}" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                <!-- UBAH WARNA TOMBOL KE CYAN -->
+                <a href="{{ route('users.create') }}" class="px-4 py-2 bg-cyan-600 text-white text-sm font-bold rounded-lg hover:bg-cyan-700 transition shadow-sm">
                     <i class="fas fa-plus mr-2"></i> Tambah API Client Baru
                 </a>
             </div>
@@ -22,8 +23,6 @@
                     <p class="text-sm">Salin token ini sekarang. Token tidak akan ditampilkan lagi.</p>
                     <div class="mt-3 bg-white p-3 rounded border border-emerald-200 font-mono text-sm break-all select-all text-slate-700">
                         {{ str_replace('Token berhasil dibuat untuk ', '', session('success')) }}
-                        {{-- (Parsing sederhana string session, atau sesuaikan di controller agar kirim array) --}}
-                        {{-- Sebaiknya di controller: with('new_token', $token->plainTextToken) agar lebih rapi --}}
                     </div>
                 </div>
             @endif
@@ -35,7 +34,8 @@
                         <!-- Header User -->
                         <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                                <!-- UBAH ICON WARNA KE CYAN -->
+                                <div class="w-10 h-10 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">
                                     {{ substr($user->name, 0, 1) }}
                                 </div>
                                 <div>
@@ -48,9 +48,11 @@
                             <form action="{{ route('api.store') }}" method="POST" class="flex gap-2">
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <!-- UBAH FOCUS RING KE CYAN -->
                                 <input type="text" name="token_name" placeholder="Nama Token (e.g. Web Prod)" required
-                                       class="text-xs px-3 py-1.5 rounded border border-slate-300 focus:ring-indigo-500 w-48">
-                                <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 transition">
+                                       class="text-xs px-3 py-1.5 rounded border border-slate-300 focus:ring-cyan-500 w-48">
+                                <!-- UBAH TOMBOL GENERATE KE CYAN -->
+                                <button type="submit" class="px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded hover:bg-cyan-700 transition">
                                     <i class="fas fa-key mr-1"></i> Generate
                                 </button>
                             </form>
@@ -94,7 +96,8 @@
                         </div>
                         <h3 class="text-lg font-bold text-slate-700">Belum Ada API Client</h3>
                         <p class="text-slate-500 text-sm mb-4">Buat user dengan role 'API Viewer' di menu Manajemen User terlebih dahulu.</p>
-                        <a href="{{ route('users.create') }}" class="text-indigo-600 font-bold hover:underline">Ke Manajemen User &rarr;</a>
+                        <!-- UBAH LINK COLOR -->
+                        <a href="{{ route('users.create') }}" class="text-cyan-600 font-bold hover:underline">Ke Manajemen User &rarr;</a>
                     </div>
                 @endforelse
             </div>
