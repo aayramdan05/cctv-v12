@@ -4,41 +4,45 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Str;
 
 class ApiKeyController extends Controller
 {
-    // Tampilkan daftar token user saat ini
     public function index()
     {
-        $user = auth()->user();
-        // Ambil semua token milik user yang login
-        $tokens = $user->tokens;
+        // Ambil hanya user dengan role 'api_viewer'
+        // Beserta token-token yang mereka miliki
+        $apiUsers = User::where('role', 'api_viewer')
+                        ->with('tokens')
+                        ->orderBy('name')
+                        ->get();
         
-        return view('api.index', compact('tokens'));
+        return view('api.index', compact('apiUsers'));
     }
 
-    // Buat Token Baru
     public function store(Request $request)
     {
         $request->validate([
+            'user_id' => 'required|exists:users,id',
             'token_name' => 'required|string|max:255',
         ]);
 
-        $user = auth()->user();
+        // Cari user target (Pastikan dia memang api_viewer)
+        $targetUser = User::where('id', $request->user_id)
+                          ->where('role', 'api_viewer')
+                          ->firstOrFail();
         
-        // Buat token dengan permission 'read' (bisa disesuaikan nanti)
-        // createToken mengembalikan instance NewAccessToken
-        $token = $user->createToken($request->token_name);
+        // Buat token ATAS NAMA user target tersebut
+        $token = $targetUser->createToken($request->token_name);
 
-        // Token plain text HANYA muncul sekali saat dibuat
-        return back()->with('success', 'API Token berhasil dibuat. Simpan ini sekarang: ' . $token->plainTextToken);
+        return back()->with('success', 'Token berhasil dibuat untuk ' . $targetUser->name . '. Token: ' . $token->plainTextToken);
     }
 
-    // Hapus Token (Revoke)
     public function destroy($id)
     {
-        auth()->user()->tokens()->where('id', $id)->delete();
-        return back()->with('success', 'Token berhasil dihapus.');
+        // Hapus token berdasarkan ID token (dari tabel personal_access_tokens)
+        // Kita gunakan model User milik Laravel Sanctum atau query builder
+        \Laravel\Sanctum\PersonalAccessToken::findOrFail($id)->delete();
+
+        return back()->with('success', 'Token berhasil dicabut (revoked).');
     }
 }
