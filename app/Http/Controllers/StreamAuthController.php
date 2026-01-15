@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Sanctum\PersonalAccessToken;
 use App\Models\Cctv;
+use Illuminate\Support\Facades\Log; // Added for debugging
 
 class StreamAuthController extends Controller
 {
@@ -105,8 +106,15 @@ class StreamAuthController extends Controller
             return response("OK - $authSource (Authorized)", 200);
         }
 
-        // Log percobaan akses ilegal (Opsional)
-        // \Log::warning("Unauthorized Access Attempt: User {$user->email} tried to access Camera {$cctvId}");
+        // --- DEBUGGING LOG (Cek storage/logs/laravel.log jika Forbidden) ---
+        Log::warning("Stream Access Denied", [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'user_faculty' => $user->faculty ?? 'N/A',
+            'cctv_id' => $cctvId,
+            'cctv_faculty' => $cctv->building->fakultas ?? 'N/A',
+            'auth_source' => $authSource
+        ]);
 
         return response('Forbidden - Access Denied', 403);
     }
