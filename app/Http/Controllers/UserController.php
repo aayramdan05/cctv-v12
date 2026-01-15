@@ -42,7 +42,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:admin,operator,user,faculty_operator'],
+            'role' => ['required', 'in:admin,operator,user,faculty_operator,api_viewer'],
             'cctv_access' => ['array'],
         ];
 
