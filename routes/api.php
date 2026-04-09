@@ -27,18 +27,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/cctvs', function (Request $request) {
         
-        // Ambil token mentah yang sedang dipakai request ini
-        // (Token yang dikirim mobile app di header Authorization)
+        // 1. Ambil data User yang memiliki token ini
+        $user = $request->user();
+
+        // 2. Ambil token mentah yang sedang dipakai
         $currentToken = $request->bearerToken(); 
 
-        return Cctv::with('building')->get()->map(function($cam) use ($currentToken) {
+        // 3. PERUBAHAN UTAMA: Gunakan $user->cctvs() BUKAN Cctv::all()
+        return $user->cctvs()->with('building')->get()->map(function($cam) use ($currentToken) {
             
             // Logika untuk menempelkan token ke URL
-            // Cek apakah URL asli sudah punya tanda tanya '?'
             $separator = parse_url($cam->live_stream_url, PHP_URL_QUERY) ? '&' : '?';
             
             // Tempelkan token di ujung URL
-            // Contoh hasil: /node1/stream.html?src=camera_1&api_token=1|Xyz...
             $signedUrl = $cam->live_stream_url . $separator . "api_token=" . $currentToken;
 
             return [
