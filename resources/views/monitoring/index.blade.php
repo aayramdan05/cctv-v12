@@ -255,17 +255,48 @@
                 <div class="p-3 border-b border-slate-100 bg-slate-50 rounded-t-2xl font-bold text-slate-700 text-sm flex justify-between items-center">
                     <span>Camera List</span><span class="text-xs text-slate-400 bg-white border px-2 py-0.5 rounded-full">{{ $cctvs->count() }}</span>
                 </div>
-                <div class="p-2 border-b border-slate-100"><input type="text" x-model="search" placeholder="Cari..." class="w-full px-3 py-1.5 text-xs rounded border"></div>
+                <div class="p-2 border-b border-slate-100 flex flex-col gap-2">
+                    <input type="text" x-model="search" placeholder="Cari Kamera..." class="w-full px-3 py-1.5 text-[11px] rounded border border-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                    <div class="flex gap-2">
+                        <select x-model="filterFaculty" class="w-1/2 px-2 py-1.5 text-[10px] rounded border border-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 truncate">
+                            <option value="">Semua Fakultas</option>
+                            @foreach($cctvs->pluck('building.fakultas')->filter()->unique()->sort() as $fakultas)
+                                <option value="{{ $fakultas }}">{{ $fakultas }}</option>
+                            @endforeach
+                        </select>
+                        <select x-model="filterBuilding" class="w-1/2 px-2 py-1.5 text-[10px] rounded border border-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 truncate">
+                            <option value="">Semua Gedung</option>
+                            @foreach($cctvs->pluck('building.nama_gedung')->filter()->unique()->sort() as $gedung)
+                                <option value="{{ $gedung }}">{{ $gedung }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
                 <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                     @foreach($cctvs as $cctv)
                     <div class="bg-white p-2 rounded border hover:border-cyan-400 cursor-pointer flex items-center gap-3 shadow-sm hover:shadow-md transition select-none group"
+                        x-show="
+                            (search === '' || '{{ strtolower($cctv->nama_cctv) }}'.includes(search.toLowerCase())) &&
+                            (filterFaculty === '' || '{{ $cctv->building->fakultas ?? '' }}' === filterFaculty) &&
+                            (filterBuilding === '' || '{{ $cctv->building->nama_gedung ?? '' }}' === filterBuilding)
+                        "
                         draggable="true" 
                         @dragstart="handleDragStart($event, {{ $cctv->id }}, '{{ $cctv->nama_cctv }}', '{{ $cctv->building->nama_gedung ?? '-' }}', '{{ $cctv->building->fakultas ?? '-' }}', '{{ $cctv->live_stream_url }}')"
                         @dragend="isDragging = false"
                         @click.stop="addCameraOnClick({ id: {{ $cctv->id }}, name: '{{ $cctv->nama_cctv }}', building: '{{ $cctv->building->nama_gedung ?? '-' }}', faculty: '{{ $cctv->building->fakultas ?? '-' }}', liveUrl: '{{ $cctv->live_stream_url }}' })">
-                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-500 transition"><i class="fas fa-video"></i></div>
-                        <div class="min-w-0"><p class="text-xs font-bold text-slate-700 truncate group-hover:text-cyan-600 transition">{{ $cctv->nama_cctv }}</p><p class="text-[9px] text-slate-500 truncate">{{ $cctv->building->nama_gedung ?? '-' }}</p></div>
-                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition"><i class="fas fa-plus-circle text-cyan-400"></i></div>
+                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-500 transition shrink-0"><i class="fas fa-video"></i></div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-slate-700 truncate group-hover:text-cyan-600 transition flex items-center gap-1">
+                                <span class="truncate">{{ $cctv->nama_cctv }}</span>
+                                @if($cctv->server)
+                                    <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[8px] font-mono border border-blue-100 shrink-0" title="IP: {{ $cctv->server->ip_address }}">Node {{ $cctv->server->id }}</span>
+                                @else
+                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[8px] font-mono border border-slate-200 shrink-0">Master</span>
+                                @endif
+                            </p>
+                            <p class="text-[9px] text-slate-500 truncate">{{ $cctv->building->nama_gedung ?? '-' }}</p>
+                        </div>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition shrink-0"><i class="fas fa-plus-circle text-cyan-400"></i></div>
                     </div>
                     @endforeach
                 </div>
@@ -277,7 +308,7 @@
         function hybridMonitoring() {
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
-                search: '', currentHost: window.location.hostname, isFullscreen: false,
+                search: '', filterFaculty: '', filterBuilding: '', currentHost: window.location.hostname, isFullscreen: false,
                 isDragging: false,
                 
                 selectedDate: new Date().toISOString().split('T')[0],

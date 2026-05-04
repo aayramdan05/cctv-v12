@@ -12,7 +12,7 @@ class MonitoringController extends Controller
     public function index(): View
     {
         $cctvs = Cctv::accessibleByAuth()
-                     ->with('building')
+                     ->with(['building', 'server'])
                      ->orderBy('nama_cctv')
                      ->get();
         return view('monitoring.index', compact('cctvs'));
