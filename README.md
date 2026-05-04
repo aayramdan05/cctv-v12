@@ -148,9 +148,21 @@ sudo systemctl enable --now cctv-sync
 
 ---
 
-## 📝 Catatan Penting
-*   **Sinkronisasi Waktu**: Pastikan semua Node memiliki waktu yang sinkron dengan Master (gunakan NTP) agar timeline rekaman akurat.
-*   **Retention**: Script secara otomatis menghapus rekaman fisik dan data di DB setelah melewati batas hari yang ditentukan di `.env`.
+## 🚀 Instalasi Cepat Recording Node (Automated)
+
+Jika Anda ingin menambah server rekaman baru (Node) tanpa ribet, gunakan script installer otomatis yang sudah disediakan:
+
+```bash
+# 1. Download installer dari folder scripts proyek ini ke Server Node
+# 2. Beri izin eksekusi
+chmod +x install_node.sh
+
+# 3. Jalankan sebagai root
+sudo ./install_node.sh
+```
+
+Script ini akan otomatis menginstal Nginx, FFmpeg, Python, Go2RTC, dan menyeting seluruh konfigurasi yang dibutuhkan berdasarkan input IP Master Anda.
 
 ---
+
 © 2026 UNPAD CCTV Infrastructure Team
