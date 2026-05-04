@@ -43,11 +43,13 @@
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row flex-1 gap-6 overflow-hidden min-h-0 relative">
+        <div class="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0 relative">
             
-            <div class="flex-1 flex flex-col min-w-0 gap-4 z-10 min-h-0">
+            <div class="flex flex-col min-w-0 gap-3 lg:gap-4 z-10 min-h-0"
+                 :class="isFullscreen ? 'flex-1 h-full' : 'flex-none lg:flex-1'">
                 
-                <div class="flex-1 bg-slate-900 rounded-2xl overflow-hidden shadow-lg border border-slate-700 relative min-h-[50vh] lg:min-h-0">
+                <div class="w-full lg:w-auto bg-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-md lg:shadow-lg border border-slate-700 relative transition-all duration-300"
+                     :class="isFullscreen ? 'flex-1 h-full' : (gridSize === 1 ? 'aspect-video shrink-0 lg:flex-1 lg:shrink' : 'aspect-square shrink-0 lg:flex-1 lg:shrink')">
                     <div class="grid h-full w-full gap-0.5 bg-black"
                          :class="{ 'grid-cols-1 grid-rows-1': gridSize === 1, 'grid-cols-2 grid-rows-2': gridSize === 4, 'grid-cols-3 grid-rows-3': gridSize === 9 }">
                         
@@ -124,7 +126,7 @@
                     </div>
                 </div>
 
-                <div class="h-auto min-h-[6rem] bg-white border border-slate-300 p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-lg relative"
+                <div class="h-auto min-h-[6rem] bg-white border border-slate-200 lg:border-slate-300 p-2.5 lg:p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-md lg:shadow-lg relative"
                      x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
                      x-transition>
                     
@@ -249,9 +251,9 @@
                 </div>
             </div>
 
-            <div class="w-full lg:w-80 xl:w-96 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30 h-64 lg:h-auto"
+            <div class="w-full lg:w-80 xl:w-96 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col transition-all duration-300 z-30 min-h-0"
                     x-show="showSidebar && !isFullscreen"
-                    :class="{'absolute top-0 right-0 h-full w-full lg:relative lg:w-80 xl:w-96': isFullscreen}">
+                    :class="isFullscreen ? 'absolute top-0 right-0 h-full w-full lg:relative lg:w-80 xl:w-96' : 'flex-1 lg:flex-none lg:h-auto lg:shrink-0'">
                 <div class="p-4 border-b border-slate-100 bg-white flex flex-col gap-3 rounded-t-2xl shrink-0">
                     <div class="flex justify-between items-center text-slate-700 text-sm font-bold">
                         <span class="flex items-center gap-2"><i class="fas fa-video text-cyan-500"></i> Camera List</span>
