@@ -11,13 +11,13 @@ from dotenv import load_dotenv
 # Load Environment Variables dari file .env
 load_dotenv('/home/aay/cctv-scripts/.env')
 
-DB_HOST = os.getenv('DB_HOST', '10.69.69.21')
-DB_PORT = os.getenv('DB_PORT', '5432')
-DB_NAME = os.getenv('DB_DATABASE', 'cctv_prod')
-DB_USER = os.getenv('DB_USERNAME', 'postgres')
-DB_PASS = os.getenv('DB_PASSWORD', '')
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
+DB_NAME = os.getenv('DB_DATABASE')
+DB_USER = os.getenv('DB_USERNAME')
+DB_PASS = os.getenv('DB_PASSWORD')
 
-NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.39')
+NODE_IP = os.getenv('SERVER_RECORDER_IP')
 RETENTION_DAYS = int(os.getenv('RETENTION_DAYS', 2))
 RECORD_DURATION = 900  # 15 menit per chunk file mp4
 CHECK_INTERVAL = 5     # Cek update konfigurasi database setiap 5 menit
