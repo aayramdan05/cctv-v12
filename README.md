@@ -1,59 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# UNPAD Enterprise CCTV Monitoring System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem monitoring CCTV berbasis web yang dirancang untuk skala besar menggunakan arsitektur **Hybrid Multi-Node**. Sistem ini memisahkan antara server kontrol (Master) dan server perekam (Node) untuk efisiensi bandwidth dan skalabilitas.
 
-## About Laravel
+## 🚀 Arsitektur Sistem
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Sistem ini terdiri dari dua komponen utama:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1.  **Master Server (Laravel)**:
+    *   Berfungsi sebagai pusat antarmuka pengguna (UI).
+    *   Mengelola database pusat (PostgreSQL) untuk metadata CCTV dan rekaman.
+    *   Mengatur otentikasi dan izin akses video menggunakan Nginx `auth_request`.
+2.  **Recording Node (Python Agent)**:
+    *   Server terdistribusi yang melakukan penarikan *stream* dari kamera fisik.
+    *   Mengelola *live streaming* via WebRTC/HLS menggunakan **Go2RTC**.
+    *   Melakukan perekaman otomatis ke storage lokal dalam potongan 15 menit (.mp4).
+    *   Mensinkronisasikan metadata rekaman ke Database Master secara *real-time*.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🛠️ Instalasi Master Server
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 1. Persyaratan Sistem
+*   PHP 8.2+ & Composer
+*   PostgreSQL 14+
+*   Node.js & NPM
+*   Nginx (dengan modul `libnginx-mod-http-auth-request`)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 2. Langkah Instalasi
+```bash
+# Clone repository
+git clone <repository-url>
+cd cctv-v12
 
-## Laravel Sponsors
+# Install dependensi
+composer install
+npm install
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Konfigurasi Environment
+cp .env.example .env
+php artisan key:generate
 
-### Premium Partners
+# Database Migration
+php artisan migrate
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 3. Konfigurasi Nginx Master
+Pastikan Nginx Master memiliki konfigurasi *reverse proxy* untuk mengarahkan permintaan ke Node-node pendukung. Contoh untuk Node 2:
+```nginx
+location /node2/storage/ {
+    auth_request /auth-video;
+    rewrite ^/node2/(.*) /$1 break;
+    proxy_pass http://<IP_NODE_2>:80;
+}
 
-## Contributing
+location /node2/ {
+    auth_request /auth-video;
+    rewrite ^/node2/(.*) /$1 break;
+    proxy_pass http://<IP_NODE_2>:80;
+}
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 📹 Instalasi Recording Node (Remote Node)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Setiap server yang dijadikan node perekam harus dikonfigurasi sebagai berikut:
 
-## Security Vulnerabilities
+### 1. Persyaratan Node
+*   Python 3.10+
+*   FFmpeg (Terinstal di System Path)
+*   Go2RTC (Binary)
+*   Nginx (Untuk menyajikan file statis rekaman)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 2. Setup Folder & Izin Akses
+Penting agar Nginx bisa membaca file video di folder user:
+```bash
+mkdir -p ~/storage/recordings
+chmod o+x /home/<user>
+chmod -R 755 ~/storage
+```
 
-## License
+### 3. Konfigurasi Nginx Node (Port 80)
+```nginx
+server {
+    listen 80;
+    
+    location /storage/ {
+        root /home/<user>/;
+        add_header Access-Control-Allow-Origin *;
+        add_header Accept-Ranges bytes;
+        max_ranges 100;
+    }
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    location / {
+        proxy_pass http://127.0.0.1:1984; # Go2RTC API
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+### 4. Setup Python Agent (`sync_node.py`)
+Install dependensi python:
+```bash
+pip install psycopg2-binary pyyaml python-dotenv
+```
+
+Buat file `.env` di folder script:
+```env
+DB_HOST=10.69.69.21 (IP Master)
+DB_DATABASE=cctv_prod
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+SERVER_RECORDER_IP=10.69.69.39 (IP Node ini)
+RETENTION_DAYS=2
+```
+
+### 5. Menjalankan Sebagai Service (Systemd)
+Buat file `/etc/systemd/system/cctv-sync.service`:
+```ini
+[Unit]
+Description=CCTV Node Agent
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/<user>/cctv-scripts/sync_node.py
+WorkingDirectory=/home/<user>/cctv-scripts
+User=<user>
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+Aktifkan service:
+```bash
+sudo systemctl enable --now cctv-sync
+```
+
+---
+
+## 💡 Fitur Utama UI
+*   **Grid View**: Pilihan tampilan 1, 4, atau 9 kamera sekaligus.
+*   **Timeline Playback**: Klik pada balok hijau untuk memutar ulang rekaman di jam tersebut.
+*   **Digital Zoom**: Gunakan *scroll wheel* mouse atau menu zoom untuk memperbesar area video.
+*   **Mobile Optimized**: Tampilan list kamera di HP yang luas dan *native-like*.
+
+---
+
+## 📝 Catatan Penting
+*   **Sinkronisasi Waktu**: Pastikan semua Node memiliki waktu yang sinkron dengan Master (gunakan NTP) agar timeline rekaman akurat.
+*   **Retention**: Script secara otomatis menghapus rekaman fisik dan data di DB setelah melewati batas hari yang ditentukan di `.env`.
+
+---
+© 2026 UNPAD CCTV Infrastructure Team
