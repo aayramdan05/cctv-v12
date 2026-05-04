@@ -143,7 +143,25 @@ class RecordCamera extends Command
         }
 
         if (File::exists($finalPath)) {
-            $this->info("🏁 FINISH: {$finalFilename} (Size: " . round(File::size($finalPath) / 1024 / 1024, 2) . " MB)");
+            $fileSizeMb = round(File::size($finalPath) / 1024 / 1024, 2);
+            $this->info("🏁 FINISH: {$finalFilename} (Size: {$fileSizeMb} MB)");
+
+            // SIMPAN KE DATABASE BARU
+            try {
+                $startSeconds = $startTime->hour * 3600 + $startTime->minute * 60 + $startTime->second;
+                
+                \App\Models\Recording::create([
+                    'cctv_id' => $cctv->id,
+                    'date' => $dateFolder,
+                    'filename' => $finalFilename,
+                    'start_time' => $startSeconds,
+                    'duration' => $totalDuration,
+                    'size_mb' => $fileSizeMb
+                ]);
+                $this->info("💾 Berhasil mencatat {$finalFilename} ke database master.");
+            } catch (\Exception $e) {
+                $this->error("❌ Gagal mencatat ke database: " . $e->getMessage());
+            }
         }
     }
 }

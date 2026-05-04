@@ -22,40 +22,38 @@ class MonitoringController extends Controller
     {
         // 1. Ambil Tanggal (Default Hari Ini)
         $date = $request->input('date', now()->format('Y-m-d'));
-        $path = storage_path("app/public/recordings/{$date}");
+        $cctvInfo = Cctv::with('building')->find($cctvId);
 
-        if (!\Illuminate\Support\Facades\File::exists($path)) {
+        if (!$cctvInfo) {
             return response()->json([]);
         }
-        $cctvInfo = Cctv::with('building')->find($cctvId);
-        $files = glob("{$path}/cam_{$cctvId}_*.mp4");
+
+        // Ambil riwayat rekaman dari Database
+        $recordings = \App\Models\Recording::where('cctv_id', $cctvId)
+            ->where('date', $date)
+            ->orderBy('start_time')
+            ->get();
+
         $segments = [];
-        foreach ($files as $file) {
-            $filename = basename($file);
-            // Parse: cam_1_2025-12-03_08-15-00.mp4
-            if (preg_match('/_(\d{2}-\d{2}-\d{2})\.mp4$/', $filename, $matches)) {
-                $timeParts = explode('-', $matches[1]); // [08, 15, 00]
-                // Konversi ke Detik (INT)
-                $h = (int)$timeParts[0];
-                $m = (int)$timeParts[1];
-                $s = (int)$timeParts[2];
-                $startSeconds = ($h * 3600) + ($m * 60) + $s;
-                $duration = 900; // 15 menit fix
-                $segments[] = [
-                    'start' => $startSeconds,
-                    'duration' => $duration,
-                    'human_start' => sprintf("%02d:%02d", $h, $m),
-                    // Gunakan aset URL yang valid
-                    'url' => $cctvInfo->getRecordingUrl($date, $filename),
-                    // Info tambahan untuk player
-                    'cctv_name' => $cctvInfo->nama_cctv ?? 'Camera',
-                    'building_name' => $cctvInfo->building->nama_gedung ?? '-',
-                    'faculty_name' => $cctvInfo->building->fakultas ?? '-'
-                ];
-            }
+        foreach ($recordings as $rec) {
+            // Kalkulasi jam dan menit dari start_time (seconds dari tengah malam)
+            $h = floor($rec->start_time / 3600);
+            $m = floor(($rec->start_time % 3600) / 60);
+
+            $segments[] = [
+                'start' => $rec->start_time,
+                'duration' => $rec->duration,
+                'human_start' => sprintf("%02d:%02d", $h, $m),
+                // Gunakan fungsi getRecordingUrl untuk mendukung Multi-Node Path
+                'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
+                // Info tambahan untuk player
+                'cctv_name' => $cctvInfo->nama_cctv ?? 'Camera',
+                'building_name' => $cctvInfo->building->nama_gedung ?? '-',
+                'faculty_name' => $cctvInfo->building->fakultas ?? '-',
+                'size_mb' => $rec->size_mb
+            ];
         }
        
-        usort($segments, fn($a, $b) => $a['start'] <=> $b['start']);
         return response()->json($segments);
     }
 }

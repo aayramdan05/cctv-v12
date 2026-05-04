@@ -46,6 +46,11 @@ class Cctv extends Model
         return $this->belongsToMany(User::class);
     }
 
+    public function recordings()
+    {
+        return $this->hasMany(Recording::class);
+    }
+
     public function scopeAccessibleByAuth($query)
     {
         $user = Auth::user();
