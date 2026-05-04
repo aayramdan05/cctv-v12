@@ -252,24 +252,39 @@
             <div class="w-full lg:w-80 xl:w-96 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col shrink-0 transition-all duration-300 z-30 h-64 lg:h-auto"
                     x-show="showSidebar && !isFullscreen"
                     :class="{'absolute top-0 right-0 h-full w-full lg:relative lg:w-80 xl:w-96': isFullscreen}">
-                <div class="p-3 border-b border-slate-100 bg-slate-50 rounded-t-2xl font-bold text-slate-700 text-sm flex justify-between items-center">
-                    <span>Camera List</span><span class="text-xs text-slate-400 bg-white border px-2 py-0.5 rounded-full">{{ $cctvs->count() }}</span>
-                </div>
-                <div class="p-2 border-b border-slate-100 flex flex-col gap-2">
-                    <input type="text" x-model="search" placeholder="Cari Kamera..." class="w-full px-3 py-1.5 text-[11px] rounded border border-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                <div class="p-4 border-b border-slate-100 bg-white flex flex-col gap-3 rounded-t-2xl shrink-0">
+                    <div class="flex justify-between items-center text-slate-700 text-sm font-bold">
+                        <span class="flex items-center gap-2"><i class="fas fa-video text-cyan-500"></i> Camera List</span>
+                        <span class="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200 shadow-inner">{{ $cctvs->count() }} Unit</span>
+                    </div>
+                    
+                    <div class="relative group">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-500 transition-colors pointer-events-none text-xs"></i>
+                        <input type="text" x-model="search" placeholder="Cari nama kamera..." 
+                               class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all placeholder-slate-400 text-slate-700 shadow-sm">
+                    </div>
+                    
                     <div class="flex gap-2">
-                        <select x-model="filterFaculty" class="w-1/2 px-2 py-1.5 text-[10px] rounded border border-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 truncate">
-                            <option value="">Semua Fakultas</option>
-                            @foreach($cctvs->pluck('building.fakultas')->filter()->unique()->sort() as $fakultas)
-                                <option value="{{ $fakultas }}">{{ $fakultas }}</option>
-                            @endforeach
-                        </select>
-                        <select x-model="filterBuilding" class="w-1/2 px-2 py-1.5 text-[10px] rounded border border-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 truncate">
-                            <option value="">Semua Gedung</option>
-                            @foreach($cctvs->pluck('building.nama_gedung')->filter()->unique()->sort() as $gedung)
-                                <option value="{{ $gedung }}">{{ $gedung }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative w-1/2 group">
+                            <i class="fas fa-layer-group absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
+                            <select x-model="filterFaculty" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
+                                <option value="">Semua Fakultas</option>
+                                @foreach($cctvs->pluck('building.fakultas')->filter()->unique()->sort() as $fakultas)
+                                    <option value="{{ $fakultas }}">{{ $fakultas }}</option>
+                                @endforeach
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                        </div>
+                        <div class="relative w-1/2 group">
+                            <i class="fas fa-building absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
+                            <select x-model="filterBuilding" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
+                                <option value="">Semua Gedung</option>
+                                @foreach($cctvs->pluck('building.nama_gedung')->filter()->unique()->sort() as $gedung)
+                                    <option value="{{ $gedung }}">{{ $gedung }}</option>
+                                @endforeach
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                        </div>
                     </div>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
