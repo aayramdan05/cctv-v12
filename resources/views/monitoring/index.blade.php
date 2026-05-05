@@ -233,11 +233,11 @@
                                  </div>
                             </template>
 
-                            <!-- MOTION EVENTS (ORANGE) -->
+                            <!-- MOTION EVENTS (ORANGE GLOW) -->
                             <template x-for="ev in currentEventsData">
-                                <div class="absolute top-0 bottom-0 z-20 w-[2px] bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] pointer-events-none"
+                                <div class="absolute top-0 bottom-0 z-30 w-[6px] -ml-[3px] bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,1)] cursor-help"
                                      :style="'left: ' + (ev.start / 86400 * 100) + '%;'"
-                                     title="Motion Detected">
+                                     :title="'Gerakan Terdeteksi: ' + formatTime(ev.start)">
                                 </div>
                             </template>
                         </div>
@@ -457,6 +457,7 @@
                                     // Update data tanpa mengganggu playhead
                                     this.currentTimelineData = data.segments || []; 
                                     this.currentEventsData = data.events || [];
+                                    console.log(`📊 Timeline Updated: ${this.currentTimelineData.length} Rekaman, ${this.currentEventsData.length} Kejadian.`);
                                 })
                                 .catch(e => {});
                         };

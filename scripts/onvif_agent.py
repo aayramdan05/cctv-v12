@@ -59,14 +59,33 @@ def subscribe_to_camera(cam):
             
             if hasattr(messages, 'NotificationMessage'):
                 for msg in messages.NotificationMessage:
-                    # Cek apakah ini Motion Detection
                     try:
-                        topic = str(msg.Topic._value_1)
-                        if 'Motion' in topic or 'Detector' in topic or 'Alarm' in topic:
-                            report_to_master(cam_id, 'motion')
+                        # Cara lebih aman mengambil Topic
+                        topic = "Unknown"
+                        if hasattr(msg, 'Topic') and msg.Topic is not None:
+                            # Coba beberapa kemungkinan lokasi Topic string
+                            topic = getattr(msg.Topic, '_value_1', str(msg.Topic))
+                        
+                        # Deteksi via XML (X-Ray Mode)
+                        try:
+                            msg_obj = msg.Message._value_1
+                            # Ambil semua item di dalam XML Message secara universal
+                            for item in msg_obj.xpath('.//tt:SimpleItem', namespaces={'tt': 'http://www.onvif.org/ver10/schema'}):
+                                name = item.get('Name')
+                                value = item.get('Value')
+                                
+                                # Cek Motion atau Tamper
+                                if name in ["IsMotion", "IsTamper"] and (value == "true" or value == "1"):
+                                    print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN!")
+                                    report_to_master(cam_id, 'motion')
+                        except:
+                            # Jika bukan objek XML, fallback ke deteksi teks mentah
+                            raw_msg = str(msg)
+                            if any(x in raw_msg for x in ['IsMotion="true"', 'Value="true"', 'IsMotion="1"']):
+                                 report_to_master(cam_id, 'motion')
+                                
                     except Exception as parse_err:
-                        # Jika gagal parsing detail, lapor saja sebagai motion jika ada pesan masuk
-                        report_to_master(cam_id, 'motion')
+                        print(f"⚠️ [CAM {cam_id}] Deep Parse Error: {parse_err}")
             
             time.sleep(0.5)
 

@@ -56,7 +56,8 @@ class MonitoringController extends Controller
             ->whereDate('event_time', $date)
             ->get()
             ->map(function($ev) {
-                $time = \Carbon\Carbon::parse($ev->event_time);
+                // Paksa ke timezone Jakarta (WIB) agar sinkron dengan User
+                $time = \Carbon\Carbon::parse($ev->event_time)->timezone('Asia/Jakarta');
                 return [
                     'start' => ($time->hour * 3600) + ($time->minute * 60) + $time->second,
                     'type' => $ev->event_type
