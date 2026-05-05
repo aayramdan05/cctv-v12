@@ -95,31 +95,61 @@ def auto_cleanup():
         # Tidur 6 jam sebelum mengecek lagi
         time.sleep(6 * 3600)
 
-def get_cameras_from_go2rtc():
-    """Membaca CCTV dari go2rtc.yaml dan menggunakan RTSP Lokal (Menghemat bandwidth!)"""
-    cameras = []
-    if os.path.exists(GO2RTC_CONFIG_PATH):
-        try:
-            with open(GO2RTC_CONFIG_PATH, 'r') as f:
-                config = yaml.safe_load(f) or {}
-                
-            streams = config.get('streams', {})
-            for cam_name, urls in streams.items():
-                if cam_name.startswith('camera_'):
-                    try:
-                        c_id = int(cam_name.replace('camera_', ''))
-                        # Menggunakan RTSP LOKAL dari Go2RTC!
-                        local_rtsp_url = f"rtsp://127.0.0.1:8554/{cam_name}"
-                        cameras.append({'id': c_id, 'url': local_rtsp_url})
-                    except ValueError:
-                        pass
-            print(f"✅ Menemukan {len(cameras)} Kamera di {GO2RTC_CONFIG_PATH}")
-        except Exception as e:
-            print(f"❌ Error membaca go2rtc.yaml: {e}")
-    else:
-        print(f"⚠️ File config tidak ditemukan: {GO2RTC_CONFIG_PATH}")
+# Tambahkan ini di bagian atas (Environment Variables)
+MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
+
+def sync_go2rtc_config_from_db():
+    """Menarik konfigurasi kamera dari API Master (Sudah didekripsi) dan mengupdate go2rtc.yaml"""
+    try:
+        import requests
+        # Panggil API Master
+        api_url = f"{MASTER_URL}/api/node-config?ip={NODE_IP}"
+        response = requests.get(api_url, timeout=10)
         
-    return cameras
+        if response.status_code != 200:
+            print(f"❌ Gagal ambil config dari API: {response.status_code}")
+            return []
+
+        data = response.json()
+        streams_from_api = data.get('streams', {})
+        cameras_list = data.get('cameras_list', [])
+
+        if not streams_from_api:
+            print(f"⚠️ Tidak ada kamera yang ditugaskan untuk Node IP: {NODE_IP}")
+            return []
+
+        # Susun struktur YAML untuk go2rtc
+        new_config = {
+            'streams': streams_from_api,
+            'rtsp': {'listen': ':8554'}
+        }
+        
+        # Cek apakah config berubah sebelum menulis (efisiensi)
+        current_config = {}
+        if os.path.exists(GO2RTC_CONFIG_PATH):
+            with open(GO2RTC_CONFIG_PATH, 'r') as f:
+                try:
+                    current_config = yaml.safe_load(f) or {}
+                except:
+                    pass
+
+        if new_config != current_config:
+            print(f"🔄 Perubahan terdeteksi! Mengupdate {GO2RTC_CONFIG_PATH}...")
+            with open(GO2RTC_CONFIG_PATH, 'w') as f:
+                yaml.dump(new_config, f, default_flow_style=False)
+            
+            # Beritahu go2rtc untuk reload via API (port 1984)
+            try:
+                requests.get("http://127.0.0.1:1984/api/reload", timeout=2)
+                print("✅ Go2RTC Configuration Reloaded.")
+            except Exception as e:
+                print(f"⚠️ Gagal reload Go2RTC API: {e} (Mungkin Go2RTC belum jalan)")
+
+        return cameras_list
+
+    except Exception as e:
+        print(f"❌ Error Sync Config from API: {e}")
+        return []
 
 def record_worker(cam_id, stream_url):
     """Worker rekaman individu per kamera"""
@@ -226,7 +256,7 @@ if __name__ == '__main__':
     active_threads = {}
     
     while True:
-        cameras = get_cameras_from_go2rtc()
+        cameras = sync_go2rtc_config_from_db()
         
         # Mulai thread untuk kamera baru
         for cam in cameras:

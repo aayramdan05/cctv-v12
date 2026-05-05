@@ -25,30 +25,55 @@
 
         <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
             
-        <!-- Slim Filter & Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <form action="{{ route('building.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
-                <!-- Search Input Slim -->
+        <!-- Seamless Filter & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
+            loading: false,
+            async updateTable() {
+                this.loading = true;
+                const form = document.getElementById('filter-form');
+                const params = new URLSearchParams(new FormData(form)).toString();
+                try {
+                    const res = await fetch(`{{ route('building.index') }}?${params}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const html = await res.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    document.getElementById('building-table-body').innerHTML = doc.getElementById('building-table-body').innerHTML;
+                    document.getElementById('pagination-container').innerHTML = doc.getElementById('pagination-container').innerHTML;
+                    window.history.pushState({}, '', `?${params}`);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }">
+            <form id="filter-form" action="{{ route('building.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-slate-400 text-xs"></i>
+                    </div>
                     <input type="text" name="search" value="{{ request('search') }}" 
-                           oninput="clearTimeout(window.buildSearchTimer); window.buildSearchTimer = setTimeout(() => this.form.submit(), 500)"
+                           @input.debounce.500ms="updateTable()"
                            placeholder="Cari nama atau kode gedung..." 
-                           class="w-full pl-9 pr-4 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50">
+                           class="w-full pl-9 pr-4 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 shadow-sm">
+                    <div x-show="loading" class="absolute inset-y-0 right-3 flex items-center">
+                        <i class="fas fa-circle-notch fa-spin text-cyan-500 text-xs"></i>
+                    </div>
                 </div>
 
-                <!-- Dropdown Slims -->
-                <select name="fakultas" onchange="this.form.submit()" 
-                        class="w-64 px-3 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50 cursor-pointer">
-                    <option value="">Semua Fakultas</option>
-                    @foreach($faculties as $f)
-                        <option value="{{ $f }}" {{ request('fakultas') == $f ? 'selected' : '' }}>{{ $f }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <select name="fakultas" @change="updateTable()" 
+                            class="w-64 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
+                        <option value="">Semua Fakultas</option>
+                        @foreach($faculties as $f)
+                            <option value="{{ $f }}" {{ request('fakultas') == $f ? 'selected' : '' }}>{{ $f }}</option>
+                        @endforeach
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
+                </div>
 
                 @if(request()->anyFilled(['search', 'fakultas']))
-                    <a href="{{ route('building.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors">
-                        <i class="fas fa-times-circle mr-1"></i> Clear
+                    <a href="{{ route('building.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors ml-2">
+                        <i class="fas fa-times-circle mr-1"></i> Reset
                     </a>
                 @endif
             </form>
@@ -64,7 +89,7 @@
                             <th class="pb-4 pr-4 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm text-slate-600">
+                    <tbody id="building-table-body" class="text-sm text-slate-600">
                         @forelse ($buildings as $building)
                             <tr class="hover:bg-cyan-50/50 transition-colors group border-b border-slate-50 last:border-none">
                                 <td class="py-4 pl-4 font-medium text-cyan-600">
@@ -107,10 +132,8 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="mt-6">
-                {{ $buildings->links() }}
-            </div>
+            <div id="pagination-container" class="mt-6">{{ $buildings->links() }}</div>
+        </div>
 
         </div>
     </main>

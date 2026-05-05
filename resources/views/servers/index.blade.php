@@ -20,21 +20,44 @@
             </a>
         </div>
 
-        <!-- Slim Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <form action="{{ route('servers.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
-                <!-- Search Input Slim -->
+        <!-- Seamless Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
+            loading: false,
+            async updateTable() {
+                this.loading = true;
+                const form = document.getElementById('filter-form');
+                const params = new URLSearchParams(new FormData(form)).toString();
+                try {
+                    const res = await fetch(`{{ route('servers.index') }}?${params}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const html = await res.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    document.getElementById('server-table-body').innerHTML = doc.getElementById('server-table-body').innerHTML;
+                    document.getElementById('pagination-container').innerHTML = doc.getElementById('pagination-container').innerHTML;
+                    window.history.pushState({}, '', `?${params}`);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }">
+            <form id="filter-form" action="{{ route('servers.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-slate-400 text-xs"></i>
+                    </div>
                     <input type="text" name="search" value="{{ request('search') }}" 
-                           oninput="clearTimeout(window.srvSearchTimer); window.srvSearchTimer = setTimeout(() => this.form.submit(), 500)"
+                           @input.debounce.500ms="updateTable()"
                            placeholder="Cari nama server atau IP..." 
-                           class="w-full pl-9 pr-4 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50">
+                           class="w-full pl-9 pr-4 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 shadow-sm">
+                    <div x-show="loading" class="absolute inset-y-0 right-3 flex items-center">
+                        <i class="fas fa-circle-notch fa-spin text-cyan-500 text-xs"></i>
+                    </div>
                 </div>
 
                 @if(request('search'))
-                    <a href="{{ route('servers.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors">
-                        <i class="fas fa-times-circle mr-1"></i> Clear
+                    <a href="{{ route('servers.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors ml-2">
+                        <i class="fas fa-times-circle mr-1"></i> Reset
                     </a>
                 @endif
             </form>
@@ -52,7 +75,7 @@
                         <th class="pb-4 pr-4 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm text-slate-600">
+                <tbody id="server-table-body" class="text-sm text-slate-600">
                     @forelse ($servers as $server)
                     <tr class="hover:bg-slate-50/50 transition border-b border-slate-50 last:border-none">
                         <td class="py-4 pl-4 font-bold text-slate-700">{{ $server->name }}</td>
@@ -82,7 +105,7 @@
                     @endforelse
                 </tbody>
             </table>
-            <div class="mt-4">{{ $servers->links() }}</div>
+            <div id="pagination-container" class="mt-4">{{ $servers->links() }}</div>
         </div>
     </main>
 </x-app-layout>

@@ -129,4 +129,36 @@ Route::get('/auth-video', function (Request $request) {
     return response('OK', 200);
 });
 
+// API untuk Node menarik konfigurasi (Sudah didekripsi)
+Route::get('/api/node-config', function (Request $request) {
+    $nodeIp = $request->query('ip');
+    
+    if (!$nodeIp) {
+        return response()->json(['error' => 'IP Node tidak disertakan'], 400);
+    }
+
+    $server = \App\Models\Server::where('ip_address', $nodeIp)->first();
+    if (!$server) {
+        return response()->json(['error' => 'Server Node tidak terdaftar'], 404);
+    }
+
+    $cameras = \App\Models\Cctv::where('server_id', $server->id)->get();
+    
+    $config = [
+        'streams' => [],
+        'cameras_list' => []
+    ];
+
+    foreach ($cameras as $cam) {
+        $fullUrl = $cam->stream_url; // Menggunakan accessor getStreamUrlAttribute (Otomatis Didekripsi)
+        $config['streams']["camera_{$cam->id}"] = $fullUrl;
+        $config['cameras_list'][] = [
+            'id' => $cam->id,
+            'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}"
+        ];
+    }
+
+    return response()->json($config);
+});
+
 require __DIR__.'/auth.php';

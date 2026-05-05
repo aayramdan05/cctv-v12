@@ -23,32 +23,57 @@
             </a>
         </div>
 
-        <!-- Slim Filter & Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <form action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
-                <!-- Search Input Slim -->
+        <!-- Seamless Filter & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
+            loading: false,
+            async updateTable() {
+                this.loading = true;
+                const form = document.getElementById('filter-form');
+                const params = new URLSearchParams(new FormData(form)).toString();
+                try {
+                    const res = await fetch(`{{ route('users.index') }}?${params}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const html = await res.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    document.getElementById('user-table-body').innerHTML = doc.getElementById('user-table-body').innerHTML;
+                    document.getElementById('pagination-container').innerHTML = doc.getElementById('pagination-container').innerHTML;
+                    window.history.pushState({}, '', `?${params}`);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }">
+            <form id="filter-form" action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-slate-400 text-xs"></i>
+                    </div>
                     <input type="text" name="search" value="{{ request('search') }}" 
-                           oninput="clearTimeout(window.userSearchTimer); window.userSearchTimer = setTimeout(() => this.form.submit(), 500)"
+                           @input.debounce.500ms="updateTable()"
                            placeholder="Cari nama atau email..." 
-                           class="w-full pl-9 pr-4 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50">
+                           class="w-full pl-9 pr-4 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 shadow-sm">
+                    <div x-show="loading" class="absolute inset-y-0 right-3 flex items-center">
+                        <i class="fas fa-circle-notch fa-spin text-cyan-500 text-xs"></i>
+                    </div>
                 </div>
 
-                <!-- Dropdown Slims -->
-                <select name="role" onchange="this.form.submit()" 
-                        class="w-48 px-3 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50 cursor-pointer">
-                    <option value="">Semua Role</option>
-                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
-                    <option value="faculty_operator" {{ request('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
-                    <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User (Restricted)</option>
-                    <option value="api_viewer" {{ request('role') == 'api_viewer' ? 'selected' : '' }}>API Viewer</option>
-                </select>
+                <div class="relative">
+                    <select name="role" @change="updateTable()" 
+                            class="w-48 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
+                        <option value="">Semua Role</option>
+                        <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
+                        <option value="faculty_operator" {{ request('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
+                        <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User (Restricted)</option>
+                        <option value="api_viewer" {{ request('role') == 'api_viewer' ? 'selected' : '' }}>API Viewer</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
+                </div>
 
                 @if(request()->anyFilled(['search', 'role']))
-                    <a href="{{ route('users.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors">
-                        <i class="fas fa-times-circle mr-1"></i> Clear
+                    <a href="{{ route('users.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors ml-2">
+                        <i class="fas fa-times-circle mr-1"></i> Reset
                     </a>
                 @endif
             </form>
@@ -68,7 +93,7 @@
                             <th class="pb-4 pr-4 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm text-slate-600">
+                    <tbody id="user-table-body" class="text-sm text-slate-600">
                         @forelse ($users as $user)
                             <tr class="hover:bg-cyan-50/50 transition-colors group border-b border-slate-50 last:border-none">
                                 <td class="py-4 pl-4">
@@ -128,7 +153,6 @@
                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-cyan-300 hover:text-cyan-600 transition-all shadow-sm">
                                         <i class="fas fa-pencil-alt text-xs"></i>
                                     </a>
-
                                     @if(auth()->id() !== $user->id)
                                         <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus user ini?');">
                                             @csrf
@@ -154,10 +178,8 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="mt-6">
-                {{ $users->links() }}
-            </div>
+            <div id="pagination-container" class="mt-6">{{ $users->links() }}</div>
+        </div>
 
         </div>
     </main>
