@@ -149,4 +149,22 @@ class CctvController extends Controller
             return back()->with('error', 'Gagal menghapus kamera: ' . $e->getMessage());
         }
     }
+
+    public function bulkMove(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'cctv_ids' => 'required|array',
+            'cctv_ids.*' => 'exists:cctvs,id',
+            'target_server_id' => 'required|exists:servers,id',
+        ]);
+
+        Cctv::whereIn('id', $request->cctv_ids)->update([
+            'server_id' => $request->target_server_id
+        ]);
+
+        // Opsional: Jalankan sync config setelah pindah masal
+        \Artisan::call('cctv:sync-config');
+
+        return redirect()->route('cctv.index')->with('success', count($request->cctv_ids) . ' Kamera berhasil dipindahkan ke Node baru.');
+    }
 }

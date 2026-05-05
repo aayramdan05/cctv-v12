@@ -74,6 +74,7 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 
 // --- GROUP 4: ADMIN & ALL OPERATORS (Manajemen CCTV & User) ---
 Route::middleware(['auth', 'role:admin,operator,faculty_operator'])->group(function () {
+    Route::post('cctv/bulk-move', [CctvController::class, 'bulkMove'])->name('cctv.bulkMove');
     Route::resource('cctv', CctvController::class);
     Route::resource('users', UserController::class);
 });
