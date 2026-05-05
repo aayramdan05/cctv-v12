@@ -13,15 +13,36 @@ use Illuminate\Database\Eloquent\Builder; // Import untuk Builder
 
 class CctvController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        // Gunakan scope accessibleByAuth untuk RBAC (Operator Fakultas hanya lihat kameranya)
-        $cctvs = Cctv::accessibleByAuth()
-                     ->with(['building', 'server'])
-                     ->latest()
-                     ->paginate(10);
+        $query = Cctv::accessibleByAuth()->with(['building', 'server']);
+
+        // Filter Pencarian
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_cctv', 'like', "%{$search}%")
+                  ->orWhere('kode_cctv', 'like', "%{$search}%")
+                  ->orWhere('ip', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter Gedung
+        if ($request->filled('building_id')) {
+            $query->where('building_id', $request->building_id);
+        }
+
+        // Filter Server Node
+        if ($request->filled('server_id')) {
+            $query->where('server_id', $request->server_id);
+        }
+
+        $cctvs = $query->latest()->paginate(15)->withQueryString();
+        
+        $buildings = \App\Models\Building::orderBy('nama_gedung')->get();
+        $servers = \App\Models\Server::all();
                      
-        return view('cctvs.index', compact('cctvs'));
+        return view('cctvs.index', compact('cctvs', 'buildings', 'servers'));
     }
 
     public function create()

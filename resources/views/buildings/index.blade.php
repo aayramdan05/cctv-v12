@@ -25,16 +25,38 @@
 
         <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
             
-            <div class="flex items-center justify-between mb-6">
-                <div class="relative">
-                    <input type="text" placeholder="Cari gedung..." class="w-64 h-10 px-4 pl-10 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-cyan-200 text-sm text-slate-700">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <!-- Filter & Search Bar -->
+        <div class="glass-effect rounded-2xl p-4 mb-6 border border-cyan-100">
+            <form action="{{ route('building.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-[250px]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Cari Gedung</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-3 text-slate-400"></i>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama atau kode gedung..." 
+                               class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm">
+                    </div>
                 </div>
-                <div class="flex space-x-2">
-                    <button class="p-2 text-slate-500 hover:text-cyan-600 transition-colors"><i class="fas fa-filter"></i></button>
-                    <button class="p-2 text-slate-500 hover:text-cyan-600 transition-colors"><i class="fas fa-download"></i></button>
+                <div class="w-64">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Fakultas</label>
+                    <select name="fakultas" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm appearance-none">
+                        <option value="">Semua Fakultas</option>
+                        @foreach($faculties as $f)
+                            <option value="{{ $f }}" {{ request('fakultas') == $f ? 'selected' : '' }}>{{ $f }}</option>
+                        @endforeach
+                    </select>
                 </div>
-            </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-sm">
+                        Filter
+                    </button>
+                    @if(request()->anyFilled(['search', 'fakultas']))
+                        <a href="{{ route('building.index') }}" class="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">

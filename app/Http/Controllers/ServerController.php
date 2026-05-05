@@ -9,10 +9,19 @@ use Illuminate\Http\RedirectResponse;
 
 class ServerController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        // Tampilkan list server beserta jumlah kameranya
-        $servers = Server::withCount('cctvs')->latest()->paginate(10);
+        $query = Server::withCount('cctvs');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%");
+            });
+        }
+
+        $servers = $query->latest()->paginate(15)->withQueryString();
         return view('servers.index', compact('servers'));
     }
 

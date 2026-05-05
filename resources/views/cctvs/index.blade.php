@@ -20,6 +20,48 @@
             </a>
         </div>
 
+        <!-- Filter & Search Bar -->
+        <div class="glass-effect rounded-2xl p-4 mb-6 border border-cyan-100">
+            <form action="{{ route('cctv.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-[250px]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Cari Kamera</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-3 text-slate-400"></i>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama, kode, atau IP..." 
+                               class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm">
+                    </div>
+                </div>
+                <div class="w-48">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Gedung</label>
+                    <select name="building_id" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm appearance-none">
+                        <option value="">Semua Gedung</option>
+                        @foreach($buildings as $b)
+                            <option value="{{ $b->id }}" {{ request('building_id') == $b->id ? 'selected' : '' }}>{{ $b->nama_gedung }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="w-48">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Server Node</label>
+                    <select name="server_id" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm appearance-none">
+                        <option value="">Semua Node</option>
+                        @foreach($servers as $s)
+                            <option value="{{ $s->id }}" {{ request('server_id') == $s->id ? 'selected' : '' }}>Node {{ $s->id }} ({{ $s->ip_address }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-sm">
+                        Filter
+                    </button>
+                    @if(request()->anyFilled(['search', 'building_id', 'server_id']))
+                        <a href="{{ route('cctv.index') }}" class="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+
         <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">

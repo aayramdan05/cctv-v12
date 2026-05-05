@@ -12,10 +12,26 @@ class BuildingController extends Controller
     /**
      * Menampilkan daftar gedung.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $buildings = Building::latest()->paginate(10);
-        return view('buildings.index', compact('buildings'));
+        $query = Building::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_gedung', 'like', "%{$search}%")
+                  ->orWhere('kode_gedung', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('fakultas')) {
+            $query->where('fakultas', $request->fakultas);
+        }
+
+        $buildings = $query->latest()->paginate(15)->withQueryString();
+        $faculties = Building::distinct()->pluck('fakultas')->filter();
+
+        return view('buildings.index', compact('buildings', 'faculties'));
     }
 
     /**

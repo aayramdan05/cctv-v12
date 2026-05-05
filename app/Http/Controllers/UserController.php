@@ -11,18 +11,33 @@ use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $currentUser = auth()->user();
         $query = User::query();
 
+        // RBAC Filter
         if ($currentUser->role === 'faculty_operator') {
             $query->where('faculty', $currentUser->faculty);
         } elseif ($currentUser->role === 'operator') {
             $query->where('role', '!=', 'admin');
         }
 
-        $users = $query->latest()->paginate(10);
+        // Search Filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Role Filter
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $users = $query->latest()->paginate(15)->withQueryString();
         return view('users.index', compact('users'));
     }
 
