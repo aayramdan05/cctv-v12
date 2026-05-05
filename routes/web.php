@@ -182,4 +182,28 @@ Route::get('/api/node-config', function (Request $request) {
     return response()->json($config);
 });
 
+// API untuk Node melaporkan kejadian (Motion Detection, dll)
+Route::get('/api/report-event', function (Request $request) {
+    $token = $request->query('token');
+    $secret = env('SYNC_TOKEN', 'secret_unpad_cctv_2026'); 
+    
+    if ($token !== $secret) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $cctvId = $request->query('cctv_id');
+    $type = $request->query('type', 'motion');
+    
+    if (!$cctvId) return response()->json(['error' => 'Missing CCTV ID'], 400);
+
+    \App\Models\CameraEvent::create([
+        'cctv_id' => $cctvId,
+        'event_type' => $type,
+        'event_time' => now(),
+        'metadata' => $request->all()
+    ]);
+
+    return response()->json(['status' => 'Event Recorded']);
+});
+
 require __DIR__.'/auth.php';
