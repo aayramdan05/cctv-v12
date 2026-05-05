@@ -234,13 +234,17 @@
                             </template>
                         </div>
 
-                        <!-- MOTION EVENTS (ORANGE GLOW - OUTSIDE OVERFLOW) -->
-                        <template x-for="ev in currentEventsData">
-                            <div class="absolute top-4 bottom-0 z-[50] w-[4px] -ml-[2px] bg-orange-600 shadow-[0_0_15px_rgba(234,88,12,1)] cursor-help border-t-2 border-white"
+                        <!-- MOTION EVENTS (STRESS TEST - RED) -->
+                        <template x-for="(ev, index) in currentEventsData">
+                            <div class="absolute top-0 bottom-0 z-[999] w-[10px] bg-red-600 border-x border-white"
+                                 x-init="console.log(`📍 Event ${index} at ${ (ev.start / 86400 * 100).toFixed(2) }%`)"
                                  :style="'left: ' + (ev.start / 86400 * 100) + '%;'"
                                  :title="'Gerakan Terdeteksi: ' + formatTime(ev.start)">
                             </div>
                         </template>
+
+                        <!-- TEST MARKER (FIXED 50%) -->
+                        <div class="absolute top-0 bottom-0 left-1/2 z-[999] w-[10px] bg-blue-600 border-x border-white" title="TEST MARKER 50%"></div>
                         
                         <div class="absolute top-2 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
