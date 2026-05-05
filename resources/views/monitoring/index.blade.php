@@ -225,28 +225,18 @@
                             <template x-for="seg in currentTimelineData">
                                 <div class="absolute top-0 bottom-0 z-10 cursor-pointer transition-all border-r border-black/10"
                                      :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) 
-                                             ? 'bg-red-500/90 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
-                                             : 'bg-green-500 hover:bg-green-400'"
-                                     :style="'left: ' + (seg.start / 86400 * 100) + '%; width: calc(' + (seg.duration / 86400 * 100) + '% + 2px); min-width: 5px;'"
-                                     :title="'Rekaman: ' + seg.human_start"
+                                             ? 'animate-pulse shadow-[0_0_10px_rgba(255,165,0,0.6)]' 
+                                             : 'hover:opacity-80'"
+                                     :style="{
+                                         left: (seg.start / 86400 * 100) + '%', 
+                                         width: 'calc(' + (seg.duration / 86400 * 100) + '% + 2px)',
+                                         minWidth: '5px',
+                                         backgroundColor: seg.has_motion ? '#f97316' : '#22c55e'
+                                     }"
+                                     :title="(seg.has_motion ? '⚠️ ADA GERAKAN: ' : 'Rekaman: ') + seg.human_start"
                                      @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
                                 </div>
                             </template>
-                        </div>
-
-                        <!-- MOTION EVENTS (ORANGE - INLINE STYLE) -->
-                        <template x-for="(ev, index) in currentEventsData">
-                            <div class="absolute top-0 bottom-0 z-[100] w-[8px] -ml-[4px]"
-                                 x-init="console.log(`📍 Rendering Event ${index} at ${ (ev.start / 86400 * 100).toFixed(2) }%`)"
-                                 :style="'left: ' + (ev.start / 86400 * 100) + '%; background-color: #ff6600; box-shadow: 0 0 10px #ff6600;'"
-                                 :title="'Gerakan Terdeteksi: ' + formatTime(ev.start)">
-                            </div>
-                        </template>
-
-                        <!-- TEST MARKER (CYAN - INLINE STYLE) -->
-                        <div class="absolute top-0 bottom-0 left-1/2 z-[100] w-[8px] -ml-[4px]" 
-                             style="background-color: #00ffff; box-shadow: 0 0 10px #00ffff;" 
-                             title="TEST MARKER 50%">
                         </div>
                         
                         <div class="absolute top-2 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"

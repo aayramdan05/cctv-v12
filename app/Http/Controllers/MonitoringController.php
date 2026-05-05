@@ -34,23 +34,6 @@ class MonitoringController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $segments = [];
-        foreach ($recordings as $rec) {
-            $h = floor($rec->start_time / 3600);
-            $m = floor(($rec->start_time % 3600) / 60);
-
-            $segments[] = [
-                'start' => $rec->start_time,
-                'duration' => $rec->duration,
-                'human_start' => sprintf("%02d:%02d", $h, $m),
-                'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
-                'cctv_name' => $cctvInfo->nama_cctv ?? 'Camera',
-                'building_name' => $cctvInfo->building->nama_gedung ?? '-',
-                'faculty_name' => $cctvInfo->building->fakultas ?? '-',
-                'size_mb' => $rec->size_mb
-            ];
-        }
-
         // Ambil riwayat kejadian (Motion) dengan range waktu yang tepat (WIB)
         $startDay = \Carbon\Carbon::parse($date, 'Asia/Jakarta')->startOfDay();
         $endDay = \Carbon\Carbon::parse($date, 'Asia/Jakarta')->endOfDay();
@@ -59,13 +42,32 @@ class MonitoringController extends Controller
             ->whereBetween('event_time', [$startDay, $endDay])
             ->get()
             ->map(function($ev) {
-                // Konversi ke WIB untuk tampilan di timeline
                 $time = \Carbon\Carbon::parse($ev->event_time)->timezone('Asia/Jakarta');
                 return [
                     'start' => ($time->hour * 3600) + ($time->minute * 60) + $time->second,
                     'type' => $ev->event_type
                 ];
             });
+
+        $segments = [];
+        foreach ($recordings as $rec) {
+            $h = floor($rec->start_time / 3600);
+            $m = floor(($rec->start_time % 3600) / 60);
+
+            // Cek apakah ada motion di dalam rentang waktu rekaman ini
+            $hasMotion = $events->contains(function($ev) use ($rec) {
+                return $ev['start'] >= $rec->start_time && $ev['start'] <= ($rec->start_time + $rec->duration);
+            });
+
+            $segments[] = [
+                'start' => $rec->start_time,
+                'duration' => $rec->duration,
+                'human_start' => sprintf("%02d:%02d", $h, $m),
+                'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
+                'has_motion' => $hasMotion, // Tanda motion
+                'size_mb' => $rec->size_mb
+            ];
+        }
        
         return response()->json([
             'segments' => $segments,
