@@ -151,7 +151,13 @@ Route::get('/api/node-config', function (Request $request) {
 
     foreach ($cameras as $cam) {
         $fullUrl = $cam->stream_url; // Menggunakan accessor getStreamUrlAttribute (Otomatis Didekripsi)
-        $config['streams']["camera_{$cam->id}"] = $fullUrl;
+        
+        // Tambahkan suffix wajib untuk Go2RTC
+        $urlWithSuffix = "{$fullUrl}#video=copy#audio=aac#rtsp_transport=tcp";
+        
+        // Format sebagai LIST (Array) agar sesuai permintaan go2rtc
+        $config['streams']["camera_{$cam->id}"] = [$urlWithSuffix];
+        
         $config['cameras_list'][] = [
             'id' => $cam->id,
             'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}"
