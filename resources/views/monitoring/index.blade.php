@@ -230,6 +230,14 @@
                                      :style="'left: ' + (seg.start / 86400 * 100) + '%; width: calc(' + (seg.duration / 86400 * 100) + '% + 2px); min-width: 5px;'"
                                      :title="'Rekaman: ' + seg.human_start"
                                      @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
+                                 </div>
+                            </template>
+
+                            <!-- MOTION EVENTS (ORANGE) -->
+                            <template x-for="ev in currentEventsData">
+                                <div class="absolute top-0 bottom-0 z-20 w-[2px] bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] pointer-events-none"
+                                     :style="'left: ' + (ev.start / 86400 * 100) + '%;'"
+                                     title="Motion Detected">
                                 </div>
                             </template>
                         </div>
@@ -345,7 +353,7 @@
                 isDragging: false,
                 
                 selectedDate: new Date().toISOString().split('T')[0],
-                currentTimelineData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
+                currentTimelineData: [], currentEventsData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
                 
                 // CONTROL STATE
                 isPlaying: true,
@@ -447,7 +455,8 @@
                                 .then(res => res.json())
                                 .then(data => { 
                                     // Update data tanpa mengganggu playhead
-                                    this.currentTimelineData = data; 
+                                    this.currentTimelineData = data.segments || []; 
+                                    this.currentEventsData = data.events || [];
                                 })
                                 .catch(e => {});
                         };

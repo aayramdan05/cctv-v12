@@ -2,13 +2,14 @@ import time
 import os
 import requests
 import threading
+import json
 from onvif import ONVIFCamera
 from datetime import datetime
 
 # CONFIGURATION
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-NODE_IP = os.getenv('SERVER_RECORDER_IP', '127.0.0.1')
-MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
+NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.39')
+MASTER_URL = os.getenv('MASTER_URL', 'https://cctv.unpad.net')
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026')
 
 def report_to_master(cctv_id, event_type):
@@ -48,23 +49,26 @@ def subscribe_to_camera(cam):
         print(f"✅ [CAM {cam_id}] Berhasil subscribe ONVIF!")
 
         while True:
-            # Tarik pesan setiap 5 detik
-            messages = pullpoint.PullMessages(Timeout='PT5S', MessageLimit=10)
+            # Tarik pesan (Gunakan format yang lebih kompatibel)
+            try:
+                # Beberapa kamera butuh timeout dalam format string, beberapa tidak suka keyword 'Timeout'
+                messages = pullpoint.PullMessages({'Timeout': 'PT5S', 'MessageLimit': 10})
+            except:
+                # Fallback: coba tanpa argumen jika gagal
+                messages = pullpoint.PullMessages()
             
-            for msg in messages.NotificationMessage:
-                # Cek apakah ini Motion Detection
-                topic = msg.Topic._value_1
-                if 'MotionAlarm' in topic or 'CellMotionDetector' in topic:
-                    # Cek nilai boolean motion (IsMotion)
+            if hasattr(messages, 'NotificationMessage'):
+                for msg in messages.NotificationMessage:
+                    # Cek apakah ini Motion Detection
                     try:
-                        is_motion = msg.Message.Data.SimpleItem[0].Value
-                        if is_motion == 'true' or is_motion == True:
+                        topic = str(msg.Topic._value_1)
+                        if 'Motion' in topic or 'Detector' in topic or 'Alarm' in topic:
                             report_to_master(cam_id, 'motion')
-                    except:
-                        # Fallback jika struktur XML berbeda
+                    except Exception as parse_err:
+                        # Jika gagal parsing detail, lapor saja sebagai motion jika ada pesan masuk
                         report_to_master(cam_id, 'motion')
             
-            time.sleep(1)
+            time.sleep(0.5)
 
     except Exception as e:
         print(f"❌ [CAM {cam_id}] ONVIF Error: {e}")
@@ -79,7 +83,24 @@ def main():
             # Ambil daftar kamera dari Master
             api_url = f"{MASTER_URL}/api/node-config?ip={NODE_IP}&token={SYNC_TOKEN}"
             res = requests.get(api_url, timeout=10)
-            cameras = res.json().get('cameras_list', [])
+            
+            # Bersihkan response jika ada teks sampah di awal/akhir
+            raw_text = res.text.strip()
+            
+            # Jika response diawali dengan 'OK' atau teks lain, coba ambil bagian JSON-nya
+            if not raw_text.startswith('{'):
+                start_index = raw_text.find('{')
+                if start_index != -1:
+                    raw_text = raw_text[start_index:]
+            
+            try:
+                data = json.loads(raw_text)
+                cameras = data.get('cameras_list', [])
+            except Exception as je:
+                print(f"❌ JSON Decode Error: {je}")
+                print(f"📄 Raw Response: {res.text[:100]}...")
+                time.sleep(10)
+                continue
 
             for cam in cameras:
                 # Jalankan listener per kamera di thread terpisah

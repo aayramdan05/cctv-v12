@@ -207,3 +207,9 @@ Route::get('/api/report-event', function (Request $request) {
 });
 
 require __DIR__.'/auth.php';
+
+// Halaman Riwayat Kejadian (Events)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');
+    Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
+});

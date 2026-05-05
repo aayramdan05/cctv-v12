@@ -36,7 +36,6 @@ class MonitoringController extends Controller
 
         $segments = [];
         foreach ($recordings as $rec) {
-            // Kalkulasi jam dan menit dari start_time (seconds dari tengah malam)
             $h = floor($rec->start_time / 3600);
             $m = floor(($rec->start_time % 3600) / 60);
 
@@ -44,16 +43,29 @@ class MonitoringController extends Controller
                 'start' => $rec->start_time,
                 'duration' => $rec->duration,
                 'human_start' => sprintf("%02d:%02d", $h, $m),
-                // Gunakan fungsi getRecordingUrl untuk mendukung Multi-Node Path
                 'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
-                // Info tambahan untuk player
                 'cctv_name' => $cctvInfo->nama_cctv ?? 'Camera',
                 'building_name' => $cctvInfo->building->nama_gedung ?? '-',
                 'faculty_name' => $cctvInfo->building->fakultas ?? '-',
                 'size_mb' => $rec->size_mb
             ];
         }
+
+        // Ambil riwayat kejadian (Motion)
+        $events = \App\Models\CameraEvent::where('cctv_id', $cctvId)
+            ->whereDate('event_time', $date)
+            ->get()
+            ->map(function($ev) {
+                $time = \Carbon\Carbon::parse($ev->event_time);
+                return [
+                    'start' => ($time->hour * 3600) + ($time->minute * 60) + $time->second,
+                    'type' => $ev->event_type
+                ];
+            });
        
-        return response()->json($segments);
+        return response()->json([
+            'segments' => $segments,
+            'events' => $events
+        ]);
     }
 }

@@ -65,10 +65,22 @@
 
             </div>
 
-            <div class="pt-4 mt-4 border-t border-cyan-100">
                 <a href="{{ route('playback.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('playback.*') ? 'active' : '' }}">
                     <i class="fas fa-history w-5 {{ request()->routeIs('playback.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Recording</span>
+                </a>
+                <a href="{{ route('events.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('events.*') ? 'active' : '' }} relative">
+                    <i class="fas fa-robot w-5 {{ request()->routeIs('events.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                    <span class="font-medium text-sm">Intelligence Events</span>
+                    
+                    @php
+                        $unreadEvents = \App\Models\CameraEvent::where('is_read', false)->count();
+                    @endphp
+                    @if($unreadEvents > 0)
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                            {{ $unreadEvents }}
+                        </span>
+                    @endif
                 </a>
                 <a href="{{ route('notifications.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
                     <i class="fas fa-bell w-5 {{ request()->routeIs('notifications.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
