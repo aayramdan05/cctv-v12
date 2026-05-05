@@ -234,17 +234,20 @@
                             </template>
                         </div>
 
-                        <!-- MOTION EVENTS (STRESS TEST - RED) -->
+                        <!-- MOTION EVENTS (ORANGE - INLINE STYLE) -->
                         <template x-for="(ev, index) in currentEventsData">
-                            <div class="absolute top-0 bottom-0 z-[999] w-[10px] bg-red-600 border-x border-white"
-                                 x-init="console.log(`📍 Event ${index} at ${ (ev.start / 86400 * 100).toFixed(2) }%`)"
-                                 :style="'left: ' + (ev.start / 86400 * 100) + '%;'"
+                            <div class="absolute top-0 bottom-0 z-[100] w-[8px] -ml-[4px]"
+                                 x-init="console.log(`📍 Rendering Event ${index} at ${ (ev.start / 86400 * 100).toFixed(2) }%`)"
+                                 :style="'left: ' + (ev.start / 86400 * 100) + '%; background-color: #ff6600; box-shadow: 0 0 10px #ff6600;'"
                                  :title="'Gerakan Terdeteksi: ' + formatTime(ev.start)">
                             </div>
                         </template>
 
-                        <!-- TEST MARKER (FIXED 50%) -->
-                        <div class="absolute top-0 bottom-0 left-1/2 z-[999] w-[10px] bg-blue-600 border-x border-white" title="TEST MARKER 50%"></div>
+                        <!-- TEST MARKER (CYAN - INLINE STYLE) -->
+                        <div class="absolute top-0 bottom-0 left-1/2 z-[100] w-[8px] -ml-[4px]" 
+                             style="background-color: #00ffff; box-shadow: 0 0 10px #00ffff;" 
+                             title="TEST MARKER 50%">
+                        </div>
                         
                         <div class="absolute top-2 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
