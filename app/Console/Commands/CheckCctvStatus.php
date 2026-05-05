@@ -29,26 +29,25 @@ class CheckCctvStatus extends Command
         $timeout = 2; // Detik (Jangan terlalu lama agar cepat selesai)
 
         foreach ($cctvs as $cctv) {
-            $ip = $cctv->ip;
+            $ip = trim($cctv->ip); // Pastikan tidak ada spasi tersembunyi
             
-            // Jika tidak ada IP, skip (anggap offline)
             if (!$ip) {
                 $this->updateStatus($cctv, 'offline');
                 continue;
             }
 
             // CEK PING (ICMP)
-            // Menggunakan perintah ping sistem (Windows/Linux support)
-            $wait = (PHP_OS_FAMILY === 'Windows') ? '-n 1 -w 1000' : '-c 1 -W 1';
-            $cmd = "ping {$wait} " . escapeshellarg($ip);
+            $wait = (PHP_OS_FAMILY === 'Windows') ? '-n 1 -w 2000' : '-c 1 -W 2';
+            $cmd = "ping {$wait} " . escapeshellarg($ip) . " 2>&1";
             
+            $output = [];
             exec($cmd, $output, $resultCode);
 
             if ($resultCode === 0) {
-                // Jika ping berhasil (exit code 0)
                 $this->updateStatus($cctv, 'online');
             } else {
-                // Jika ping gagal
+                // Catat detail kegagalan ke log untuk kita periksa
+                \Log::warning("Gagal Ping ke {$cctv->nama_cctv} ({$ip}). Code: {$resultCode}. Output: " . implode(' ', $output));
                 $this->updateStatus($cctv, 'offline');
             }
         }
