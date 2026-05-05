@@ -97,13 +97,14 @@ def auto_cleanup():
 
 # Tambahkan ini di bagian atas (Environment Variables)
 MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
+SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026') # Harus sama dengan di Master
 
 def sync_go2rtc_config_from_db():
-    """Menarik konfigurasi kamera dari API Master (Sudah didekripsi) dan mengupdate go2rtc.yaml"""
+    """Menarik konfigurasi kamera dari API Master (DIPROTEKSI) dan mengupdate go2rtc.yaml"""
     try:
         import requests
-        # Panggil API Master
-        api_url = f"{MASTER_URL}/api/node-config?ip={NODE_IP}"
+        # Panggil API Master dengan Token Keamanan
+        api_url = f"{MASTER_URL}/api/node-config?ip={NODE_IP}&token={SYNC_TOKEN}"
         response = requests.get(api_url, timeout=10)
         
         if response.status_code != 200:
@@ -138,12 +139,28 @@ def sync_go2rtc_config_from_db():
             with open(GO2RTC_CONFIG_PATH, 'w') as f:
                 yaml.dump(new_config, f, default_flow_style=False)
             
-            # Beritahu go2rtc untuk reload via API (port 1984)
+            # Beritahu go2rtc untuk reload via API (Coba POST dan GET)
+            reloaded = False
             try:
-                requests.get("http://127.0.0.1:1984/api/reload", timeout=2)
-                print("✅ Go2RTC Configuration Reloaded.")
+                # Coba POST dulu
+                r = requests.post("http://localhost:1984/api/reload", timeout=3)
+                if r.status_code == 200:
+                    reloaded = True
+                    print("✅ Go2RTC Configuration Reloaded via API (POST).")
+                else:
+                    # Coba GET jika POST gagal
+                    r = requests.get("http://localhost:1984/api/reload", timeout=3)
+                    if r.status_code == 200:
+                        reloaded = True
+                        print("✅ Go2RTC Configuration Reloaded via API (GET).")
             except Exception as e:
-                print(f"⚠️ Gagal reload Go2RTC API: {e} (Mungkin Go2RTC belum jalan)")
+                print(f"⚠️ API Reload gagal: {e}")
+
+            # FALLBACK: Jika API gagal, paksa restart service
+            if not reloaded:
+                print("⚙️ Melakukan Fallback: Restarting go2rtc service...")
+                subprocess.run(['sudo', 'systemctl', 'restart', 'go2rtc'])
+                print("✅ Go2RTC Service Restarted.")
 
         return cameras_list
 

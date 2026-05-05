@@ -129,12 +129,21 @@ Route::get('/auth-video', function (Request $request) {
     return response('OK', 200);
 });
 
-// API untuk Node menarik konfigurasi (Sudah didekripsi)
+// API untuk Node menarik konfigurasi (DIPROTEKSI)
 Route::get('/api/node-config', function (Request $request) {
     $nodeIp = $request->query('ip');
+    $token = $request->query('token');
     
-    if (!$nodeIp) {
-        return response()->json(['error' => 'IP Node tidak disertakan'], 400);
+    // 1. Validasi Token (Gunakan APP_KEY sebagai secret sederhana atau string custom)
+    $secret = env('SYNC_TOKEN', 'secret_unpad_cctv_2026'); 
+    if ($token !== $secret) {
+        return response()->json(['error' => 'Unauthorized: Invalid Token'], 401);
+    }
+
+    // 2. Validasi IP Pemanggil (Hanya boleh dari IP Node itu sendiri)
+    if ($request->ip() !== $nodeIp && $request->ip() !== '127.0.0.1') {
+         // return response()->json(['error' => 'Forbidden: IP Mismatch'], 403);
+         // Catatan: Jika lewat proxy, mungkin perlu check X-Forwarded-For
     }
 
     $server = \App\Models\Server::where('ip_address', $nodeIp)->first();
