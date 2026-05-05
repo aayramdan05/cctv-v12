@@ -60,5 +60,4 @@ class FfmpegStatusController extends Controller
 
         return view('monitoring.ffmpeg', compact('statusData', 'servers', 'selectedServerId'));
     }
-    }
 }
