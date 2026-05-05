@@ -22,8 +22,8 @@ RETENTION_DAYS = int(os.getenv('RETENTION_DAYS', 2))
 RECORD_DURATION = 900  # 15 menit per chunk file mp4
 CHECK_INTERVAL = 5     # Cek update konfigurasi database setiap 5 menit
 
-GO2RTC_CONFIG_PATH = '/home/aay/go2rtc.yaml'
-STORAGE_BASE_PATH = '/home/aay/storage/recordings'
+GO2RTC_CONFIG_PATH = os.getenv('GO2RTC_CONFIG_PATH', '/home/aay/go2rtc.yaml')
+STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/home/aay/storage/recordings')
 
 def get_db_connection():
     """Membuat koneksi ke database Master dengan Autocommit (Anti-Zombie)"""
@@ -40,27 +40,33 @@ def get_db_connection():
 def auto_cleanup():
     """Worker background untuk menghapus file dan record lama"""
     while True:
-        print(f"🧹 Memulai Pengecekan Auto-Cleanup (Batas: {RETENTION_DAYS} hari)...")
-        cutoff_date = datetime.now() - timedelta(days=RETENTION_DAYS)
-        cutoff_date_str = cutoff_date.strftime('%Y-%m-%d')
-
         conn = get_db_connection()
+        current_retention = 7 # Default fallback
+        
         if conn:
             try:
                 cur = conn.cursor()
-                
-                # 1. Hapus dari Database (Hanya CCTV milik Server ini)
-                cur.execute("SELECT id FROM servers WHERE ip_address = %s", (NODE_IP,))
+                # 1. Ambil ID Server dan Batas Retensi dari Database Master
+                cur.execute("SELECT id, retention_days FROM servers WHERE ip_address = %s", (NODE_IP,))
                 server_row = cur.fetchone()
+                
                 if server_row:
                     server_id = server_row[0]
+                    current_retention = server_row[1] or 7
+                    
+                    print(f"🧹 Memulai Auto-Cleanup (Batas Dashboard: {current_retention} hari)...")
+                    
+                    cutoff_date = datetime.now() - timedelta(days=current_retention)
+                    cutoff_date_str = cutoff_date.strftime('%Y-%m-%d')
+
+                    # 2. Hapus dari Database (Hanya CCTV milik Server ini)
                     cur.execute("""
                         DELETE FROM recordings 
                         WHERE date < %s AND cctv_id IN (
                             SELECT id FROM cctvs WHERE server_id = %s
                         )
                     """, (cutoff_date_str, server_id))
-                    print(f"🗑️ Membersihkan data rekaman sebelum {cutoff_date_str} dari Database.")
+                    print(f"🗑️ Membersihkan data database sebelum {cutoff_date_str}.")
                 
                 cur.close()
             except Exception as e:
@@ -68,8 +74,9 @@ def auto_cleanup():
             finally:
                 conn.close()
 
-        # 2. Hapus Folder Fisik di Harddisk Node
+        # 3. Hapus Folder Fisik di Harddisk Node (Gunakan current_retention terbaru)
         try:
+            cutoff_date = datetime.now() - timedelta(days=current_retention)
             if os.path.exists(STORAGE_BASE_PATH):
                 folders = glob.glob(f"{STORAGE_BASE_PATH}/*")
                 for folder in folders:

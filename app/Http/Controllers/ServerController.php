@@ -28,6 +28,7 @@ class ServerController extends Controller
             'ip_address' => 'required|ipv4|unique:servers,ip_address',
             'location' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'retention_days' => 'required|integer|min:1|max:365',
             'is_active' => 'boolean',
         ]);
 
@@ -51,6 +52,7 @@ class ServerController extends Controller
             'ip_address' => 'required|ipv4|unique:servers,ip_address,' . $server->id,
             'location' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'retention_days' => 'required|integer|min:1|max:365',
         ]);
 
         // Handle checkbox toggle

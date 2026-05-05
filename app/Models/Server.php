@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Server extends Model
 {
     protected $fillable = [
-        'name', 'ip_address', 'location', 'is_active', 'description'
+        'name', 'ip_address', 'location', 'is_active', 'description', 'retention_days'
     ];
 
     // Relasi: Satu Server punya banyak CCTV
