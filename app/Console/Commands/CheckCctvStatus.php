@@ -37,20 +37,18 @@ class CheckCctvStatus extends Command
                 continue;
             }
 
-            // CEK PORT 554 (RTSP)
-            // Kita gunakan fsockopen untuk mencoba koneksi TCP
-            try {
-                $connection = @fsockopen($ip, 554, $errno, $errstr, $timeout);
+            // CEK PING (ICMP)
+            // Menggunakan perintah ping sistem (Windows/Linux support)
+            $wait = (PHP_OS_FAMILY === 'Windows') ? '-n 1 -w 1000' : '-c 1 -W 1';
+            $cmd = "ping {$wait} " . escapeshellarg($ip);
+            
+            exec($cmd, $output, $resultCode);
 
-                if ($connection) {
-                    // Jika berhasil connect, berarti ONLINE
-                    $this->updateStatus($cctv, 'online');
-                    fclose($connection);
-                } else {
-                    // Jika gagal connect, berarti OFFLINE
-                    $this->updateStatus($cctv, 'offline');
-                }
-            } catch (\Exception $e) {
+            if ($resultCode === 0) {
+                // Jika ping berhasil (exit code 0)
+                $this->updateStatus($cctv, 'online');
+            } else {
+                // Jika ping gagal
                 $this->updateStatus($cctv, 'offline');
             }
         }
