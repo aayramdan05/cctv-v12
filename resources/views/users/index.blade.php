@@ -23,38 +23,34 @@
             </a>
         </div>
 
-        <!-- Filter & Search Bar -->
-        <div class="glass-effect rounded-2xl p-4 mb-6 border border-cyan-100">
-            <form action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
-                <div class="flex-1 min-w-[250px]">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Cari Pengguna</label>
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-3 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama atau email..." 
-                               class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm">
-                    </div>
+        <!-- Slim Filter & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <form action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
+                <!-- Search Input Slim -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" 
+                           oninput="clearTimeout(window.userSearchTimer); window.userSearchTimer = setTimeout(() => this.form.submit(), 500)"
+                           placeholder="Cari nama atau email..." 
+                           class="w-full pl-9 pr-4 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50">
                 </div>
-                <div class="w-48">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Role</label>
-                    <select name="role" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm appearance-none">
-                        <option value="">Semua Role</option>
-                        <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
-                        <option value="faculty_operator" {{ request('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
-                        <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User (Restricted)</option>
-                        <option value="api_viewer" {{ request('role') == 'api_viewer' ? 'selected' : '' }}>API Viewer</option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-sm">
-                        Filter
-                    </button>
-                    @if(request()->anyFilled(['search', 'role']))
-                        <a href="{{ route('users.index') }}" class="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    @endif
-                </div>
+
+                <!-- Dropdown Slims -->
+                <select name="role" onchange="this.form.submit()" 
+                        class="w-48 px-3 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50 cursor-pointer">
+                    <option value="">Semua Role</option>
+                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
+                    <option value="faculty_operator" {{ request('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
+                    <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User (Restricted)</option>
+                    <option value="api_viewer" {{ request('role') == 'api_viewer' ? 'selected' : '' }}>API Viewer</option>
+                </select>
+
+                @if(request()->anyFilled(['search', 'role']))
+                    <a href="{{ route('users.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors">
+                        <i class="fas fa-times-circle mr-1"></i> Clear
+                    </a>
+                @endif
             </form>
         </div>
 

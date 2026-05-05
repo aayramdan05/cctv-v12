@@ -25,36 +25,32 @@
 
         <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
             
-        <!-- Filter & Search Bar -->
-        <div class="glass-effect rounded-2xl p-4 mb-6 border border-cyan-100">
-            <form action="{{ route('building.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
-                <div class="flex-1 min-w-[250px]">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Cari Gedung</label>
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-3 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama atau kode gedung..." 
-                               class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm">
-                    </div>
+        <!-- Slim Filter & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <form action="{{ route('building.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
+                <!-- Search Input Slim -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" 
+                           oninput="clearTimeout(window.buildSearchTimer); window.buildSearchTimer = setTimeout(() => this.form.submit(), 500)"
+                           placeholder="Cari nama atau kode gedung..." 
+                           class="w-full pl-9 pr-4 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50">
                 </div>
-                <div class="w-64">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Fakultas</label>
-                    <select name="fakultas" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-400 transition-all text-sm appearance-none">
-                        <option value="">Semua Fakultas</option>
-                        @foreach($faculties as $f)
-                            <option value="{{ $f }}" {{ request('fakultas') == $f ? 'selected' : '' }}>{{ $f }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-sm">
-                        Filter
-                    </button>
-                    @if(request()->anyFilled(['search', 'fakultas']))
-                        <a href="{{ route('building.index') }}" class="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    @endif
-                </div>
+
+                <!-- Dropdown Slims -->
+                <select name="fakultas" onchange="this.form.submit()" 
+                        class="w-64 px-3 py-1.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-xs bg-white/50 cursor-pointer">
+                    <option value="">Semua Fakultas</option>
+                    @foreach($faculties as $f)
+                        <option value="{{ $f }}" {{ request('fakultas') == $f ? 'selected' : '' }}>{{ $f }}</option>
+                    @endforeach
+                </select>
+
+                @if(request()->anyFilled(['search', 'fakultas']))
+                    <a href="{{ route('building.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors">
+                        <i class="fas fa-times-circle mr-1"></i> Clear
+                    </a>
+                @endif
             </form>
         </div>
 
