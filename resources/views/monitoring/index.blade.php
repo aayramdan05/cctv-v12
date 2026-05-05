@@ -230,17 +230,17 @@
                                      :style="'left: ' + (seg.start / 86400 * 100) + '%; width: calc(' + (seg.duration / 86400 * 100) + '% + 2px); min-width: 5px;'"
                                      :title="'Rekaman: ' + seg.human_start"
                                      @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
-                                 </div>
-                            </template>
-
-                            <!-- MOTION EVENTS (ORANGE GLOW) -->
-                            <template x-for="ev in currentEventsData">
-                                <div class="absolute top-0 bottom-0 z-30 w-[6px] -ml-[3px] bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,1)] cursor-help"
-                                     :style="'left: ' + (ev.start / 86400 * 100) + '%;'"
-                                     :title="'Gerakan Terdeteksi: ' + formatTime(ev.start)">
                                 </div>
                             </template>
                         </div>
+
+                        <!-- MOTION EVENTS (ORANGE GLOW - OUTSIDE OVERFLOW) -->
+                        <template x-for="ev in currentEventsData">
+                            <div class="absolute top-4 bottom-0 z-[50] w-[4px] -ml-[2px] bg-orange-600 shadow-[0_0_15px_rgba(234,88,12,1)] cursor-help border-t-2 border-white"
+                                 :style="'left: ' + (ev.start / 86400 * 100) + '%;'"
+                                 :title="'Gerakan Terdeteksi: ' + formatTime(ev.start)">
+                            </div>
+                        </template>
                         
                         <div class="absolute top-2 bottom-0 w-0.5 bg-red-600 z-20 pointer-events-none transition-all duration-75 ease-linear"
                                 :style="'left: ' + currentPlayheadPercent + '%'">
