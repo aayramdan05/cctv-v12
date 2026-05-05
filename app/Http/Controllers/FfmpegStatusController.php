@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cctv;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 
