@@ -63,61 +63,56 @@ class PlaybackController extends Controller
 
     public function getRecordings(Request $request)
     {
-        $date = $request->input('date', now()->format('Y-m-d'));
-        $targetCamId = $request->input('cctv_id');
-        
-        // --- PERBAIKAN: DEFINISIKAN CCTV INFO DULU ---
-        // Kita butuh info nama kamera/gedung untuk ditampilkan di playlist
-        $cctvInfo = Cctv::with('building')->find($targetCamId);
-        
-        // Cek folder tanggal
-        $path = storage_path("app/public/recordings/{$date}");
-        
-        // Jika kamera tidak ditemukan ATAU folder rekaman belum ada
-        if (!$cctvInfo || !File::exists($path)) {
-            return response()->json([]);
-        }
-
-        $files = File::files($path);
-        $data = [];
-
-        foreach ($files as $file) {
-            $filename = $file->getFilename();
+        try {
+            $date = $request->input('date', now()->format('Y-m-d'));
+            $targetCamId = $request->input('cctv_id');
             
-            // Regex: cam_{id}_{Y-m-d_H-i-s}.mp4
-            if (preg_match('/cam_(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/', $filename, $matches)) {
-                
-                $fileCamId = $matches[1];
-                $fileDate = $matches[2];
-                
-                // Filter hanya file milik kamera ini
-                if ($fileCamId != $targetCamId || $fileDate !== $date) {
-                    continue;
-                }
-
-                $timeStr = str_replace('-', ':', $matches[3]);
-                $start = Carbon::createFromFormat('Y-m-d H:i:s', "$fileDate $timeStr", config('app.timezone'));
-                $end = $start->copy()->addSeconds(900);
-
-                $data[] = [
-                    'id' => $filename,
-                    'url' => $cctvInfo->getRecordingUrl($date, $filename),
-                    'start_time' => $start->format('H:i'),
-                    'end_time' => $end->format('H:i'),
-                    'start_ts' => $start->timestamp,
-                    'duration' => 900,
-                    
-                    // DATA DETAIL (Sekarang sudah aman karena $cctvInfo ada)
-                    'cctv_name' => $cctvInfo->nama_cctv,
-                    'building_name' => $cctvInfo->building->nama_gedung ?? 'Unknown Building',
-                    'faculty_name' => $cctvInfo->building->fakultas ?? 'Unknown Faculty',
-                ];
+            $cctvInfo = Cctv::with('building')->find($targetCamId);
+            $path = storage_path("app/public/recordings/{$date}");
+            
+            if (!$cctvInfo || !File::exists($path)) {
+                return response()->json([]);
             }
+
+            $files = File::files($path);
+            $data = [];
+
+            foreach ($files as $file) {
+                $filename = $file->getFilename();
+                
+                if (preg_match('/cam_(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/', $filename, $matches)) {
+                    $fileCamId = $matches[1];
+                    $fileDate = $matches[2];
+                    
+                    if ($fileCamId != $targetCamId || $fileDate !== $date) {
+                        continue;
+                    }
+
+                    $timeStr = str_replace('-', ':', $matches[3]);
+                    $start = Carbon::createFromFormat('Y-m-d H:i:s', "$fileDate $timeStr", config('app.timezone'));
+                    $end = $start->copy()->addSeconds(900);
+
+                    $data[] = [
+                        'id' => $filename,
+                        'url' => $cctvInfo->getRecordingUrl($date, $filename),
+                        'start_time' => $start->format('H:i'),
+                        'end_time' => $end->format('H:i'),
+                        'start_ts' => $start->timestamp,
+                        'duration' => 900,
+                        'cctv_name' => $cctvInfo->nama_cctv,
+                        'building_name' => $cctvInfo->building->nama_gedung ?? 'Unknown Building',
+                        'faculty_name' => $cctvInfo->building->fakultas ?? 'Unknown Faculty',
+                    ];
+                }
+            }
+
+            usort($data, fn($a, $b) => $a['start_ts'] <=> $b['start_ts']);
+            return response()->json($data);
+            
+        } catch (\Exception $e) {
+            \Log::error("Error fetching recordings: " . $e->getMessage());
+            return response()->json(['error' => 'Gagal mengambil data rekaman'], 500);
         }
-
-        usort($data, fn($a, $b) => $a['start_ts'] <=> $b['start_ts']);
-
-        return response()->json($data);
     }
 
     public function exportRecordings(Request $request)

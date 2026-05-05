@@ -122,8 +122,9 @@ class FfmpegStatusController extends Controller
                         if ($latestFile) {
                             $lastWrite = Carbon::createFromTimestamp($latestTime);
                             
-                            // Toleransi 60 detik untuk dianggap "Running"
-                            if ($lastWrite->diffInSeconds(now()) < 60) {
+                            // Toleransi 20 menit (1200 detik) untuk dianggap "Running"
+                            // Karena kita merekam per segmen 15 menit + buffer 5 menit
+                            if ($lastWrite->diffInSeconds(now()) < 1200) {
                                 $isRecording = true;
                             }
                             $lastUpdateText = $lastWrite->diffForHumans();

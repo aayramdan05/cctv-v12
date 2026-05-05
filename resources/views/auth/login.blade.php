@@ -65,6 +65,19 @@
 
                 <x-auth-session-status class="mb-4" :status="session('status')" />
 
+                @if ($errors->any())
+                    <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 animate-shake">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-1"></i>
+                        <div class="text-sm text-red-700 font-medium">
+                            <ul class="list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">
                     @csrf
 

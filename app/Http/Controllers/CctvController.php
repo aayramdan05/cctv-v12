@@ -41,25 +41,29 @@ class CctvController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'building_id'   => 'required|exists:buildings,id',
-            'server_id'     => 'nullable|exists:servers,id', // Server Node
-            
-            'kode_cctv'     => 'required|string|unique:cctvs,kode_cctv|max:50',
-            'nama_cctv'     => 'required|string|max:255',
-            'ip'            => 'nullable|ip',
-            'rtsp_url'      => 'required|string',
-            'rtsp_user'     => 'nullable|string',
-            'rtsp_password' => 'nullable|string',
-            'rtsp_url_sub'  => 'nullable|string', // URL Substream
-            
-            'status'        => 'nullable|in:online,offline,maintenance',
-        ]);
+        try {
+            $validated = $request->validate([
+                'building_id'   => 'required|exists:buildings,id',
+                'server_id'     => 'nullable|exists:servers,id', // Server Node
+                
+                'kode_cctv'     => 'required|string|unique:cctvs,kode_cctv|max:50',
+                'nama_cctv'     => 'required|string|max:255',
+                'ip'            => 'nullable|ip',
+                'rtsp_url'      => 'required|string',
+                'rtsp_user'     => 'nullable|string',
+                'rtsp_password' => 'nullable|string',
+                'rtsp_url_sub'  => 'nullable|string', // URL Substream
+                
+                'status'        => 'nullable|in:online,offline,maintenance',
+            ]);
 
-        Cctv::create($validated);
-        Artisan::call('cctv:sync-config');
+            Cctv::create($validated);
+            Artisan::call('cctv:sync-config');
 
-        return redirect()->route('cctv.index')->with('success', 'Kamera berhasil ditambahkan.');
+            return redirect()->route('cctv.index')->with('success', 'Kamera berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Gagal menambah kamera: ' . $e->getMessage());
+        }
     }
 
     public function edit(Cctv $cctv): View
@@ -78,42 +82,50 @@ class CctvController extends Controller
 
     public function update(Request $request, Cctv $cctv): RedirectResponse
     {
-        $validated = $request->validate([
-            'building_id'   => 'required|exists:buildings,id',
-            'server_id'     => 'nullable|exists:servers,id', // Server Node
-            
-            'kode_cctv'     => 'required|string|max:50|unique:cctvs,kode_cctv,' . $cctv->id,
-            'nama_cctv'     => 'required|string|max:255',
-            'ip'            => 'nullable|ip',
-            'rtsp_url'      => 'required|string',
-            'rtsp_user'     => 'nullable|string',
-            'rtsp_password' => 'nullable|string',
-            'rtsp_url_sub'  => 'nullable|string',
-            'status'        => 'required|in:online,offline,maintenance',
-        ]);
+        try {
+            $validated = $request->validate([
+                'building_id'   => 'required|exists:buildings,id',
+                'server_id'     => 'nullable|exists:servers,id', // Server Node
+                
+                'kode_cctv'     => 'required|string|max:50|unique:cctvs,kode_cctv,' . $cctv->id,
+                'nama_cctv'     => 'required|string|max:255',
+                'ip'            => 'nullable|ip',
+                'rtsp_url'      => 'required|string',
+                'rtsp_user'     => 'nullable|string',
+                'rtsp_password' => 'nullable|string',
+                'rtsp_url_sub'  => 'nullable|string',
+                'status'        => 'required|in:online,offline,maintenance',
+            ]);
 
-        // Handle Password (Jangan timpa dengan NULL jika kosong)
-        if (empty($validated['rtsp_password'])) {
-            unset($validated['rtsp_password']);
+            // Handle Password (Jangan timpa dengan NULL jika kosong)
+            if (empty($validated['rtsp_password'])) {
+                unset($validated['rtsp_password']);
+            }
+
+            $cctv->update($validated);
+            Artisan::call('cctv:sync-config');
+
+            return redirect()->route('cctv.index')
+                ->with('success', 'Data kamera berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Gagal memperbarui kamera: ' . $e->getMessage());
         }
-
-        $cctv->update($validated);
-        Artisan::call('cctv:sync-config');
-
-        return redirect()->route('cctv.index')
-            ->with('success', 'Data kamera berhasil diperbarui.');
     }
 
     public function destroy(Cctv $cctv): RedirectResponse
     {
-        // Pengecekan Hak Akses Hapus
-        if (auth()->user()->role === 'faculty_operator' && $cctv->building->fakultas !== auth()->user()->faculty) {
-            abort(403);
+        try {
+            // Pengecekan Hak Akses Hapus
+            if (auth()->user()->role === 'faculty_operator' && $cctv->building->fakultas !== auth()->user()->faculty) {
+                abort(403);
+            }
+            
+            $cctv->delete();
+            Artisan::call('cctv:sync-config');
+            
+            return redirect()->route('cctv.index')->with('success', 'Kamera berhasil dihapus.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus kamera: ' . $e->getMessage());
         }
-        
-        $cctv->delete();
-        Artisan::call('cctv:sync-config');
-        
-        return redirect()->route('cctv.index')->with('success', 'Kamera berhasil dihapus.');
     }
 }

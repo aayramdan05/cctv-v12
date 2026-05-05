@@ -1,0 +1,13 @@
+[Unit]
+Description=Laravel Queue Worker (CCTV Export)
+After=network.target postgresql.service
+
+[Service]
+User=aay
+Group=aay
+Restart=always
+ExecStart=/usr/bin/php /home/aay/cctv-v12/artisan queue:work --tries=3 --timeout=3600
+WorkingDirectory=/home/aay/cctv-v12
+
+[Install]
+WantedBy=multi-user.target

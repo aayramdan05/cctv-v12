@@ -40,6 +40,44 @@
         {{ $slot }}
     </div>
 
+    <!-- Global Flash Notification -->
+    @if(session('success') || session('error') || session('warning'))
+        <div x-data="{ show: true }" 
+             x-show="show" 
+             x-init="setTimeout(() => show = false, 5000)"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform translate-y-4"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform translate-y-0"
+             x-transition:leave-end="opacity-0 transform translate-y-4"
+             class="fixed bottom-6 right-6 z-[9999] max-w-sm w-full"
+        >
+            <div class="flex items-center p-4 rounded-2xl shadow-2xl border backdrop-blur-md 
+                @if(session('success')) bg-emerald-500/90 border-emerald-400 text-white @endif
+                @if(session('error')) bg-red-500/90 border-red-400 text-white @endif
+                @if(session('warning')) bg-amber-500/90 border-amber-400 text-white @endif
+            ">
+                <div class="mr-3 text-xl">
+                    @if(session('success')) <i class="fas fa-check-circle"></i> @endif
+                    @if(session('error')) <i class="fas fa-exclamation-triangle"></i> @endif
+                    @if(session('warning')) <i class="fas fa-info-circle"></i> @endif
+                </div>
+                <div class="flex-1 mr-4">
+                    <p class="text-sm font-bold">
+                        @if(session('success')) Success @endif
+                        @if(session('error')) Error @endif
+                        @if(session('warning')) Warning @endif
+                    </p>
+                    <p class="text-xs opacity-90">{{ session('success') ?? session('error') ?? session('warning') }}</p>
+                </div>
+                <button @click="show = false" class="text-white hover:opacity-75 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
+
     @stack('scripts')
 </body>
 </html>

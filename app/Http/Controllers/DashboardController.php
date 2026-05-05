@@ -12,44 +12,43 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $user = auth()->user();
+        try {
+            $user = auth()->user();
 
-        // 1. STATISTIK UTAMA
-        $totalCctv = Cctv::accessibleByAuth()->count();
-        $activeCctv = Cctv::accessibleByAuth()->where('status', 'online')->count();
-        $offlineCctv = Cctv::accessibleByAuth()->where('status', 'offline')->count();
+            // 1. STATISTIK UTAMA
+            $totalCctv = Cctv::accessibleByAuth()->count();
+            $activeCctv = Cctv::accessibleByAuth()->where('status', 'online')->count();
+            $offlineCctv = Cctv::accessibleByAuth()->where('status', 'offline')->count();
 
-        // 2. DATA GEDUNG
-        if ($user->role === 'faculty_operator') {
-            $buildings = Building::where('fakultas', $user->faculty)
-                        ->withCount('cctvs')->get();
-            $totalGedung = Building::where('fakultas', $user->faculty)->count();
-        } else {
-            $buildings = Building::withCount('cctvs')
-                        ->orderBy('cctvs_count', 'desc')->take(6)->get();
-            $totalGedung = Building::count();
+            // 2. DATA GEDUNG
+            if ($user->role === 'faculty_operator') {
+                $buildings = Building::where('fakultas', $user->faculty)
+                            ->withCount('cctvs')->get();
+                $totalGedung = Building::where('fakultas', $user->faculty)->count();
+            } else {
+                $buildings = Building::withCount('cctvs')
+                            ->orderBy('cctvs_count', 'desc')->take(6)->get();
+                $totalGedung = Building::count();
+            }
+
+            // 3. LIVE PREVIEW (3 Kamera Terakhir)
+            $latestCctvs = Cctv::accessibleByAuth()
+                            ->with(['building', 'server']) 
+                            ->latest()
+                            ->take(3)
+                            ->get();
+
+            // 4. ALERTS
+            $alerts = $this->getAlerts();
+
+            return view('dashboard', compact(
+                'totalCctv', 'totalGedung', 'activeCctv', 'offlineCctv',
+                'buildings', 'latestCctvs', 'alerts'
+            ));
+        } catch (\Exception $e) {
+            \Log::error("Dashboard Error: " . $e->getMessage());
+            return view('dashboard')->with('error', 'Gagal memuat data dashboard.');
         }
-
-        // 3. LIVE PREVIEW (3 Kamera Terakhir)
-        // Kita tetap memuat relasi 'server' agar Accessor 'live_stream_url' di Model
-        // bisa bekerja efisien menentukan path /node1/, /node2/, dll.
-        $latestCctvs = Cctv::accessibleByAuth()
-                           ->with(['building', 'server']) 
-                           ->latest()
-                           ->take(3)
-                           ->get();
-
-        // REVISI: BAGIAN REGISTER STREAM DIHAPUS
-        // Karena registrasi stream sudah ditangani oleh SyncGo2RTCConfig.php (Background Service)
-        // Dashboard hanya bertugas menampilkan URL saja via Accessor Model.
-
-        // 4. ALERTS
-        $alerts = $this->getAlerts();
-
-        return view('dashboard', compact(
-            'totalCctv', 'totalGedung', 'activeCctv', 'offlineCctv',
-            'buildings', 'latestCctvs', 'alerts'
-        ));
     }
 
     /**

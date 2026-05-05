@@ -10,6 +10,8 @@ Sistem ini terdiri dari dua komponen utama:
     *   Berfungsi sebagai pusat antarmuka pengguna (UI).
     *   Mengelola database pusat (PostgreSQL) untuk metadata CCTV dan rekaman.
     *   Mengatur otentikasi dan izin akses video menggunakan Nginx `auth_request`.
+    *   Menjalankan **Queue Worker** untuk proses export rekaman yang berat.
+
 2.  **Recording Node (Python Agent)**:
     *   Server terdistribusi yang melakukan penarikan *stream* dari kamera fisik.
     *   Mengelola *live streaming* via WebRTC/HLS menggunakan **Go2RTC**.
@@ -42,9 +44,37 @@ php artisan key:generate
 
 # Database Migration
 php artisan migrate
+
+# Compile Frontend Assets
+npm run build
 ```
 
-### 3. Konfigurasi Nginx Master
+### 3. Setup Queue Worker (Background Processing)
+Agar fitur Export Rekaman dan Notifikasi berjalan di latar belakang tanpa memberatkan UI, Anda harus menjalankan Queue Worker. Di server production, gunakan Systemd:
+
+1. Buat file `/etc/systemd/system/laravel-worker.service`:
+```ini
+[Unit]
+Description=Laravel Queue Worker
+After=network.target
+
+[Service]
+User=aay
+Group=aay
+Restart=always
+ExecStart=/usr/bin/php /home/aay/cctv-v12/artisan queue:work --tries=3 --timeout=3600
+WorkingDirectory=/home/aay/cctv-v12
+
+[Install]
+WantedBy=multi-user.target
+```
+2. Jalankan service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now laravel-worker
+```
+
+### 4. Konfigurasi Nginx Master
 Pastikan Nginx Master memiliki konfigurasi *reverse proxy* untuk mengarahkan permintaan ke Node-node pendukung. Contoh untuk Node 2:
 ```nginx
 location /node2/storage/ {
@@ -88,6 +118,9 @@ server {
     location /storage/ {
         root /home/<user>/;
         add_header Access-Control-Allow-Origin *;
+        add_header Cache-Control no-cache;
+        
+        # PENTING untuk Scrubbing Video (Rewind/Forward)
         add_header Accept-Ranges bytes;
         max_ranges 100;
     }
@@ -110,6 +143,7 @@ pip install psycopg2-binary pyyaml python-dotenv
 Buat file `.env` di folder script:
 ```env
 DB_HOST=10.69.69.21 (IP Master)
+DB_PORT=5432
 DB_DATABASE=cctv_prod
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
@@ -140,17 +174,9 @@ sudo systemctl enable --now cctv-sync
 
 ---
 
-## 💡 Fitur Utama UI
-*   **Grid View**: Pilihan tampilan 1, 4, atau 9 kamera sekaligus.
-*   **Timeline Playback**: Klik pada balok hijau untuk memutar ulang rekaman di jam tersebut.
-*   **Digital Zoom**: Gunakan *scroll wheel* mouse atau menu zoom untuk memperbesar area video.
-*   **Mobile Optimized**: Tampilan list kamera di HP yang luas dan *native-like*.
-
----
-
 ## 🚀 Instalasi Cepat Recording Node (Automated)
 
-Jika Anda ingin menambah server rekaman baru (Node) tanpa ribet, gunakan script installer otomatis yang sudah disediakan:
+Jika Anda ingin menambah server rekaman baru (Node) tanpa ribet, gunakan script installer otomatis yang sudah disediakan di folder `scripts/`:
 
 ```bash
 # 1. Download installer dari folder scripts proyek ini ke Server Node
@@ -161,8 +187,19 @@ chmod +x install_node.sh
 sudo ./install_node.sh
 ```
 
-Script ini akan otomatis menginstal Nginx, FFmpeg, Python, Go2RTC, dan menyeting seluruh konfigurasi yang dibutuhkan berdasarkan input IP Master Anda.
+---
+
+## 💡 Fitur Utama UI
+*   **Grid View**: Pilihan tampilan 1, 4, atau 9 kamera sekaligus.
+*   **Timeline Playback**: Klik pada balok hijau untuk memutar ulang rekaman di jam tersebut.
+*   **Digital Zoom**: Gunakan *scroll wheel* mouse atau menu zoom untuk memperbesar area video.
+*   **Mobile Optimized**: Tampilan list kamera di HP yang luas dan *native-like*.
 
 ---
 
+## 📝 Catatan Penting
+*   **Sinkronisasi Waktu**: Pastikan semua Node memiliki waktu yang sinkron dengan Master (gunakan NTP) agar timeline rekaman akurat.
+*   **Retention**: Script secara otomatis menghapus rekaman fisik dan data di DB setelah melewati batas hari yang ditentukan di `.env`.
+
+---
 © 2026 UNPAD CCTV Infrastructure Team
