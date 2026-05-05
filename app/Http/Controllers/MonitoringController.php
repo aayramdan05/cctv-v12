@@ -51,12 +51,15 @@ class MonitoringController extends Controller
             ];
         }
 
-        // Ambil riwayat kejadian (Motion)
+        // Ambil riwayat kejadian (Motion) dengan range waktu yang tepat (WIB)
+        $startDay = \Carbon\Carbon::parse($date, 'Asia/Jakarta')->startOfDay();
+        $endDay = \Carbon\Carbon::parse($date, 'Asia/Jakarta')->endOfDay();
+
         $events = \App\Models\CameraEvent::where('cctv_id', $cctvId)
-            ->whereDate('event_time', $date)
+            ->whereBetween('event_time', [$startDay, $endDay])
             ->get()
             ->map(function($ev) {
-                // Paksa ke timezone Jakarta (WIB) agar sinkron dengan User
+                // Konversi ke WIB untuk tampilan di timeline
                 $time = \Carbon\Carbon::parse($ev->event_time)->timezone('Asia/Jakarta');
                 return [
                     'start' => ($time->hour * 3600) + ($time->minute * 60) + $time->second,
