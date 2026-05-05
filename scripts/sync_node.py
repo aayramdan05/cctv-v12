@@ -210,59 +210,11 @@ def record_worker(cam_id, stream_url):
                     finally:
                         conn.close()
 
-def health_check_worker():
-    """Worker untuk mengecek apakah kamera fisik UP atau DOWN (Update Dashboard)"""
-    print(f"📡 Memulai thread Health-Check Kamera (Node: {NODE_IP})...")
-    while True:
-        conn = get_db_connection()
-        if conn:
-            try:
-                cur = conn.cursor()
-                # 1. Ambil semua CCTV yang dikelola server ini
-                cur.execute("""
-                    SELECT c.id, c.rtsp_url, c.nama_cctv 
-                    FROM cctvs c
-                    JOIN servers s ON c.server_id = s.id
-                    WHERE s.ip_address = %s
-                """, (NODE_IP,))
-                cameras = cur.fetchall()
-
-                for cam_id, rtsp_url, name in cameras:
-                    # 2. Probe menggunakan FFmpeg (Timeout 5 detik)
-                    # Kita cek apakah stream bisa dibuka
-                    cmd = [
-                        'ffprobe', '-v', 'error', '-rtsp_transport', 'tcp', 
-                        '-show_entries', 'format=format_name', '-t', '1',
-                        rtsp_url
-                    ]
-                    
-                    try:
-                        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=8)
-                        status = 'online' if result.returncode == 0 else 'offline'
-                    except subprocess.TimeoutExpired:
-                        status = 'offline'
-                    
-                    # 3. Update Status ke Database
-                    cur.execute("UPDATE cctvs SET status = %s, updated_at = NOW() WHERE id = %s", (status, cam_id))
-                    
-                    if status == 'offline':
-                        print(f"⚠️ Kamera {name} (ID: {cam_id}) TERDETEKSI OFFLINE!")
-
-                cur.close()
-            except Exception as e:
-                print(f"❌ Error Health-Check: {e}")
-            finally:
-                conn.close()
-        
-        # Cek setiap 2 menit agar tidak membebani network
-        time.sleep(120)
-
 if __name__ == '__main__':
     print(f"🚀 Memulai CCTV Node Agent | Interval: {CHECK_INTERVAL}m | Retention: {RETENTION_DAYS} Hari")
     
-    # Jalankan Auto-Cleanup & Health-Check di background
+    # Jalankan Auto-Cleanup di background
     threading.Thread(target=auto_cleanup, daemon=True).start()
-    threading.Thread(target=health_check_worker, daemon=True).start()
     
     active_threads = {}
     

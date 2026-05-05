@@ -18,11 +18,11 @@ class Kernel extends ConsoleKernel
         // 1. TUGAS UMUM (Jalan di semua server)
         // ---------------------------------------------------------
         
-        // Cek Status Koneksi (Ping RTSP) - Setiap 5 menit
-        // Di arsitektur cluster, sebaiknya ini hanya dijalankan oleh Master Server 
-        // atau server yang punya akses jaringan ke semua kamera.
-        // Jika ingin aman, biarkan jalan di semua node (redundansi).
-        $schedule->command('cctv:check-status')->everyFiveMinutes();
+        // Cek Status Koneksi (Ping RTSP) - Setiap 1 menit
+        // Hanya dijalankan oleh Master Server (Tanpa MY_SERVER_IP)
+        if (!env('MY_SERVER_IP')) {
+            $schedule->command('cctv:check-status')->everyMinute();
+        }
 
 
         // ---------------------------------------------------------
