@@ -169,7 +169,13 @@ Route::get('/api/node-config', function (Request $request) {
         
         $config['cameras_list'][] = [
             'id' => $cam->id,
-            'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}"
+            'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}",
+            'ip' => $cam->ip,
+            'onvif' => [
+                'port' => $cam->onvif_port ?? 80,
+                'user' => $cam->onvif_user ?? $cam->rtsp_user,
+                'password' => $cam->onvif_password ?: $cam->rtsp_password // Menggunakan logic yang sama untuk decrypt
+            ]
         ];
     }
 

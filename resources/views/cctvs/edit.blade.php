@@ -164,6 +164,29 @@
                         <p class="text-xs text-slate-400 mt-1">Isi hanya jika ingin mengganti password.</p>
                     </div>
 
+                    <!-- ONVIF Configuration Section -->
+                    <div class="md:col-span-2 pt-4 border-t border-slate-100 mt-4">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-robot text-slate-400"></i> Konfigurasi ONVIF (Event Intelligence)
+                        </h3>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">ONVIF Port</label>
+                        <input type="number" name="onvif_port" value="{{ old('onvif_port', $cctv->onvif_port ?? 80) }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="80 atau 8000">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">ONVIF User</label>
+                        <input type="text" name="onvif_user" value="{{ old('onvif_user', $cctv->onvif_user) }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="admin">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">ONVIF Password</label>
+                        <input type="password" name="onvif_password" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 placeholder-slate-400" placeholder="(Biarkan kosong jika tidak ingin mengubah)">
+                        <p class="text-[10px] text-slate-400 mt-1">Isi hanya jika ingin mengganti password ONVIF.</p>
+                    </div>
+
                     <div class="md:col-span-2 flex justify-end space-x-4 pt-6 border-t border-slate-100 mt-4">
                         <a href="{{ route('cctv.index') }}" class="px-6 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 font-medium transition-colors">Batal</a>
                         <button type="submit" class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all duration-300">

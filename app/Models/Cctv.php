@@ -13,7 +13,7 @@ class Cctv extends Model
 
     protected $fillable = [
         'building_id',
-        'server_id', // Pastikan kolom ini ada di $fillable
+        'server_id',
         'kode_cctv',
         'nama_cctv',
         'ip',
@@ -21,12 +21,16 @@ class Cctv extends Model
         'rtsp_url_sub',
         'rtsp_user',
         'rtsp_password',
+        'onvif_port',
+        'onvif_user',
+        'onvif_password',
         'status',
-        'recorder_ip', // Kolom legacy (bisa dihapus nanti jika sudah full server_id)
+        'recorder_ip',
     ];
 
     protected $casts = [
         'rtsp_password' => 'encrypted',
+        'onvif_password' => 'encrypted',
     ];
 
     // --- RELASI ---

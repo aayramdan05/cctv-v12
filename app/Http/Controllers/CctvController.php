@@ -73,7 +73,12 @@ class CctvController extends Controller
                 'rtsp_url'      => 'required|string',
                 'rtsp_user'     => 'nullable|string',
                 'rtsp_password' => 'nullable|string',
-                'rtsp_url_sub'  => 'nullable|string', // URL Substream
+                'rtsp_url_sub'  => 'nullable|string',
+                
+                // ONVIF
+                'onvif_port'     => 'nullable|integer',
+                'onvif_user'     => 'nullable|string',
+                'onvif_password' => 'nullable|string',
                 
                 'status'        => 'nullable|in:online,offline,maintenance',
             ]);
@@ -115,12 +120,23 @@ class CctvController extends Controller
                 'rtsp_user'     => 'nullable|string',
                 'rtsp_password' => 'nullable|string',
                 'rtsp_url_sub'  => 'nullable|string',
+
+                // ONVIF
+                'onvif_port'     => 'nullable|integer',
+                'onvif_user'     => 'nullable|string',
+                'onvif_password' => 'nullable|string',
+
                 'status'        => 'required|in:online,offline,maintenance',
             ]);
 
-            // Handle Password (Jangan timpa dengan NULL jika kosong)
+            // Handle Password RTSP (Jangan timpa dengan NULL jika kosong)
             if (empty($validated['rtsp_password'])) {
                 unset($validated['rtsp_password']);
+            }
+
+            // Handle Password ONVIF (Jangan timpa dengan NULL jika kosong)
+            if (empty($validated['onvif_password'])) {
+                unset($validated['onvif_password']);
             }
 
             $cctv->update($validated);
