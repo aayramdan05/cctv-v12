@@ -267,7 +267,7 @@
                     </div>
                     
                     <div class="flex gap-2">
-                        <div class="relative w-1/2 group">
+                        <div class="relative w-1/3 group">
                             <i class="fas fa-layer-group absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
                             <select x-model="filterFaculty" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
                                 <option value="">Semua Fakultas</option>
@@ -277,7 +277,18 @@
                             </select>
                             <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
                         </div>
-                        <div class="relative w-1/2 group">
+                        <div class="relative w-1/3 group">
+                            <i class="fas fa-server absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
+                            <select x-model="filterServer" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
+                                <option value="">Semua Node</option>
+                                @foreach($cctvs->pluck('server')->filter()->unique('id')->sort() as $srv)
+                                    <option value="{{ $srv->id }}">Node {{ $srv->id }} ({{ $srv->ip_address }})</option>
+                                @endforeach
+                                <option value="master">Master Server</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                        </div>
+                        <div class="relative w-1/3 group">
                             <i class="fas fa-building absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
                             <select x-model="filterBuilding" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
                                 <option value="">Semua Gedung</option>
@@ -295,13 +306,18 @@
                         x-show="
                             (search === '' || '{{ strtolower($cctv->nama_cctv) }}'.includes(search.toLowerCase())) &&
                             (filterFaculty === '' || '{{ $cctv->building->fakultas ?? '' }}' === filterFaculty) &&
-                            (filterBuilding === '' || '{{ $cctv->building->nama_gedung ?? '' }}' === filterBuilding)
+                            (filterBuilding === '' || '{{ $cctv->building->nama_gedung ?? '' }}' === filterBuilding) &&
+                            (filterServer === '' || (filterServer === 'master' && '{{ $cctv->server_id }}' === '') || '{{ $cctv->server_id }}' === filterServer)
                         "
                         draggable="true" 
                         @dragstart="handleDragStart($event, {{ $cctv->id }}, '{{ $cctv->nama_cctv }}', '{{ $cctv->building->nama_gedung ?? '-' }}', '{{ $cctv->building->fakultas ?? '-' }}', '{{ $cctv->live_stream_url }}')"
                         @dragend="isDragging = false"
                         @click.stop="addCameraOnClick({ id: {{ $cctv->id }}, name: '{{ $cctv->nama_cctv }}', building: '{{ $cctv->building->nama_gedung ?? '-' }}', faculty: '{{ $cctv->building->fakultas ?? '-' }}', liveUrl: '{{ $cctv->live_stream_url }}' })">
-                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-500 transition shrink-0"><i class="fas fa-video"></i></div>
+                        
+                        <div class="w-8 h-8 rounded flex items-center justify-center transition shrink-0
+                            {{ $cctv->status === 'online' ? 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white' : 'bg-red-50 text-red-500 group-hover:bg-red-500 group-hover:text-white' }}">
+                            <i class="fas fa-video"></i>
+                        </div>
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-bold text-slate-700 truncate group-hover:text-cyan-600 transition flex items-center gap-1">
                                 <span class="truncate">{{ $cctv->nama_cctv }}</span>
@@ -325,7 +341,7 @@
         function hybridMonitoring() {
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
-                search: '', filterFaculty: '', filterBuilding: '', currentHost: window.location.hostname, isFullscreen: false,
+                search: '', filterFaculty: '', filterBuilding: '', filterServer: '', currentHost: window.location.hostname, isFullscreen: false,
                 isDragging: false,
                 
                 selectedDate: new Date().toISOString().split('T')[0],
@@ -338,6 +354,7 @@
                 // MONITORING STATE
                 lastTime: 0,
                 checkInterval: null,
+                timelineInterval: null,
                 
                 // Panning State
                 panning: false, panSlot: null, startX: 0, startY: 0,
@@ -419,13 +436,27 @@
                     this.selectedSlot = index;
                     this.syncControls(); 
 
+                    // Hapus interval lama jika ada
+                    if(this.timelineInterval) clearInterval(this.timelineInterval);
+
                     const slot = this.activeSlots[index];
                     if(slot) {
-                        const antiCache = new Date().getTime();
-                        fetch(`/monitoring/timeline/${slot.id}?date=${this.selectedDate}&_=${antiCache}`)
-                            .then(res => res.json())
-                            .then(data => { this.currentTimelineData = data; })
-                            .catch(e => this.currentTimelineData = []);
+                        const refreshTimelineData = () => {
+                            const antiCache = new Date().getTime();
+                            fetch(`/monitoring/timeline/${slot.id}?date=${this.selectedDate}&_=${antiCache}`)
+                                .then(res => res.json())
+                                .then(data => { 
+                                    // Update data tanpa mengganggu playhead
+                                    this.currentTimelineData = data; 
+                                })
+                                .catch(e => {});
+                        };
+
+                        // Ambil data pertama kali
+                        refreshTimelineData();
+
+                        // Set auto-refresh setiap 60 detik
+                        this.timelineInterval = setInterval(refreshTimelineData, 60000);
                     } else {
                         this.currentTimelineData = [];
                     }
