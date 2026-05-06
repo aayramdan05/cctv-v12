@@ -47,6 +47,8 @@ class CctvController extends Controller
 
     public function create()
     {
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan menambah kamera.');
+        
         $user = auth()->user();
         
         // 1. Filter Gedung berdasarkan Role (Sudah benar)
@@ -62,6 +64,8 @@ class CctvController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan menambah kamera.');
+
         try {
             $validated = $request->validate([
                 'building_id'   => 'required|exists:buildings,id',
@@ -95,9 +99,7 @@ class CctvController extends Controller
     public function edit(Cctv $cctv): View
     {
         // Pengecekan Hak Akses (Wajib)
-        if (auth()->user()->role === 'faculty_operator' && $cctv->building->fakultas !== auth()->user()->faculty) {
-            abort(403, 'Anda tidak memiliki izin mengedit kamera ini.');
-        }
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan mengedit kamera.');
 
         $buildings = Building::all();
         // Ambil Daftar Server Node (Wajib ditambahkan)
@@ -108,6 +110,8 @@ class CctvController extends Controller
 
     public function update(Request $request, Cctv $cctv): RedirectResponse
     {
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan mengedit kamera.');
+
         try {
             $validated = $request->validate([
                 'building_id'   => 'required|exists:buildings,id',
@@ -151,11 +155,9 @@ class CctvController extends Controller
 
     public function destroy(Cctv $cctv): RedirectResponse
     {
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan menghapus kamera.');
+
         try {
-            // Pengecekan Hak Akses Hapus
-            if (auth()->user()->role === 'faculty_operator' && $cctv->building->fakultas !== auth()->user()->faculty) {
-                abort(403);
-            }
             
             $cctv->delete();
             Artisan::call('cctv:sync-config');
@@ -168,6 +170,8 @@ class CctvController extends Controller
 
     public function bulkMove(Request $request): RedirectResponse
     {
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan memindahkan kamera.');
+
         $request->validate([
             'cctv_ids' => 'required|array',
             'cctv_ids.*' => 'exists:cctvs,id',

@@ -52,6 +52,22 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $currentUser = auth()->user();
+
+        // --- HIERARKI RBAC ---
+        if ($currentUser->role === 'faculty_operator') {
+            // Operator Fakultas HANYA BOLEH membuat role 'user' di fakultasnya sendiri
+            $request->merge([
+                'role' => 'user',
+                'faculty' => $currentUser->faculty
+            ]);
+        } elseif ($currentUser->role === 'operator') {
+            // Operator Pusat HANYA BOLEH membuat role 'faculty_operator' dan 'user'
+            if (!in_array($request->role, ['faculty_operator', 'user'])) {
+                abort(403, 'Operator Pusat hanya boleh membuat akun Operator Fakultas dan User.');
+            }
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -93,6 +109,26 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $currentUser = auth()->user();
+
+        // --- HIERARKI RBAC SECURITY ---
+        if ($currentUser->role === 'faculty_operator') {
+            // Cegah mengedit orang selain 'user' dari fakultasnya
+            if ($user->role !== 'user' || $user->faculty !== $currentUser->faculty) {
+                abort(403, 'Anda hanya boleh mengedit User biasa di fakultas Anda.');
+            }
+            // Paksa nilai agar tidak dirubah via Inspect Element
+            $request->merge([
+                'role' => 'user',
+                'faculty' => $currentUser->faculty
+            ]);
+        } elseif ($currentUser->role === 'operator') {
+            // Cegah mengedit akun admin, ATAU menset role menjadi admin/operator/api_viewer
+            if ($user->role === 'admin' || !in_array($request->role, ['faculty_operator', 'user'])) {
+                abort(403, 'Operator Pusat tidak boleh mengedit Admin atau mengubah role menjadi Admin/Operator/API.');
+            }
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
@@ -132,6 +168,19 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $currentUser = auth()->user();
+
+        // --- HIERARKI RBAC SECURITY ---
+        if ($currentUser->role === 'faculty_operator') {
+            if ($user->role !== 'user' || $user->faculty !== $currentUser->faculty) {
+                abort(403, 'Anda hanya boleh menghapus User biasa di fakultas Anda.');
+            }
+        } elseif ($currentUser->role === 'operator') {
+            if ($user->role === 'admin') {
+                abort(403, 'Operator Pusat tidak boleh menghapus Admin.');
+            }
+        }
+
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
