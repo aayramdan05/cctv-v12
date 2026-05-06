@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Process;
 use Carbon\Carbon;
 use ZipArchive;
 use App\Models\User;
+use App\Models\Cctv;
+use App\Models\Recording;
 use App\Notifications\ExportReady;
 use App\Notifications\ExportProcessing;
 use App\Notifications\ExportFailed;
@@ -46,15 +48,32 @@ class ProcessRecordingExport implements ShouldQueue
         $reqStart = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->startTimeStr}");
         $reqEnd = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->endTimeStr}");
 
-        $path = storage_path("app/public/recordings/{$this->date}");
-        
-        if (!File::exists($path)) {
+        $cctv = Cctv::with('server')->find($this->cctvId);
+        if (!$cctv) {
             $this->user->notifications()->where('type', ExportProcessing::class)->delete();
-            $this->user->notify(new ExportFailed("Folder rekaman untuk tanggal {$this->date} tidak ditemukan di server master."));
+            $this->user->notify(new ExportFailed("CCTV dengan ID {$this->cctvId} tidak ditemukan."));
             return;
         }
 
-        // Folder temp (hanya untuk menyimpan potongan awal/akhir)
+        // Ambil data rekaman langsung dari database
+        $recordings = Recording::where('cctv_id', $this->cctvId)
+            ->whereDate('start_time', $this->date)
+            ->get();
+
+        // Filter rekaman yang beririsan dengan waktu permintaan
+        $recordings = $recordings->filter(function($rec) use ($reqStart, $reqEnd) {
+            $recStart = Carbon::createFromTimestamp($rec->start_time);
+            $recEndCarbon = $recStart->copy()->addSeconds($rec->duration);
+            return $recStart < $reqEnd && $recEndCarbon > $reqStart;
+        })->sortBy('start_time');
+
+        if ($recordings->isEmpty()) {
+            $this->user->notifications()->where('type', ExportProcessing::class)->delete();
+            $this->user->notify(new ExportFailed("Tidak ada data rekaman video di database untuk rentang waktu tersebut pada CAM {$this->cctvId}."));
+            return;
+        }
+
+        // Folder temp (untuk menyimpan hasil download dan potongan)
         $jobId = $this->job ? $this->job->getJobId() : uniqid();
         $tempDir = storage_path("app/public/temp_export/{$jobId}");
         
@@ -62,72 +81,57 @@ class ProcessRecordingExport implements ShouldQueue
             File::makeDirectory($tempDir, 0775, true);
         }
 
-        $files = File::files($path);
-        // Urutkan file agar di dalam ZIP rapi
-        usort($files, function($a, $b) {
-            return strcmp($a->getFilename(), $b->getFilename());
-        });
-
         // Array untuk menyimpan path file yang akan di-zip
-        // Format: ['path' => '/real/path', 'name' => 'nama_di_zip.mp4']
         $filesToZip = [];
 
-        foreach ($files as $file) {
-            $filename = $file->getFilename();
-            // Regex match: cam_1_2025-12-16_08-15-00.mp4
-            if (preg_match('/cam_(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/', $filename, $matches)) {
-                $fileCamId = $matches[1];
-                if ($fileCamId != $this->cctvId) continue;
+        foreach ($recordings as $rec) {
+            $filename = $rec->filename;
+            $fileStart = Carbon::createFromTimestamp($rec->start_time);
+            $fileEnd = $fileStart->copy()->addSeconds($rec->duration);
 
-                $timePart = str_replace('-', ':', $matches[3]);
-                $fileStart = Carbon::createFromFormat('Y-m-d H:i:s', "{$this->date} $timePart");
-                $fileEnd = $fileStart->copy()->addSeconds(900); // Asumsi 15 menit
+            // LOGIKA IRISAN WAKTU
+            $trimStart = $fileStart->max($reqStart);
+            $trimEnd = $fileEnd->min($reqEnd);
 
-                // LOGIKA IRISAN WAKTU
-                $trimStart = $fileStart->max($reqStart);
-                $trimEnd = $fileEnd->min($reqEnd);
+            // Jika ada irisan valid
+            if ($trimStart < $trimEnd) {
+                // Generate URL HTTP Publik (misal: https://cctv.unpad.net/node1/storage/...)
+                $relativeUrl = $cctv->getRecordingUrl($this->date, $filename);
+                $sourceUrl = url($relativeUrl);
 
-                // Jika ada irisan valid
-                if ($trimStart < $trimEnd) {
-                    
-                    // CEK APAKAH PERLU DIPOTONG?
-                    // Jika waktu trim SAMA DENGAN waktu asli file, berarti file ini UTUH.
-                    // Tidak perlu FFmpeg, langsung ambil aslinya.
-                    $isFullSegment = ($trimStart->eq($fileStart) && $trimEnd->eq($fileEnd));
+                $seekSeconds = $fileStart->diffInSeconds($trimStart);
+                $durationSeconds = $trimStart->diffInSeconds($trimEnd);
 
-                    if ($isFullSegment) {
-                        // --- OPTIMASI: LANGSUNG MASUKKAN FILE ASLI ---
-                        $filesToZip[] = [
-                            'path' => $file->getPathname(),
-                            'name' => $filename // Gunakan nama asli
-                        ];
-                    } else {
-                        // --- PROSES POTONG (Hanya untuk awal/akhir) ---
-                        $seekSeconds = $fileStart->diffInSeconds($trimStart);
-                        $durationSeconds = $trimStart->diffInSeconds($trimEnd);
+                // Beri nama khusus
+                $trimFilename = "Trim_" . $trimStart->format('H-i-s') . "_" . $filename;
+                $outputPath = "{$tempDir}/{$trimFilename}";
 
-                        // Beri nama khusus agar admin tahu ini hasil potongan
-                        $trimFilename = "Trim_" . $trimStart->format('H-i-s') . "_" . $filename;
-                        $outputPath = "{$tempDir}/{$trimFilename}";
+                // FFmpeg command over HTTP
+                // Karena file berada di server lain, kita selalu perlu mendownloadnya ke tempDir.
+                // Opsi -ss diletakkan sebelum -i agar FFmpeg melompat (seek) ke detik yang dituju lewat HTTP (sangat cepat).
+                $cmd = [
+                    'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error'
+                ];
 
-                        $cmd = [
-                            'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
-                            '-ss', $seekSeconds,
-                            '-i', $file->getPathname(),
-                            '-t', $durationSeconds,
-                            '-c', 'copy', 
-                            $outputPath
-                        ];
+                if ($seekSeconds > 0) {
+                    $cmd[] = '-ss';
+                    $cmd[] = $seekSeconds;
+                }
 
-                        Process::run($cmd);
+                $cmd = array_merge($cmd, [
+                    '-i', $sourceUrl,
+                    '-t', $durationSeconds,
+                    '-c', 'copy', 
+                    $outputPath
+                ]);
 
-                        if (File::exists($outputPath)) {
-                            $filesToZip[] = [
-                                'path' => $outputPath,
-                                'name' => $trimFilename
-                            ];
-                        }
-                    }
+                Process::run($cmd);
+
+                if (File::exists($outputPath)) {
+                    $filesToZip[] = [
+                        'path' => $outputPath,
+                        'name' => $trimFilename
+                    ];
                 }
             }
         }
