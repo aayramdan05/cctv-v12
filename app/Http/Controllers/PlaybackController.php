@@ -73,20 +73,16 @@ class PlaybackController extends Controller
                 return response()->json([]);
             }
 
-            // Konversi tanggal ke rentang Unix Timestamp
-            $dayStart = Carbon::parse($date)->startOfDay()->timestamp;
-            $dayEnd = Carbon::parse($date)->endOfDay()->timestamp;
-
-            // Ambil dari database Recording
+            // Ambil dari database Recording berdasarkan tanggal
             $recordings = \App\Models\Recording::where('cctv_id', $targetCamId)
-                ->whereBetween('start_time', [$dayStart, $dayEnd])
+                ->where('date', $date)
                 ->orderBy('start_time', 'asc')
                 ->get();
 
             $data = [];
 
             foreach ($recordings as $rec) {
-                $start = Carbon::createFromTimestamp($rec->start_time)->timezone(config('app.timezone'));
+                $start = Carbon::parse($date)->startOfDay()->addSeconds($rec->start_time)->timezone(config('app.timezone'));
                 $end = $start->copy()->addSeconds($rec->duration);
 
                 $data[] = [

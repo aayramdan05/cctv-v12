@@ -55,18 +55,14 @@ class ProcessRecordingExport implements ShouldQueue
             return;
         }
 
-        // Konversi tanggal ke rentang Unix Timestamp
-        $dayStart = Carbon::parse($this->date)->startOfDay()->timestamp;
-        $dayEnd = Carbon::parse($this->date)->endOfDay()->timestamp;
-
-        // Ambil data rekaman langsung dari database
+        // Ambil data rekaman langsung dari database berdasarkan kolom 'date'
         $recordings = Recording::where('cctv_id', $this->cctvId)
-            ->whereBetween('start_time', [$dayStart, $dayEnd])
+            ->where('date', $this->date)
             ->get();
 
         // Filter rekaman yang beririsan dengan waktu permintaan
         $recordings = $recordings->filter(function($rec) use ($reqStart, $reqEnd) {
-            $recStart = Carbon::createFromTimestamp($rec->start_time);
+            $recStart = Carbon::parse($this->date)->startOfDay()->addSeconds($rec->start_time);
             $recEndCarbon = $recStart->copy()->addSeconds($rec->duration);
             return $recStart < $reqEnd && $recEndCarbon > $reqStart;
         })->sortBy('start_time');
@@ -90,7 +86,7 @@ class ProcessRecordingExport implements ShouldQueue
 
         foreach ($recordings as $rec) {
             $filename = $rec->filename;
-            $fileStart = Carbon::createFromTimestamp($rec->start_time);
+            $fileStart = Carbon::parse($this->date)->startOfDay()->addSeconds($rec->start_time);
             $fileEnd = $fileStart->copy()->addSeconds($rec->duration);
 
             // LOGIKA IRISAN WAKTU
