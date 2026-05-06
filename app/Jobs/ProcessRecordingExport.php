@@ -95,9 +95,14 @@ class ProcessRecordingExport implements ShouldQueue
 
             // Jika ada irisan valid
             if ($trimStart < $trimEnd) {
-                // Generate URL HTTP Publik (misal: https://cctv.unpad.net/node1/storage/...)
-                $relativeUrl = $cctv->getRecordingUrl($this->date, $filename);
-                $sourceUrl = url($relativeUrl);
+                // Generate URL HTTP Langsung ke IP Node (bukan via HTTPS public)
+                // Ini untuk menghindari "Connection refused" pada port 443 di internal server
+                if ($cctv->server) {
+                    $nodeIp = $cctv->server->ip_address;
+                    $sourceUrl = "http://{$nodeIp}/storage/recordings/{$this->date}/{$filename}";
+                } else {
+                    $sourceUrl = "http://127.0.0.1/storage/recordings/{$this->date}/{$filename}";
+                }
 
                 $seekSeconds = $fileStart->diffInSeconds($trimStart);
                 $durationSeconds = $trimStart->diffInSeconds($trimEnd);
