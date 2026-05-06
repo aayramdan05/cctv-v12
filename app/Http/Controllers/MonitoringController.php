@@ -55,16 +55,24 @@ class MonitoringController extends Controller
             $m = floor(($rec->start_time % 3600) / 60);
 
             // Cek apakah ada motion di dalam rentang waktu rekaman ini
-            $hasMotion = $events->contains(function($ev) use ($rec) {
+            $motionEventsCount = $events->filter(function($ev) use ($rec) {
                 return $ev['start'] >= $rec->start_time && $ev['start'] <= ($rec->start_time + $rec->duration);
-            });
+            })->count();
+
+            // Asumsi 1 event = 10 detik gerakan (karena cooldown agent 10s)
+            $motionSeconds = $motionEventsCount * 10;
+            $motionPercentage = 0;
+            if ($rec->duration > 0) {
+                $motionPercentage = min(100, round(($motionSeconds / $rec->duration) * 100));
+            }
 
             $segments[] = [
                 'start' => $rec->start_time,
                 'duration' => $rec->duration,
                 'human_start' => sprintf("%02d:%02d", $h, $m),
                 'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
-                'has_motion' => $hasMotion, // Tanda motion
+                'has_motion' => $motionEventsCount > 0, // Tanda motion
+                'motion_percentage' => $motionPercentage,
                 'size_mb' => $rec->size_mb
             ];
         }

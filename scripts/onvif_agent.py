@@ -5,12 +5,25 @@ import threading
 import json
 from onvif import ONVIFCamera
 from datetime import datetime
+import builtins
+
+# Memaksa print() untuk selalu melakukan flush agar log langsung muncul di systemd
+def print(*args, **kwargs):
+    kwargs['flush'] = True
+    builtins.print(*args, **kwargs)
+
 
 # CONFIGURATION
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
 NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.39')
 MASTER_URL = os.getenv('MASTER_URL', 'https://cctv.unpad.net')
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026')
+
+# Melacak thread yang sedang berjalan
+active_threads = {}
+
+# Melacak waktu terakhir pergerakan terdeteksi per kamera (untuk cooldown)
+last_motion_time = {}
 
 def report_to_master(cctv_id, event_type):
     """Melaporkan kejadian ke Master Server"""
@@ -35,65 +48,76 @@ def subscribe_to_camera(cam):
         print(f"⚠️ [CAM {cam_id}] Data ONVIF tidak lengkap, skip.")
         return
 
-    try:
-        print(f"🔍 [CAM {cam_id}] Mencoba koneksi ONVIF ke {cam_ip}:{port}...")
-        mycam = ONVIFCamera(cam_ip, port, user, password)
-        
-        # Inisialisasi Event Service
-        event_service = mycam.create_events_service()
-        properties = event_service.GetEventProperties()
-        
-        # Membuat PullPoint (Cara paling stabil untuk ambil event)
-        pullpoint = mycam.create_pullpoint_service()
-        
-        print(f"✅ [CAM {cam_id}] Berhasil subscribe ONVIF!")
-
-        while True:
-            # Tarik pesan (Gunakan format yang lebih kompatibel)
-            try:
-                # Beberapa kamera butuh timeout dalam format string, beberapa tidak suka keyword 'Timeout'
-                messages = pullpoint.PullMessages({'Timeout': 'PT5S', 'MessageLimit': 10})
-            except:
-                # Fallback: coba tanpa argumen jika gagal
-                messages = pullpoint.PullMessages()
+    while True:
+        try:
+            print(f"🔍 [CAM {cam_id}] Mencoba koneksi ONVIF ke {cam_ip}:{port}...")
+            mycam = ONVIFCamera(cam_ip, port, user, password)
             
-            if hasattr(messages, 'NotificationMessage'):
-                for msg in messages.NotificationMessage:
-                    try:
-                        # Cara lebih aman mengambil Topic
-                        topic = "Unknown"
-                        if hasattr(msg, 'Topic') and msg.Topic is not None:
-                            # Coba beberapa kemungkinan lokasi Topic string
-                            topic = getattr(msg.Topic, '_value_1', str(msg.Topic))
-                        
-                        # Deteksi via XML (X-Ray Mode)
+            # Inisialisasi Event Service
+            event_service = mycam.create_events_service()
+            properties = event_service.GetEventProperties()
+            
+            # Membuat PullPoint (Cara paling stabil untuk ambil event)
+            pullpoint = mycam.create_pullpoint_service()
+            
+            print(f"✅ [CAM {cam_id}] Berhasil subscribe ONVIF!")
+
+            while True:
+                # Tarik pesan (Gunakan format yang lebih kompatibel)
+                try:
+                    # Beberapa kamera butuh timeout dalam format string, beberapa tidak suka keyword 'Timeout'
+                    messages = pullpoint.PullMessages({'Timeout': 'PT5S', 'MessageLimit': 10})
+                except:
+                    # Fallback: coba tanpa argumen jika gagal
+                    messages = pullpoint.PullMessages()
+                
+                if hasattr(messages, 'NotificationMessage'):
+                    for msg in messages.NotificationMessage:
                         try:
-                            msg_obj = msg.Message._value_1
-                            # Ambil semua item di dalam XML Message secara universal
-                            for item in msg_obj.xpath('.//tt:SimpleItem', namespaces={'tt': 'http://www.onvif.org/ver10/schema'}):
-                                name = item.get('Name')
-                                value = item.get('Value')
-                                
-                                # Cek Motion atau Tamper
-                                if name in ["IsMotion", "IsTamper"] and (value == "true" or value == "1"):
-                                    print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN!")
-                                    report_to_master(cam_id, 'motion')
-                        except:
-                            # Jika bukan objek XML, fallback ke deteksi teks mentah
-                            raw_msg = str(msg)
-                            if any(x in raw_msg for x in ['IsMotion="true"', 'Value="true"', 'IsMotion="1"']):
-                                 report_to_master(cam_id, 'motion')
-                                
-                    except Exception as parse_err:
-                        print(f"⚠️ [CAM {cam_id}] Deep Parse Error: {parse_err}")
-            
-            time.sleep(0.5)
+                            # Cara lebih aman mengambil Topic
+                            topic = "Unknown"
+                            if hasattr(msg, 'Topic') and msg.Topic is not None:
+                                # Coba beberapa kemungkinan lokasi Topic string
+                                topic = getattr(msg.Topic, '_value_1', str(msg.Topic))
+                            
+                            # Deteksi via XML (X-Ray Mode)
+                            try:
+                                msg_obj = msg.Message._value_1
+                                # Ambil semua item di dalam XML Message secara universal
+                                for item in msg_obj.xpath('.//tt:SimpleItem', namespaces={'tt': 'http://www.onvif.org/ver10/schema'}):
+                                    name = item.get('Name')
+                                    value = item.get('Value')
+                                    
+                                    # Cek Motion atau Tamper
+                                    if name in ["IsMotion", "IsTamper"] and (value == "true" or value == "1"):
+                                        current_time = time.time()
+                                        last_time = last_motion_time.get(cam_id, 0)
+                                        # COOLDOWN 10 DETIK
+                                        if current_time - last_time >= 10:
+                                            print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN!")
+                                            report_to_master(cam_id, 'motion')
+                                            last_motion_time[cam_id] = current_time
+                            except:
+                                # Jika bukan objek XML, fallback ke deteksi teks mentah
+                                raw_msg = str(msg)
+                                if any(x in raw_msg for x in ['IsMotion="true"', 'Value="true"', 'IsMotion="1"']):
+                                    current_time = time.time()
+                                    last_time = last_motion_time.get(cam_id, 0)
+                                    if current_time - last_time >= 10:
+                                        print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN (Raw)!")
+                                        report_to_master(cam_id, 'motion')
+                                        last_motion_time[cam_id] = current_time
+                                    
+                        except Exception as parse_err:
+                            print(f"⚠️ [CAM {cam_id}] Deep Parse Error: {parse_err}")
+                
+                time.sleep(0.5)
 
-    except Exception as e:
-        print(f"❌ [CAM {cam_id}] ONVIF Error: {e}")
-        print(f"🔄 [CAM {cam_id}] Mencoba ulang dalam 1 menit...")
-        time.sleep(60)
-        subscribe_to_camera(cam)
+        except Exception as e:
+            print(f"❌ [CAM {cam_id}] ONVIF Error: {e}")
+            print(f"🔄 [CAM {cam_id}] Mencoba ulang dalam 1 menit...")
+            time.sleep(60)
+            # Loop akan mengulang koneksi dari awal tanpa memakan memori call stack baru
 
 def main():
     print("🚀 ONVIF Event Agent Started")
@@ -122,9 +146,13 @@ def main():
                 continue
 
             for cam in cameras:
-                # Jalankan listener per kamera di thread terpisah
-                t = threading.Thread(target=subscribe_to_camera, args=(cam,), daemon=True)
-                t.start()
+                cam_id = cam['id']
+                # Jalankan listener per kamera di thread terpisah JIKA belum jalan
+                if cam_id not in active_threads or not active_threads[cam_id].is_alive():
+                    print(f"🌟 Memulai thread baru untuk kamera {cam_id}")
+                    t = threading.Thread(target=subscribe_to_camera, args=(cam,), daemon=True)
+                    t.start()
+                    active_threads[cam_id] = t
             
             # Update daftar kamera setiap 1 jam
             time.sleep(3600)

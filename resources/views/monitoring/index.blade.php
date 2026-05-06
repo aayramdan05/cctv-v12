@@ -231,9 +231,9 @@
                                          left: (seg.start / 86400 * 100) + '%', 
                                          width: 'calc(' + (seg.duration / 86400 * 100) + '% + 2px)',
                                          minWidth: '5px',
-                                         backgroundColor: seg.has_motion ? '#f97316' : '#22c55e'
+                                         background: seg.has_motion ? `linear-gradient(to top, #f97316 ${seg.motion_percentage}%, #22c55e ${seg.motion_percentage}%)` : '#22c55e'
                                      }"
-                                     :title="(seg.has_motion ? '⚠️ ADA GERAKAN: ' : 'Rekaman: ') + seg.human_start"
+                                     :title="(seg.has_motion ? '⚠️ GERAKAN (' + seg.motion_percentage + '%): ' : 'Rekaman: ') + seg.human_start"
                                      @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
                                 </div>
                             </template>
