@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use ZipArchive;
 use App\Models\User;
 use App\Notifications\ExportReady;
+use App\Notifications\ExportProcessing;
+use App\Notifications\ExportFailed;
 
 class ProcessRecordingExport implements ShouldQueue
 {
@@ -38,12 +40,19 @@ class ProcessRecordingExport implements ShouldQueue
 
     public function handle(): void
     {
+        // Beri notifikasi sedang berjalan
+        $this->user->notify(new ExportProcessing("Memulai export rekaman untuk CAM {$this->cctvId} dari {$this->startTimeStr} - {$this->endTimeStr}..."));
+
         $reqStart = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->startTimeStr}");
         $reqEnd = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->endTimeStr}");
 
         $path = storage_path("app/public/recordings/{$this->date}");
         
-        if (!File::exists($path)) return;
+        if (!File::exists($path)) {
+            $this->user->notifications()->where('type', ExportProcessing::class)->delete();
+            $this->user->notify(new ExportFailed("Folder rekaman untuk tanggal {$this->date} tidak ditemukan di server master."));
+            return;
+        }
 
         // Folder temp (hanya untuk menyimpan potongan awal/akhir)
         $jobId = $this->job ? $this->job->getJobId() : uniqid();
@@ -124,6 +133,8 @@ class ProcessRecordingExport implements ShouldQueue
         }
 
         if (empty($filesToZip)) {
+            $this->user->notifications()->where('type', ExportProcessing::class)->delete();
+            $this->user->notify(new ExportFailed("Tidak ada rekaman video yang tersedia untuk CAM {$this->cctvId} pada jam tersebut."));
             File::deleteDirectory($tempDir);
             return;
         }
@@ -150,6 +161,9 @@ class ProcessRecordingExport implements ShouldQueue
         // Cleanup temp folder (hapus potongan segmen)
         // File asli di folder recordings tidak akan terhapus karena kita hanya baca
         File::deleteDirectory($tempDir);
+
+        // Hapus notifikasi proses sebelumnya
+        $this->user->notifications()->where('type', ExportProcessing::class)->delete();
 
         // Notify User
         $this->user->notify(new ExportReady($zipFileName));
