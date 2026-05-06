@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'master_server'
+    static_configs:
+      # Asumsi Node Exporter di Master jalan di port 9100 (Host)
+      - targets: ['172.17.0.1:9100']
+
+  - job_name: 'cctv_nodes'
+    static_configs:
+      # Ganti IP ini dengan IP dari cctv-node1, node2, dsb
+      - targets: ['10.69.69.39:9100']
