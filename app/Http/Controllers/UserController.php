@@ -123,9 +123,9 @@ class UserController extends Controller
                 'faculty' => $currentUser->faculty
             ]);
         } elseif ($currentUser->role === 'operator') {
-            // Cegah mengedit akun admin, ATAU menset role menjadi admin/operator/api_viewer
-            if ($user->role === 'admin' || !in_array($request->role, ['faculty_operator', 'user'])) {
-                abort(403, 'Operator Pusat tidak boleh mengedit Admin atau mengubah role menjadi Admin/Operator/API.');
+            // Cegah mengedit akun admin/operator/api_viewer, ATAU menset role menjadi admin/operator/api_viewer
+            if (!in_array($user->role, ['faculty_operator', 'user']) || !in_array($request->role, ['faculty_operator', 'user'])) {
+                abort(403, 'Operator Pusat hanya boleh mengedit dan mengubah role menjadi Operator Fakultas atau User.');
             }
         }
 
@@ -176,8 +176,8 @@ class UserController extends Controller
                 abort(403, 'Anda hanya boleh menghapus User biasa di fakultas Anda.');
             }
         } elseif ($currentUser->role === 'operator') {
-            if ($user->role === 'admin') {
-                abort(403, 'Operator Pusat tidak boleh menghapus Admin.');
+            if (!in_array($user->role, ['faculty_operator', 'user'])) {
+                abort(403, 'Operator Pusat hanya boleh menghapus akun Operator Fakultas dan User.');
             }
         }
 
