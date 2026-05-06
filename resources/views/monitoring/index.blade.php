@@ -222,19 +222,31 @@
                                     </div>
                                 </template>
                             </div>
+                            <!-- Block Rekaman (Hijau) -->
                             <template x-for="seg in currentTimelineData">
                                 <div class="absolute top-0 bottom-0 z-10 cursor-pointer transition-all border-r border-black/10"
                                      :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) 
-                                             ? 'animate-pulse shadow-[0_0_10px_rgba(255,165,0,0.6)]' 
+                                             ? 'animate-pulse' 
                                              : 'hover:opacity-80'"
                                      :style="{
                                          left: (seg.start / 86400 * 100) + '%', 
                                          width: 'calc(' + (seg.duration / 86400 * 100) + '% + 2px)',
                                          minWidth: '5px',
-                                         background: seg.has_motion ? `linear-gradient(to top, #f97316 ${seg.motion_percentage}%, #22c55e ${seg.motion_percentage}%)` : '#22c55e'
+                                         backgroundColor: '#22c55e'
                                      }"
-                                     :title="(seg.has_motion ? '⚠️ GERAKAN (' + seg.motion_percentage + '%): ' : 'Rekaman: ') + seg.human_start"
+                                     :title="'Rekaman: ' + seg.human_start"
                                      @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
+                                </div>
+                            </template>
+
+                            <!-- Block Kejadian Pergerakan (Orange di atas hijau) -->
+                            <template x-for="ev in currentEventsData">
+                                <div class="absolute top-0 bottom-0 z-20 bg-[#f97316] pointer-events-none mix-blend-screen"
+                                     :style="{
+                                         left: (ev.start / 86400 * 100) + '%', 
+                                         width: 'calc(10 / 86400 * 100%)',
+                                         minWidth: '2px'
+                                     }">
                                 </div>
                             </template>
                         </div>
