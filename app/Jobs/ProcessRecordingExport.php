@@ -125,13 +125,16 @@ class ProcessRecordingExport implements ShouldQueue
                     $outputPath
                 ]);
 
-                Process::run($cmd);
+                $result = Process::run($cmd);
 
-                if (File::exists($outputPath)) {
+                if ($result->successful() && File::exists($outputPath)) {
                     $filesToZip[] = [
                         'path' => $outputPath,
                         'name' => $trimFilename
                     ];
+                } else {
+                    \Log::error("FFmpeg Failed for CAM {$this->cctvId}. URL: {$sourceUrl}");
+                    \Log::error("FFmpeg Output: " . $result->errorOutput());
                 }
             }
         }
