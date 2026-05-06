@@ -151,23 +151,42 @@ class ProcessRecordingExport implements ShouldQueue
             return;
         }
 
-        // --- ZIP PROCESS ---
-        $zipFileName = "Export_CAM{$this->cctvId}_{$this->date}_{$this->startTimeStr}-{$this->endTimeStr}.zip";
+        // --- MERGE PROCESS (Concat FFmpeg) ---
+        $mergedFileName = "Export_CAM{$this->cctvId}_{$this->date}_{$this->startTimeStr}-{$this->endTimeStr}.mp4";
         $exportPath = storage_path("app/public/exports");
         
         if (!File::exists($exportPath)) {
             File::makeDirectory($exportPath, 0775, true);
         }
 
-        $zipFullPath = "{$exportPath}/{$zipFileName}";
+        $mergedFullPath = "{$exportPath}/{$mergedFileName}";
 
-        $zip = new ZipArchive;
-        if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($filesToZip as $item) {
-                // Masukkan file ke zip dengan nama yang sudah ditentukan
-                $zip->addFile($item['path'], $item['name']);
-            }
-            $zip->close();
+        // Buat file list.txt untuk FFmpeg concat demuxer
+        $listPath = "{$tempDir}/concat_list.txt";
+        $listContent = "";
+        foreach ($filesToZip as $item) {
+            // FFmpeg butuh path absolut dengan format: file 'path'
+            $safePath = str_replace("'", "'\\''", $item['path']);
+            $listContent .= "file '{$safePath}'\n";
+        }
+        File::put($listPath, $listContent);
+
+        // Jalankan perintah penggabungan (tanpa render ulang, sangat cepat)
+        $concatCmd = [
+            'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
+            '-f', 'concat', '-safe', '0',
+            '-i', $listPath,
+            '-c', 'copy',
+            $mergedFullPath
+        ];
+        
+        $mergeResult = Process::run($concatCmd);
+
+        if (!$mergeResult->successful() || !File::exists($mergedFullPath)) {
+            $this->user->notifications()->where('type', ExportProcessing::class)->delete();
+            $this->user->notify(new ExportFailed("Gagal menggabungkan potongan video. Error: " . $mergeResult->errorOutput()));
+            File::deleteDirectory($tempDir);
+            return;
         }
 
         // Cleanup temp folder (hapus potongan segmen)
@@ -178,6 +197,6 @@ class ProcessRecordingExport implements ShouldQueue
         $this->user->notifications()->where('type', ExportProcessing::class)->delete();
 
         // Notify User
-        $this->user->notify(new ExportReady($zipFileName));
+        $this->user->notify(new ExportReady($mergedFileName));
     }
 }
