@@ -68,45 +68,40 @@ class PlaybackController extends Controller
             $targetCamId = $request->input('cctv_id');
             
             $cctvInfo = Cctv::with('building')->find($targetCamId);
-            $path = storage_path("app/public/recordings/{$date}");
             
-            if (!$cctvInfo || !File::exists($path)) {
+            if (!$cctvInfo) {
                 return response()->json([]);
             }
 
-            $files = File::files($path);
+            // Konversi tanggal ke rentang Unix Timestamp
+            $dayStart = Carbon::parse($date)->startOfDay()->timestamp;
+            $dayEnd = Carbon::parse($date)->endOfDay()->timestamp;
+
+            // Ambil dari database Recording
+            $recordings = \App\Models\Recording::where('cctv_id', $targetCamId)
+                ->whereBetween('start_time', [$dayStart, $dayEnd])
+                ->orderBy('start_time', 'asc')
+                ->get();
+
             $data = [];
 
-            foreach ($files as $file) {
-                $filename = $file->getFilename();
-                
-                if (preg_match('/cam_(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/', $filename, $matches)) {
-                    $fileCamId = $matches[1];
-                    $fileDate = $matches[2];
-                    
-                    if ($fileCamId != $targetCamId || $fileDate !== $date) {
-                        continue;
-                    }
+            foreach ($recordings as $rec) {
+                $start = Carbon::createFromTimestamp($rec->start_time)->timezone(config('app.timezone'));
+                $end = $start->copy()->addSeconds($rec->duration);
 
-                    $timeStr = str_replace('-', ':', $matches[3]);
-                    $start = Carbon::createFromFormat('Y-m-d H:i:s', "$fileDate $timeStr", config('app.timezone'));
-                    $end = $start->copy()->addSeconds(900);
-
-                    $data[] = [
-                        'id' => $filename,
-                        'url' => $cctvInfo->getRecordingUrl($date, $filename),
-                        'start_time' => $start->format('H:i'),
-                        'end_time' => $end->format('H:i'),
-                        'start_ts' => $start->timestamp,
-                        'duration' => 900,
-                        'cctv_name' => $cctvInfo->nama_cctv,
-                        'building_name' => $cctvInfo->building->nama_gedung ?? 'Unknown Building',
-                        'faculty_name' => $cctvInfo->building->fakultas ?? 'Unknown Faculty',
-                    ];
-                }
+                $data[] = [
+                    'id' => $rec->filename,
+                    'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
+                    'start_time' => $start->format('H:i'),
+                    'end_time' => $end->format('H:i'),
+                    'start_ts' => $rec->start_time,
+                    'duration' => $rec->duration,
+                    'cctv_name' => $cctvInfo->nama_cctv,
+                    'building_name' => $cctvInfo->building->nama_gedung ?? 'Unknown Building',
+                    'faculty_name' => $cctvInfo->building->fakultas ?? 'Unknown Faculty',
+                ];
             }
 
-            usort($data, fn($a, $b) => $a['start_ts'] <=> $b['start_ts']);
             return response()->json($data);
             
         } catch (\Exception $e) {

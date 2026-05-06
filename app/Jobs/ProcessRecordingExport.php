@@ -55,9 +55,13 @@ class ProcessRecordingExport implements ShouldQueue
             return;
         }
 
+        // Konversi tanggal ke rentang Unix Timestamp
+        $dayStart = Carbon::parse($this->date)->startOfDay()->timestamp;
+        $dayEnd = Carbon::parse($this->date)->endOfDay()->timestamp;
+
         // Ambil data rekaman langsung dari database
         $recordings = Recording::where('cctv_id', $this->cctvId)
-            ->whereDate('start_time', $this->date)
+            ->whereBetween('start_time', [$dayStart, $dayEnd])
             ->get();
 
         // Filter rekaman yang beririsan dengan waktu permintaan
