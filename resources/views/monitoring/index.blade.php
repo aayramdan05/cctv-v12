@@ -222,31 +222,20 @@
                                     </div>
                                 </template>
                             </div>
-                            <!-- Block Rekaman (Hijau) -->
+                            <!-- Block Rekaman (Hijau & Orange) -->
                             <template x-for="seg in currentTimelineData">
                                 <div class="absolute top-0 bottom-0 z-10 cursor-pointer transition-all border-r border-black/10"
                                      :class="(seg.start + seg.duration) > (currentPlayheadPercent / 100 * 86400) 
-                                             ? 'animate-pulse' 
+                                             ? 'animate-pulse shadow-[0_0_10px_rgba(255,165,0,0.6)]' 
                                              : 'hover:opacity-80'"
                                      :style="{
                                          left: (seg.start / 86400 * 100) + '%', 
                                          width: 'calc(' + (seg.duration / 86400 * 100) + '% + 2px)',
                                          minWidth: '5px',
-                                         backgroundColor: '#22c55e'
+                                         background: seg.has_motion ? `linear-gradient(to right, #f97316 ${seg.motion_percentage}%, #22c55e ${seg.motion_percentage}%)` : '#22c55e'
                                      }"
-                                     :title="'Rekaman: ' + seg.human_start"
+                                     :title="(seg.has_motion ? '⚠️ GERAKAN (' + seg.motion_percentage + '%): ' : 'Rekaman: ') + seg.human_start"
                                      @click="playRecord(selectedSlot, seg.url, 0, seg.start)">
-                                </div>
-                            </template>
-
-                            <!-- Block Kejadian Pergerakan (Orange di atas hijau) -->
-                            <template x-for="ev in currentEventsData">
-                                <div class="absolute top-0 bottom-0 z-20 bg-[#f97316] pointer-events-none mix-blend-screen"
-                                     :style="{
-                                         left: (ev.start / 86400 * 100) + '%', 
-                                         width: 'calc(10 / 86400 * 100%)',
-                                         minWidth: '2px'
-                                     }">
                                 </div>
                             </template>
                         </div>
