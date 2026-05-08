@@ -69,9 +69,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('/api-keys/{id}', [ApiKeyController::class, 'destroy'])->name('api.destroy');
 });
 
-// --- GROUP 3: ADMIN & OPERATOR (Master Data) ---
-Route::middleware(['auth', 'role:admin,operator'])->group(function () {
+// --- GROUP 3: ADMIN ONLY (Master Data) ---
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('building', BuildingController::class);
+    Route::resource('faculties', \App\Http\Controllers\FacultyController::class)->except(['show']);
 });
 
 // --- GROUP 4: ADMIN & ALL OPERATORS (Manajemen CCTV & User) ---
@@ -82,7 +83,6 @@ Route::middleware(['auth', 'role:admin,operator,faculty_operator'])->group(funct
     Route::post('cctv/bulk-move', [CctvController::class, 'bulkMove'])->name('cctv.bulkMove');
     Route::resource('cctv', CctvController::class);
     Route::resource('users', UserController::class);
-    Route::resource('faculties', \App\Http\Controllers\FacultyController::class)->except(['show']);
 });
 
 
