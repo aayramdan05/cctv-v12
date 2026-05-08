@@ -245,33 +245,13 @@
         document.addEventListener("DOMContentLoaded", function() {
             
             // ---------------------------------------------------------
-            // 1. VIDEO PLAYER LOOP (Javascript Auto-Detect Version)
-            // ---------------------------------------------------------
-            // Kita gunakan JS untuk mendeteksi prefix URL (/node1/, /node2/)
-            // Cara ini menghindari Error 500 jika Model PHP belum dikonfigurasi sempurna.
-
-            // Deteksi path saat ini: misal "/node1/dashboard" -> prefix "/node1"
-            const pathSegments = window.location.pathname.split('/');
-            let urlPrefix = "";
-            
-            // Cek apakah segmen URL mengandung 'node' (support reverse proxy)
-            if (pathSegments.length > 1 && pathSegments[1].toLowerCase().startsWith('node')) {
-                urlPrefix = "/" + pathSegments[1];
-            }
-
             @foreach($latestCctvs as $cctv)
             {
                 let iframe = document.getElementById('preview-{{ $cctv->id }}');
                 
                 if(iframe) {
-                    // Kita bangun URL secara manual di JS agar tidak error di PHP
-                    let alias = "camera_{{ $cctv->id }}";
-                    
-                    // Format: /node1/stream.html?src=camera_1&mode=...
-                    let finalUrl = urlPrefix + "/stream.html?src=" + alias + "&mode=webrtc,mse,hls,mjpeg";
-                    
-                    // Set src iframe
-                    iframe.src = finalUrl;
+                    // Gunakan URL langsung dari Model (Sudah mendukung multi-node)
+                    iframe.src = "{!! $cctv->live_stream_url !!}";
                 }
             }
             @endforeach
@@ -281,9 +261,9 @@
             // ---------------------------------------------------------
             try {
                 var trace1 = {
-                    x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    y: [245, 248, 242, 250, 248, 246, 248], 
-                    name: 'Cameras Online',
+                    x: {!! json_encode($chartDates ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) !!},
+                    y: {!! json_encode($chartData ?? [0, 0, 0, 0, 0, 0, 0]) !!}, 
+                    name: 'Motion Events',
                     type: 'scatter',
                     mode: 'lines',
                     line: { color: '#06b6d4', width: 3 },

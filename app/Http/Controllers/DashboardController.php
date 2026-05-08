@@ -41,9 +41,23 @@ class DashboardController extends Controller
             // 4. ALERTS
             $alerts = $this->getAlerts();
 
+            // 5. DAILY ACTIVITY (Last 7 Days)
+            $accessibleCctvIds = Cctv::accessibleByAuth()->pluck('id');
+            $chartDates = [];
+            $chartData = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $chartDates[] = $date->format('D');
+                
+                $count = \App\Models\CameraEvent::whereIn('cctv_id', $accessibleCctvIds)
+                            ->whereDate('event_time', $date->format('Y-m-d'))
+                            ->count();
+                $chartData[] = $count;
+            }
+
             return view('dashboard', compact(
                 'totalCctv', 'totalGedung', 'activeCctv', 'offlineCctv',
-                'buildings', 'latestCctvs', 'alerts'
+                'buildings', 'latestCctvs', 'alerts', 'chartDates', 'chartData'
             ));
         } catch (\Exception $e) {
             \Log::error("Dashboard Error: " . $e->getMessage());
