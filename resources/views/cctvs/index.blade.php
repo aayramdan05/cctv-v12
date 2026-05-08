@@ -27,11 +27,21 @@
             </div>
         </div>
 
-        <!-- Seamless Filter & Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
+        <!-- Wrapper for AlpineJS Context -->
+        <div x-data="{
             loading: false,
             sortBy: '{{ request('sort_by', 'created_at') }}',
             sortDir: '{{ request('sort_dir', 'desc') }}',
+            selectedIds: [],
+            selectAll: false,
+            toggleAll() {
+                this.selectAll = !this.selectAll;
+                if(this.selectAll) {
+                    this.selectedIds = Array.from(document.querySelectorAll('.cctv-checkbox')).map(el => el.value);
+                } else {
+                    this.selectedIds = [];
+                }
+            },
             handleSort(field) {
                 if (this.sortBy === field) {
                     this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
@@ -65,6 +75,9 @@
                 }
             }
         }">
+
+        <!-- Seamless Filter & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <form id="filter-form" action="{{ route('cctv.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
                 <input type="hidden" name="sort_by" :value="sortBy">
                 <input type="hidden" name="sort_dir" :value="sortDir">
@@ -115,18 +128,7 @@
             </form>
         </div>
 
-        <div x-data="{ 
-            selectedIds: [],
-            selectAll: false,
-            toggleAll() {
-                this.selectAll = !this.selectAll;
-                if(this.selectAll) {
-                    this.selectedIds = Array.from(document.querySelectorAll('.cctv-checkbox')).map(el => el.value);
-                } else {
-                    this.selectedIds = [];
-                }
-            }
-        }">
+        <div>
             <!-- Bulk Action Bar (Floating) -->
             <div x-show="selectedIds.length > 0" 
                  x-transition:enter="transition ease-out duration-300"
@@ -230,6 +232,6 @@
                 </div>
                 <div id="pagination-container" class="mt-6">{{ $cctvs->links() }}</div>
             </div>
-        </div>
+        </div> <!-- End Wrapper AlpineJS -->
     </main>
 </x-app-layout>

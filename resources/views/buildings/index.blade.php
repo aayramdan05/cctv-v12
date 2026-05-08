@@ -23,10 +23,7 @@
             </a>
         </div>
 
-        <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
-            
-        <!-- Seamless Filter & Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
+        <div class="glass-effect rounded-2xl p-6 border border-cyan-100" x-data="{
             loading: false,
             sortBy: '{{ request('sort_by', 'created_at') }}',
             sortDir: '{{ request('sort_dir', 'desc') }}',
@@ -57,6 +54,9 @@
                 }
             }
         }">
+            
+        <!-- Seamless Filter & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <form id="filter-form" action="{{ route('building.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
                 <input type="hidden" name="sort_by" :value="sortBy">
                 <input type="hidden" name="sort_dir" :value="sortDir">

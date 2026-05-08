@@ -20,8 +20,7 @@
             </a>
         </div>
 
-        <!-- Seamless Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
+        <div class="glass-effect rounded-2xl p-6 border border-cyan-100 overflow-hidden" x-data="{
             loading: false,
             sortBy: '{{ request('sort_by', 'created_at') }}',
             sortDir: '{{ request('sort_dir', 'desc') }}',
@@ -52,6 +51,9 @@
                 }
             }
         }">
+            
+        <!-- Seamless Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <form id="filter-form" action="{{ route('servers.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
                 <input type="hidden" name="sort_by" :value="sortBy">
                 <input type="hidden" name="sort_dir" :value="sortDir">
@@ -76,7 +78,7 @@
             </form>
         </div>
 
-        <div class="glass-effect rounded-2xl p-6 border border-cyan-100 overflow-hidden">
+
             <table class="w-full text-left border-collapse">
                 <thead class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100 select-none">
                     <tr>
