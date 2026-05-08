@@ -20,7 +20,7 @@ class FacultyController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%");
+            $query->where('name', 'ilike', "%{$search}%");
         }
 
         $faculties = $query->orderBy('name')->paginate(15)->withQueryString();

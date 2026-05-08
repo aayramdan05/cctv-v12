@@ -21,9 +21,9 @@ class CctvController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('nama_cctv', 'like', "%{$search}%")
-                  ->orWhere('kode_cctv', 'like', "%{$search}%")
-                  ->orWhere('ip', 'like', "%{$search}%");
+                $q->where('nama_cctv', 'ilike', "%{$search}%")
+                  ->orWhere('kode_cctv', 'ilike', "%{$search}%")
+                  ->orWhere('ip', 'ilike', "%{$search}%");
             });
         }
 
