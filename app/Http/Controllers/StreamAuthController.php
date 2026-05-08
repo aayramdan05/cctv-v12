@@ -107,21 +107,26 @@ class StreamAuthController extends Controller
         }
 
         // 4. CEK POLICY (RBAC)
-        // Pastikan User A hanya bisa melihat Kamera yang diizinkan untuknya
-        if (Gate::forUser($user)->allows('view', $cctv)) {
-            return response("OK - $authSource (Authorized)", 200);
+        $isAuthorized = Gate::forUser($user)->allows('view', $cctv);
+        
+        if (!$isAuthorized) {
+            Log::warning("Stream Access Denied: Unauthorized User", ['user_id' => $user->id, 'cctv_id' => $cctvId]);
+            return response('Forbidden - Access Denied', 403);
         }
 
-        // --- DEBUGGING LOG (Cek storage/logs/laravel.log jika Forbidden) ---
-        Log::warning("Stream Access Denied", [
-            'user_id' => $user->id,
-            'user_role' => $user->role,
-            'user_faculty' => $user->faculty ?? 'N/A',
-            'cctv_id' => $cctvId,
-            'cctv_faculty' => $cctv->building->fakultas ?? 'N/A',
-            'auth_source' => $authSource
-        ]);
+        // 5. PROTEKSI TAB BARU / DIRECT DOWNLOAD (Khusus Non-Admin)
+        // Jika file yang diakses adalah rekaman (.mp4)
+        if (str_contains($originalUri, '.mp4') && $user->role !== 'admin') {
+            $referer = $request->header('Referer') ?? $request->header('X-Original-Referer');
+            
+            // Jika tidak ada referer (buka di tab baru) atau referer bukan dari domain kita
+            $domain = $request->getHost();
+            if (!$referer || !str_contains($referer, $domain)) {
+                Log::warning("Stream Access Denied: Direct Download Blocked", ['user_id' => $user->id, 'cctv_id' => $cctvId]);
+                return response('Forbidden - Direct download is restricted to Administrators only. Please view through the Dashboard.', 403);
+            }
+        }
 
-        return response('Forbidden - Access Denied', 403);
+        return response("OK - $authSource (Authorized)", 200);
     }
 }
