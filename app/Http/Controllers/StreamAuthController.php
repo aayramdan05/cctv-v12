@@ -75,10 +75,10 @@ class StreamAuthController extends Controller
         // 1. Ambil Parameter 'src' dari params yang sudah diparsing
         $src = $params['src'] ?? null;
 
-        // Jika tidak ada 'src', coba cari pola 'camera_ID' langsung di path URI (Berguna untuk file MP4)
+        // Jika tidak ada 'src', coba cari pola 'camera_ID' atau 'cam_ID' langsung di path URI
         if (!$src && $originalUri) {
-            if (preg_match('/camera_(\d+)/', $originalUri, $matches)) {
-                $src = 'camera_' . $matches[1];
+            if (preg_match('/(camera|cam)_(\d+)/', $originalUri, $matches)) {
+                $src = $matches[1] . '_' . $matches[2];
             }
         }
 
@@ -92,9 +92,9 @@ class StreamAuthController extends Controller
         }
 
         // 2. Parsing ID Kamera
-        // Mendukung format "?src=camera_19" atau path "/storage/recordings/camera_19/..."
-        if (preg_match('/camera_(\d+)/', $src, $matches)) {
-            $cctvId = $matches[1];
+        // Mendukung format "?src=camera_19" atau path ".../cam_3_..."
+        if (preg_match('/(camera|cam)_(\d+)/', $src, $matches)) {
+            $cctvId = $matches[2];
         } else {
             return response('Bad Request - Invalid Source ID format', 400);
         }
