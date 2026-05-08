@@ -27,7 +27,7 @@ class CctvMigrationController extends Controller
             [
                 'Fakultas' => 'Kedokteran',
                 'Gedung' => 'Gedung A',
-                'Kode CCTV' => 'CAM-KED-A-01',
+                'Kode CCTV' => 'CAM.KED-A.01',
                 'Nama CCTV' => 'Lobby Utama',
                 'IP Address' => '10.69.69.100',
                 'Merk' => 'Hikvision',
@@ -37,7 +37,7 @@ class CctvMigrationController extends Controller
             [
                 'Fakultas' => 'Kedokteran',
                 'Gedung' => 'Gedung B',
-                'Kode CCTV' => 'CAM-KED-B-01',
+                'Kode CCTV' => 'CAM.KED-B.01',
                 'Nama CCTV' => 'Parkiran Belakang',
                 'IP Address' => '10.69.69.101',
                 'Merk' => 'Dahua',
@@ -46,7 +46,35 @@ class CctvMigrationController extends Controller
             ],
         ];
 
-        return (new FastExcel($templateData))->download('Template_Migrasi_CCTV.xlsx');
+        // Buat Data Referensi Gedung
+        $buildings = Building::orderBy('fakultas')->orderBy('nama_gedung')->get();
+        $buildingData = [];
+        foreach ($buildings as $b) {
+            $kode = $b->kode_gedung ?? 'KODE';
+            $buildingData[] = [
+                'Fakultas' => $b->fakultas,
+                'Gedung' => $b->nama_gedung,
+                'Kode Gedung' => $kode,
+                'Contoh Kode CCTV' => "CAM.{$kode}.01"
+            ];
+        }
+
+        // Fallback jika belum ada gedung sama sekali
+        if (empty($buildingData)) {
+            $buildingData[] = [
+                'Fakultas' => 'Belum ada data gedung di sistem',
+                'Gedung' => '-',
+                'Kode Gedung' => '-',
+                'Contoh Kode CCTV' => '-'
+            ];
+        }
+
+        $sheets = new \Rap2hpoutre\FastExcel\SheetCollection([
+            'Template Input' => $templateData,
+            'Referensi Gedung' => $buildingData
+        ]);
+
+        return (new FastExcel($sheets))->download('Template_Migrasi_CCTV.xlsx');
     }
 
     public function import(Request $request)

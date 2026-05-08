@@ -82,6 +82,7 @@ Route::middleware(['auth', 'role:admin,operator,faculty_operator'])->group(funct
     Route::post('cctv/bulk-move', [CctvController::class, 'bulkMove'])->name('cctv.bulkMove');
     Route::resource('cctv', CctvController::class);
     Route::resource('users', UserController::class);
+    Route::resource('faculties', \App\Http\Controllers\FacultyController::class)->except(['show']);
 });
 
 

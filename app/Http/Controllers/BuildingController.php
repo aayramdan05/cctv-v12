@@ -29,7 +29,7 @@ class BuildingController extends Controller
         }
 
         $buildings = $query->latest()->paginate(15)->withQueryString();
-        $faculties = Building::distinct()->pluck('fakultas')->filter();
+        $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
 
         return view('buildings.index', compact('buildings', 'faculties'));
     }
@@ -39,7 +39,8 @@ class BuildingController extends Controller
      */
     public function create(): View
     {
-        return view('buildings.create');
+        $faculties = \App\Models\Faculty::orderBy('name')->get();
+        return view('buildings.create', compact('faculties'));
     }
 
     /**
@@ -64,7 +65,8 @@ class BuildingController extends Controller
      */
     public function edit(Building $building): View
     {
-        return view('buildings.edit', compact('building'));
+        $faculties = \App\Models\Faculty::orderBy('name')->get();
+        return view('buildings.edit', compact('building', 'faculties'));
     }
 
     /**

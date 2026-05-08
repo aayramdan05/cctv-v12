@@ -37,13 +37,12 @@
                         <select name="fakultas" id="fakultas" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-200 outline-none transition-all text-slate-700">
                             <option value="{{ $building->fakultas }}" selected>{{ $building->fakultas }} (Saat Ini)</option>
                             <option disabled>──────────</option>
-                            <option value="Fakultas Hukum">Fakultas Hukum</option>
-                            <option value="Fakultas Ekonomi & Bisnis">Fakultas Ekonomi & Bisnis</option>
-                            <option value="Fakultas Kedokteran">Fakultas Kedokteran</option>
-                            <option value="Fakultas MIPA">Fakultas MIPA</option>
-                            <option value="Fakultas Pertanian">Fakultas Pertanian</option>
-                            <option value="Rektorat">Rektorat</option>
-                            </select>
+                            @foreach($faculties as $faculty)
+                                @if($faculty->name !== $building->fakultas)
+                                    <option value="{{ $faculty->name }}">{{ $faculty->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="flex items-center justify-end space-x-4 pt-4">

@@ -43,25 +43,9 @@
                         <label for="fakultas" class="block text-sm font-semibold text-slate-700 mb-2">Fakultas / Unit</label>
                         <select name="fakultas" id="fakultas" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-200 outline-none transition-all text-slate-700">
                             <option value="" disabled selected>Pilih Fakultas/Unit</option>
-                            <option value="Fakultas Hukum">Fakultas Hukum</option>
-                            <option value="Fakultas Ekonomi & Bisnis">Fakultas Ekonomi & Bisnis</option>
-                            <option value="Fakultas Kedokteran">Fakultas Kedokteran</option>
-                            <option value="Fakultas MIPA">Fakultas MIPA</option>
-                            <option value="Fakultas Pertanian">Fakultas Pertanian</option>
-                            <option value="Fakultas Kedokteran Gigi">Fakultas Kedokteran Gigi</option>
-                            <option value="Fakultas Ilmu Sosial & Politik">Fakultas Ilmu Sosial & Politik</option>
-                            <option value="Fakultas Ilmu Budaya">Fakultas Ilmu Budaya</option>
-                            <option value="Fakultas Psikologi">Fakultas Psikologi</option>
-                            <option value="Fakultas Peternakan">Fakultas Peternakan</option>
-                            <option value="Fakultas Ilmu Komunikasi">Fakultas Ilmu Komunikasi</option>
-                            <option value="Fakultas Keperawatan">Fakultas Keperawatan</option>
-                            <option value="Fakultas Perikanan & Ilmu Kelautan">Fakultas Perikanan & Ilmu Kelautan</option>
-                            <option value="Fakultas Teknologi Industri Pertanian">Fakultas Teknologi Industri Pertanian</option>
-                            <option value="Fakultas Farmasi">Fakultas Farmasi</option>
-                            <option value="Fakultas Teknik Geologi">Fakultas Teknik Geologi</option>
-                            <option value="Pascasarjana">Pascasarjana</option>
-                            <option value="Rektorat">Rektorat</option>
-                            <option value="Lainnya">Lainnya</option>
+                            @foreach($faculties as $faculty)
+                                <option value="{{ $faculty->name }}">{{ $faculty->name }}</option>
+                            @endforeach
                         </select>
                         @error('fakultas')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

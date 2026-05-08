@@ -45,7 +45,7 @@ class UserController extends Controller
     {
         // Pastikan variabel ini dikirim ke View
         $cctvs = Cctv::orderBy('nama_cctv')->get();
-        $faculties = Building::distinct()->pluck('fakultas')->filter();
+        $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
         
         return view('users.create', compact('cctvs', 'faculties'));
     }
@@ -98,7 +98,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $cctvs = Cctv::orderBy('nama_cctv')->get();
-        $faculties = Building::distinct()->pluck('fakultas')->filter();
+        $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
         
         // --- FIX: KIRIM DATA CCTV YANG SUDAH DIPILIH ---
         $assignedCctvs = $user->cctvs->pluck('id')->toArray();

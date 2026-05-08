@@ -30,6 +30,11 @@
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase mb-2">Manajemen</p>
                 
                 @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                    <a href="{{ route('faculties.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('faculties.*') ? 'active' : '' }}">
+                        <i class="fas fa-university w-5 {{ request()->routeIs('faculties.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                        <span class="font-medium text-sm">Master Fakultas</span>
+                    </a>
+
                     <a href="{{ route('building.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('building.*') ? 'active' : '' }}">
                         <i class="fas fa-building w-5 {{ request()->routeIs('building.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                         <span class="font-medium text-sm">Master Gedung</span>
