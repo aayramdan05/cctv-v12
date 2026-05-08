@@ -23,7 +23,10 @@ class FacultyController extends Controller
             $query->where('name', 'ilike', "%{$search}%");
         }
 
-        $faculties = $query->orderBy('name')->paginate(15)->withQueryString();
+        $sortField = $request->get('sort_by', 'name');
+        $sortDir = $request->get('sort_dir', 'asc');
+
+        $faculties = $query->orderBy($sortField, $sortDir)->paginate(15)->withQueryString();
 
         return view('faculties.index', compact('faculties'));
     }

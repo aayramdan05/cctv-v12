@@ -37,7 +37,10 @@ class CctvController extends Controller
             $query->where('server_id', $request->server_id);
         }
 
-        $cctvs = $query->latest()->paginate(15)->withQueryString();
+        $sortField = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+
+        $cctvs = $query->orderBy($sortField, $sortDir)->paginate(15)->withQueryString();
         
         $buildings = \App\Models\Building::orderBy('nama_gedung')->get();
         $servers = \App\Models\Server::all();

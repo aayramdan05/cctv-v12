@@ -37,7 +37,10 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
-        $users = $query->latest()->paginate(15)->withQueryString();
+        $sortField = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+
+        $users = $query->orderBy($sortField, $sortDir)->paginate(15)->withQueryString();
         return view('users.index', compact('users'));
     }
 

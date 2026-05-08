@@ -30,19 +30,28 @@
         <!-- Seamless Filter & Search Bar -->
         <div class="flex flex-wrap items-center justify-between gap-4 mb-6" x-data="{
             loading: false,
+            sortBy: '{{ request('sort_by', 'created_at') }}',
+            sortDir: '{{ request('sort_dir', 'desc') }}',
+            handleSort(field) {
+                if (this.sortBy === field) {
+                    this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortBy = field;
+                    this.sortDir = 'asc';
+                }
+                this.$nextTick(() => { this.updateTable(); });
+            },
             async updateTable() {
                 this.loading = true;
                 const form = document.getElementById('filter-form');
-                const formData = new FormData(form);
-                const params = new URLSearchParams(formData).toString();
+                const params = new URLSearchParams(new FormData(form)).toString();
                 
                 try {
                     const res = await fetch(`{{ route('cctv.index') }}?${params}`, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     const html = await res.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
                     
                     document.getElementById('cctv-table-body').innerHTML = doc.getElementById('cctv-table-body').innerHTML;
                     document.getElementById('pagination-container').innerHTML = doc.getElementById('pagination-container').innerHTML;
@@ -57,6 +66,8 @@
             }
         }">
             <form id="filter-form" action="{{ route('cctv.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
+                <input type="hidden" name="sort_by" :value="sortBy">
+                <input type="hidden" name="sort_dir" :value="sortDir">
                 <!-- Search Input Slim -->
                 <div class="relative flex-1 min-w-[200px]">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -157,14 +168,26 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-cyan-100">
+                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-cyan-100 select-none">
                                 <th class="pb-4 pl-4 font-semibold w-10">
                                     <input type="checkbox" @click="toggleAll()" :checked="selectAll" class="rounded border-slate-300 text-cyan-500 focus:ring-cyan-200">
                                 </th>
-                                <th class="pb-4 font-semibold">Kode</th>
-                                <th class="pb-4 font-semibold">Nama / Lokasi</th>
-                                <th class="pb-4 font-semibold">IP Address</th>
-                                <th class="pb-4 font-semibold">Server Node</th>
+                                <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('kode_cctv')">
+                                    Kode
+                                    <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'kode_cctv' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
+                                </th>
+                                <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('nama_cctv')">
+                                    Nama / Lokasi
+                                    <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'nama_cctv' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
+                                </th>
+                                <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('ip')">
+                                    IP Address
+                                    <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'ip' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
+                                </th>
+                                <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('server_id')">
+                                    Server Node
+                                    <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'server_id' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
+                                </th>
                                 <th class="pb-4 pr-4 text-right font-semibold">Aksi</th>
                             </tr>
                         </thead>

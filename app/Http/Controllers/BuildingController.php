@@ -28,7 +28,10 @@ class BuildingController extends Controller
             $query->where('fakultas', $request->fakultas);
         }
 
-        $buildings = $query->latest()->paginate(15)->withQueryString();
+        $sortField = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+
+        $buildings = $query->orderBy($sortField, $sortDir)->paginate(15)->withQueryString();
         $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
 
         return view('buildings.index', compact('buildings', 'faculties'));
