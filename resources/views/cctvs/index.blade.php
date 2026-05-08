@@ -15,9 +15,16 @@
                 <h2 class="text-3xl font-bold text-slate-800 mb-2">Master Kamera</h2>
                 <p class="text-slate-500">Daftar seluruh perangkat CCTV yang terdaftar</p>
             </div>
-            <a href="{{ route('cctv.create') }}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 flex items-center">
-                <i class="fas fa-plus mr-2"></i> Tambah Kamera
-            </a>
+            <div class="flex items-center gap-3">
+                @if(auth()->user()->role === 'admin')
+                <a href="{{ route('cctv.migration') }}" class="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-medium shadow-sm hover:border-cyan-400 hover:text-cyan-600 transition-all duration-300 flex items-center">
+                    <i class="fas fa-file-excel mr-2 text-green-600"></i> Import Excel
+                </a>
+                @endif
+                <a href="{{ route('cctv.create') }}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Tambah Kamera
+                </a>
+            </div>
         </div>
 
         <!-- Seamless Filter & Search Bar -->

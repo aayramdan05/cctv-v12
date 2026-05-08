@@ -76,6 +76,9 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 
 // --- GROUP 4: ADMIN & ALL OPERATORS (Manajemen CCTV & User) ---
 Route::middleware(['auth', 'role:admin,operator,faculty_operator'])->group(function () {
+    Route::get('cctv/migration', [\App\Http\Controllers\CctvMigrationController::class, 'index'])->name('cctv.migration');
+    Route::get('cctv/migration/template', [\App\Http\Controllers\CctvMigrationController::class, 'downloadTemplate'])->name('cctv.migration.template');
+    Route::post('cctv/migration/import', [\App\Http\Controllers\CctvMigrationController::class, 'import'])->name('cctv.migration.import');
     Route::post('cctv/bulk-move', [CctvController::class, 'bulkMove'])->name('cctv.bulkMove');
     Route::resource('cctv', CctvController::class);
     Route::resource('users', UserController::class);
