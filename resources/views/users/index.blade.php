@@ -16,11 +16,13 @@
                 <h2 class="text-3xl font-bold text-slate-800 mb-2">Manage Users</h2>
                 <p class="text-slate-500">Kelola akun administrator, operator, dan user monitoring</p>
             </div>
+            @if(auth()->user()->role !== 'operator')
             <a href="{{ route('users.create') }}" 
                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 flex items-center">
                 <i class="fas fa-user-plus mr-2"></i>
                 Tambah User
             </a>
+            @endif
         </div>
 
         <div class="glass-effect rounded-2xl p-6 border border-cyan-100" x-data="{
@@ -176,7 +178,7 @@
                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-cyan-300 hover:text-cyan-600 transition-all shadow-sm">
                                         <i class="fas fa-pencil-alt text-xs"></i>
                                     </a>
-                                    @if(auth()->id() !== $user->id)
+                                    @if(auth()->id() !== $user->id && auth()->user()->role !== 'operator')
                                         <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus user ini?');">
                                             @csrf
                                             @method('DELETE')

@@ -46,6 +46,8 @@ class UserController extends Controller
 
     public function create()
     {
+        abort_if(auth()->user()->role === 'operator', 403, 'Operator Pusat tidak diizinkan menambah User.');
+
         // Pastikan variabel ini dikirim ke View
         $cctvs = Cctv::orderBy('nama_cctv')->get();
         $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
@@ -65,10 +67,7 @@ class UserController extends Controller
                 'faculty' => $currentUser->faculty
             ]);
         } elseif ($currentUser->role === 'operator') {
-            // Operator Pusat HANYA BOLEH membuat role 'faculty_operator' dan 'user'
-            if (!in_array($request->role, ['faculty_operator', 'user'])) {
-                abort(403, 'Operator Pusat hanya boleh membuat akun Operator Fakultas dan User.');
-            }
+            abort(403, 'Operator Pusat tidak diizinkan menambah User.');
         }
 
         $request->validate([
@@ -126,10 +125,16 @@ class UserController extends Controller
                 'faculty' => $currentUser->faculty
             ]);
         } elseif ($currentUser->role === 'operator') {
-            // Cegah mengedit akun admin/operator/api_viewer, ATAU menset role menjadi admin/operator/api_viewer
-            if (!in_array($user->role, ['faculty_operator', 'user']) || !in_array($request->role, ['faculty_operator', 'user'])) {
-                abort(403, 'Operator Pusat hanya boleh mengedit dan mengubah role menjadi Operator Fakultas atau User.');
+            // Cegah mengedit akun admin/operator, dan paksa data lama (hanya bisa ubah assign camera)
+            if (in_array($user->role, ['admin', 'operator'])) {
+                abort(403, 'Operator Pusat tidak boleh mengedit akun Admin atau sesama Operator.');
             }
+            $request->merge([
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'faculty' => $user->faculty
+            ]);
         }
 
         $request->validate([
@@ -179,9 +184,7 @@ class UserController extends Controller
                 abort(403, 'Anda hanya boleh menghapus User biasa di fakultas Anda.');
             }
         } elseif ($currentUser->role === 'operator') {
-            if (!in_array($user->role, ['faculty_operator', 'user'])) {
-                abort(403, 'Operator Pusat hanya boleh menghapus akun Operator Fakultas dan User.');
-            }
+            abort(403, 'Operator Pusat tidak diizinkan menghapus User.');
         }
 
         $user->delete();
