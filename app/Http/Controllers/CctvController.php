@@ -73,7 +73,7 @@ class CctvController extends Controller
                 
                 'kode_cctv'     => 'required|string|unique:cctvs,kode_cctv|max:50',
                 'nama_cctv'     => 'required|string|max:255',
-                'ip'            => 'nullable|ip',
+                'ip'            => 'nullable|ip|unique:cctvs,ip',
                 'rtsp_url'      => 'required|string',
                 'rtsp_user'     => 'nullable|string',
                 'rtsp_password' => 'nullable|string',
@@ -119,7 +119,7 @@ class CctvController extends Controller
                 
                 'kode_cctv'     => 'required|string|max:50|unique:cctvs,kode_cctv,' . $cctv->id,
                 'nama_cctv'     => 'required|string|max:255',
-                'ip'            => 'nullable|ip',
+                'ip'            => 'nullable|ip|unique:cctvs,ip,' . $cctv->id,
                 'rtsp_url'      => 'required|string',
                 'rtsp_user'     => 'nullable|string',
                 'rtsp_password' => 'nullable|string',
