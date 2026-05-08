@@ -114,24 +114,26 @@ Route::get('/auth-video', function (Request $request) {
     $src = $request->query('src'); 
     
     if ($src) {
-        // Extract ID dari string "camera_7" -> "7"
-        // Jika format lain (misal nama file), sesuaikan parsingnya
-        $id = str_replace('camera_', '', $src);
-        
-        // Validasi ID harus angka (untuk keamanan)
-        if (is_numeric($id)) {
-            // Cek apakah user yang sedang login BOLEH melihat kamera ini?
-            // Menggunakan scopeAccessibleByAuth yang ada di Model Cctv
+        // Gunakan Regex untuk mengekstrak ID dari string "camera_7" atau path "/storage/.../camera_7/..."
+        if (preg_match('/camera_(\d+)/', $src, $matches)) {
+            $id = $matches[1];
+            
+            // Validasi ID dengan RBAC
             $exists = Cctv::accessibleByAuth()->where('id', $id)->exists();
             
             if (!$exists) {
                 // User login, tapi mencoba akses kamera fakultas lain -> TOLAK
                 return response('Forbidden: Access Denied to this Camera', 403);
             }
+        } else {
+            // Jika request tidak mengandung format camera_{id} yang sah, blokir demi keamanan.
+            return response('Forbidden: Invalid source format', 403);
         }
+    } else {
+        return response('Forbidden: No source provided', 403);
     }
 
-    // Jika Lolos Semua Cek
+    // Jika Lolos Semua Cek (RBAC valid)
     return response('OK', 200);
 });
 

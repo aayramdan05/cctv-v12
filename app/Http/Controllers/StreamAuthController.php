@@ -72,25 +72,31 @@ class StreamAuthController extends Controller
         // TAHAP 2: CEK HAK AKSES KAMERA (AUTHORIZATION / POLICY)
         // =========================================================
 
-        // 1. Ambil Parameter 'src' dari params yang sudah diparsing (PENTING!)
+        // 1. Ambil Parameter 'src' dari params yang sudah diparsing
         $src = $params['src'] ?? null;
 
-        // Jika request benar-benar tidak menyertakan 'src', mungkin bukan request video.
-        // Tapi untuk keamanan, jika path mengandung 'stream.html' tapi tidak ada src, kita curiga.
-        if (!$src) {
-            // Cek apakah URI asli mengarah ke stream video
-            if ($originalUri && str_contains($originalUri, 'stream.html')) {
-                return response('Bad Request - Stream URL requires src parameter', 400);
+        // Jika tidak ada 'src', coba cari pola 'camera_ID' langsung di path URI (Berguna untuk file MP4)
+        if (!$src && $originalUri) {
+            if (preg_match('/camera_(\d+)/', $originalUri, $matches)) {
+                $src = 'camera_' . $matches[1];
             }
-            // Jika bukan stream (misal akses root api), loloskan auth user saja
+        }
+
+        if (!$src) {
+            // Cek apakah URI asli mengarah ke stream video atau storage rekaman
+            if ($originalUri && (str_contains($originalUri, 'stream.html') || str_contains($originalUri, '/storage/recordings/'))) {
+                return response('Bad Request - Target camera not specified in URL', 400);
+            }
+            // Jika bukan stream atau storage (misal akses root api), loloskan auth user saja
             return response("OK - $authSource (No Target)", 200);
         }
 
-        // 2. Parsing ID Kamera (Format: "camera_19" -> "19")
-        $cctvId = str_replace('camera_', '', $src);
-
-        if (!is_numeric($cctvId)) {
-            return response('Bad Request - Invalid Source ID', 400);
+        // 2. Parsing ID Kamera
+        // Mendukung format "?src=camera_19" atau path "/storage/recordings/camera_19/..."
+        if (preg_match('/camera_(\d+)/', $src, $matches)) {
+            $cctvId = $matches[1];
+        } else {
+            return response('Bad Request - Invalid Source ID format', 400);
         }
 
         // 3. Cari Data CCTV
