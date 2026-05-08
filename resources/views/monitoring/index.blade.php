@@ -199,7 +199,7 @@
 
                         <div class="flex items-center justify-end w-full md:w-1/3 order-3">
                             <button @click="goLive(selectedSlot)" 
-                                    :disabled="!isToday || activeSlots[selectedSlot]?.mode === 'live'"
+                                    :disabled="isToday && activeSlots[selectedSlot]?.mode === 'live'"
                                     :class="(isToday && activeSlots[selectedSlot]?.mode === 'live') ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default' : 'bg-red-600 text-white hover:bg-red-500 shadow-md animate-pulse cursor-pointer border border-red-700'"
                                     class="px-4 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition w-full md:w-auto">
                                 <i class="fas fa-broadcast-tower pointer-events-none"></i> 
