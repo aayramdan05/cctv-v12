@@ -53,7 +53,9 @@ class SyncGo2rtcConfig extends Command
                 $configUrl = $url;
             } else {
                 // KASUS RTSP (H.264 Standard)
-                $configUrl = $url . "#video=copy#audio=aac#rtsp_transport=tcp";
+                // Gunakan prefix 'ffmpeg:' agar Go2RTC menggunakan engine FFmpeg.
+                // Ini solusi paling stabil untuk password yang mengandung karakter spesial seperti # atau @.
+                $configUrl = "ffmpeg:" . $url . "#video=copy#audio=aac#rtsp_transport=tcp";
             }
             
             // Tulis stream (pakai tanda kutip agar aman)
