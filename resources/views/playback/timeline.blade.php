@@ -12,8 +12,8 @@
                     {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d M Y') }}
                 </span>
 
-                <!-- TOMBOL EXPORT (ADMIN ONLY) -->
-                @if(auth()->user()->role === 'admin')
+                <!-- TOMBOL EXPORT (ADMIN & OPERATOR) -->
+                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'operator')
                     <button onclick="openExportModal()" 
                             class="ml-2 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm active:scale-95">
                         <i class="fas fa-file-export"></i> Export ZIP
@@ -63,10 +63,10 @@
             </form>
         </div>
 
-        <!-- PLAYER & PLAYLIST CONTAINER -->
-        <div class="flex flex-1 gap-6 overflow-hidden min-h-0 flex-col lg:flex-row">
+        <!-- PLAYER & PLAYLIST CONTAINER (STACKED VERTICAL) -->
+        <div class="flex flex-1 gap-6 overflow-hidden min-h-0 flex-col">
             <!-- VIDEO PLAYER -->
-            <div class="flex-[3] flex flex-col bg-black rounded-2xl overflow-hidden shadow-xl relative group border border-slate-800 min-h-[300px]">
+            <div class="flex-[2] flex flex-col bg-black rounded-2xl overflow-hidden shadow-xl relative group border border-slate-800 min-h-[400px]">
                 <video id="main-player" class="w-full h-full object-contain" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
                     <source src="" type="video/mp4">
                 </video>
@@ -78,22 +78,34 @@
                 </div>
             </div>
 
-            <!-- PLAYLIST SIDEBAR -->
+            <!-- PLAYLIST SECTION (FULL WIDTH BELOW PLAYER) -->
+            <div class="flex-1 bg-white rounded-2xl border border-slate-200 flex flex-col overflow-hidden shadow-sm relative min-h-[300px]">
                 <div class="p-3 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center backdrop-blur-sm sticky top-0 z-20">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="select-all-recordings" onchange="toggleSelectAll()" class="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        @if(auth()->user()->role === 'admin')
+                            <input type="checkbox" id="select-all-recordings" onchange="toggleSelectAll()" class="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer">
+                        @endif
                         <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-list text-slate-400"></i> Playlist
+                            <i class="fas fa-list text-slate-400"></i> Daftar File Rekaman
                         </h3>
                     </div>
-                    <button id="btn-download-selected" onclick="downloadSelected()" disabled 
-                            class="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-400 hover:text-emerald-600 hover:border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1">
-                        <i class="fas fa-download"></i> <span id="download-count">0</span>
-                    </button>
+                    
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-500" id="total-files">0 Files</span>
+                        
+                        @if(auth()->user()->role === 'admin')
+                            <button id="btn-download-selected" onclick="downloadSelected()" disabled 
+                                    class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-400 hover:text-emerald-600 hover:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 shadow-sm">
+                                <i class="fas fa-download"></i> Download Terpilih (<span id="download-count">0</span>)
+                            </button>
+                        @endif
+                    </div>
                 </div>
-                <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar" id="playlist-container">
+                
+                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar" id="playlist-container">
+                    <!-- Data diload via JavaScript -->
                     <div class="text-center py-10 text-slate-400 text-xs flex flex-col items-center">
-                        <i class="fas fa-circle-notch fa-spin mb-2"></i> Memuat data...
+                        <i class="fas fa-circle-notch fa-spin mb-2 text-xl"></i> Memuat data...
                     </div>
                 </div>
             </div>
@@ -379,10 +391,16 @@
                     
                     let buildingName = rec.building_name || 'Unknown';
                     
+                    // Logic Checkbox (Hanya Admin)
+                    const isAdmin = "{{ auth()->user()->role === 'admin' }}";
+                    let checkboxHtml = isAdmin ? `
+                        <input type="checkbox" class="rec-checkbox w-3.5 h-3.5 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer" 
+                               data-url="${rec.url}" onchange="updateDownloadCount()" onclick="event.stopPropagation()">
+                    ` : '';
+                    
                     item.innerHTML = `
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <input type="checkbox" class="rec-checkbox w-3.5 h-3.5 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer" 
-                                   data-url="${rec.url}" onchange="updateDownloadCount()" onclick="event.stopPropagation()">
+                            ${checkboxHtml}
                             
                             <div class="flex items-center gap-3 overflow-hidden cursor-pointer" onclick="playVideo(${index})">
                                 <div class="w-8 h-8 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs group-hover:text-cyan-600 group-hover:bg-cyan-100 transition-colors">
