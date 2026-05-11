@@ -3,9 +3,16 @@ import os
 import requests
 import threading
 import json
+import psycopg2
+import psycopg2.extensions
+import select
 from onvif import ONVIFCamera
 from datetime import datetime
+from dotenv import load_dotenv
 import builtins
+
+# Load Environment Variables
+load_dotenv('/home/aay/cctv-scripts/.env')
 
 # Memaksa print() untuk selalu melakukan flush agar log langsung muncul di systemd
 def print(*args, **kwargs):
@@ -15,8 +22,13 @@ def print(*args, **kwargs):
 
 # CONFIGURATION
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.39')
-MASTER_URL = os.getenv('MASTER_URL', 'https://cctv.unpad.net')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('DB_DATABASE', 'cctv_prod')
+DB_USER = os.getenv('DB_USERNAME', 'postgres')
+DB_PASS = os.getenv('DB_PASSWORD', '')
+
+NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.41')
+MASTER_URL = os.getenv('MASTER_URL', 'http://10.69.69.21')
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026')
 
 # Melacak thread yang sedang berjalan
@@ -119,46 +131,68 @@ def subscribe_to_camera(cam):
             time.sleep(60)
             # Loop akan mengulang koneksi dari awal tanpa memakan memori call stack baru
 
+def sync_cameras():
+    """Mengambil daftar kamera dan mengupdate thread"""
+    try:
+        # Ambil daftar kamera dari Master
+        api_url = f"{MASTER_URL}/api/node-config?ip={NODE_IP}&token={SYNC_TOKEN}"
+        res = requests.get(api_url, timeout=10)
+        
+        raw_text = res.text.strip()
+        if not raw_text.startswith('{'):
+            start_index = raw_text.find('{')
+            if start_index != -1:
+                raw_text = raw_text[start_index:]
+        
+        data = json.loads(raw_text)
+        cameras = data.get('cameras_list', [])
+
+        for cam in cameras:
+            cam_id = cam['id']
+            if cam_id not in active_threads or not active_threads[cam_id].is_alive():
+                print(f"🌟 Memulai thread ONVIF untuk kamera {cam_id} ({cam['ip']})")
+                t = threading.Thread(target=subscribe_to_camera, args=(cam,), daemon=True)
+                t.start()
+                active_threads[cam_id] = t
+        return True
+    except Exception as e:
+        print(f"❌ Sync Error: {e}")
+        return False
+
 def main():
     print("🚀 ONVIF Event Agent Started")
+    
+    # 1. Sync pertama kali
+    sync_cameras()
+
+    # 2. Setup Listener Real-time
+    try:
+        conn = psycopg2.connect(
+            host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
+        )
+        conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        curs = conn.cursor()
+        curs.execute("LISTEN cctv_update;")
+        print("✅ ONVIF Listener aktif (Real-time). Menunggu sinyal...")
+    except Exception as e:
+        print(f"⚠️ Gagal memulai Real-time listener: {e}. Menggunakan mode polling 5 menit.")
+        while True:
+            sync_cameras()
+            time.sleep(300)
+        return
+
     while True:
         try:
-            # Ambil daftar kamera dari Master
-            api_url = f"{MASTER_URL}/api/node-config?ip={NODE_IP}&token={SYNC_TOKEN}"
-            res = requests.get(api_url, timeout=10)
-            
-            # Bersihkan response jika ada teks sampah di awal/akhir
-            raw_text = res.text.strip()
-            
-            # Jika response diawali dengan 'OK' atau teks lain, coba ambil bagian JSON-nya
-            if not raw_text.startswith('{'):
-                start_index = raw_text.find('{')
-                if start_index != -1:
-                    raw_text = raw_text[start_index:]
-            
-            try:
-                data = json.loads(raw_text)
-                cameras = data.get('cameras_list', [])
-            except Exception as je:
-                print(f"❌ JSON Decode Error: {je}")
-                print(f"📄 Raw Response: {res.text[:100]}...")
-                time.sleep(10)
-                continue
-
-            for cam in cameras:
-                cam_id = cam['id']
-                # Jalankan listener per kamera di thread terpisah JIKA belum jalan
-                if cam_id not in active_threads or not active_threads[cam_id].is_alive():
-                    print(f"🌟 Memulai thread baru untuk kamera {cam_id}")
-                    t = threading.Thread(target=subscribe_to_camera, args=(cam,), daemon=True)
-                    t.start()
-                    active_threads[cam_id] = t
-            
-            # Update daftar kamera setiap 1 jam
-            time.sleep(3600)
+            conn.poll()
+            while conn.notifies:
+                notify = conn.notifies.pop(0)
+                if notify.payload == NODE_IP or notify.payload == 'ALL':
+                    print(f"🔔 NOTIFIKASI DITERIMA: Payload={notify.payload}. Syncing...")
+                    sync_cameras()
+            time.sleep(1)
         except Exception as e:
             print(f"❌ Main Loop Error: {e}")
-            time.sleep(10)
+            time.sleep(5)
 
 if __name__ == "__main__":
     main()

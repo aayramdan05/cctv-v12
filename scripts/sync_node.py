@@ -6,6 +6,7 @@ import psycopg2.extensions
 import yaml
 import requests
 import select
+import glob
 import threading
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -25,7 +26,7 @@ RECORD_DURATION = 900  # 15 menit per chunk file mp4
 CHECK_INTERVAL = 30    # Jeda pengecekan update dari database (detik)
 
 GO2RTC_CONFIG_PATH = os.getenv('GO2RTC_CONFIG_PATH', '/home/aay/go2rtc.yaml')
-STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/home/aay/storage/recordings')
+STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/var/www/html/storage/recordings')
 
 MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026') # Harus sama dengan di Master
@@ -266,22 +267,77 @@ def record_worker(cam_id, stream_url):
                         conn.close()
 
 if __name__ == '__main__':
-    print(f"🚀 Memulai CCTV Node Agent | Interval: {CHECK_INTERVAL}m | Retention: {RETENTION_DAYS} Hari")
+    print(f"🚀 CCTV Node Agent Started (Node IP: {NODE_IP})", flush=True)
+    print(f"📡 DEBUG: Mengambil config pertama kali...", flush=True)
+
+    # 1. Jalankan sinkronisasi pertama kali saat startup
+    try:
+        cameras = sync_go2rtc_config_from_db()
+        print(f"✅ DEBUG: Config awal berhasil diambil. Total {len(cameras)} kamera.", flush=True)
+    except Exception as e:
+        print(f"⚠️ DEBUG: Gagal ambil config awal: {e}. Tetap lanjut ke listener...", flush=True)
+        cameras = []
     
-    # Jalankan Auto-Cleanup di background
+    # 2. Jalankan Auto-Cleanup di background
+    print(f"📡 DEBUG: Memulai thread Auto-Cleanup...", flush=True)
     threading.Thread(target=auto_cleanup, daemon=True).start()
     
     active_threads = {}
     
-    while True:
-        cameras = sync_go2rtc_config_from_db()
-        
-        # Mulai thread untuk kamera baru
-        for cam in cameras:
+    def manage_recording_threads(cameras_list):
+        for cam in cameras_list:
             if cam['id'] not in active_threads or not active_threads[cam['id']].is_alive():
                 t = threading.Thread(target=record_worker, args=(cam['id'], cam['url']), daemon=True)
                 t.start()
                 active_threads[cam['id']] = t
+
+    # Jalankan recording pertama kali
+    print(f"📡 DEBUG: Memulai thread perekaman...", flush=True)
+    manage_recording_threads(cameras)
+
+    # 3. Setup Listener Real-time
+    print(f"📡 DEBUG: Menghubungkan ke Listener Database {DB_HOST}...", flush=True)
+    conn = get_db_connection()
+    if not conn:
+        print("❌ DEBUG: Gagal konek ke DB untuk listener. Keluar...", flush=True)
+        exit(1)
+
+    print(f"✅ DEBUG: Koneksi DB listener sukses. Menyiapkan LISTEN...", flush=True)
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    curs = conn.cursor()
+    
+    print("👂 DEBUG: Menjalankan perintah LISTEN cctv_update...", flush=True)
+    curs.execute("LISTEN cctv_update;")
+    print("✅ LISTENER AKTIF. Menunggu sinyal real-time...", flush=True)
+
+    while True:
+        try:
+            # Poll koneksi database
+            conn.poll()
+            
+            while conn.notifies:
+                notify = conn.notifies.pop(0)
+                print(f"🔔 NOTIFIKASI DITERIMA: Payload='{notify.payload}'", flush=True)
                 
-        # Sinkronisasi konfigurasi database Master setiap 5 menit
-        time.sleep(CHECK_INTERVAL * 60) 
+                if notify.payload == NODE_IP or notify.payload == 'ALL':
+                    print("🔄 Sinkronisasi Instan Dimulai...", flush=True)
+                    updated_cameras = sync_go2rtc_config_from_db()
+                    manage_recording_threads(updated_cameras)
+                else:
+                    print(f"⏭️ Diabaikan (Payload '{notify.payload}' tidak cocok dengan IP '{NODE_IP}')", flush=True)
+            
+            # Tidur sebentar agar tidak membebani CPU (1 detik)
+            time.sleep(1)
+                        
+        except (psycopg2.DatabaseError, psycopg2.OperationalError) as e:
+            print(f"⚠️ Koneksi terputus: {e}. Mencoba reconnect dalam 5 detik...", flush=True)
+            time.sleep(5)
+            conn = get_db_connection()
+            if conn:
+                conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                curs = conn.cursor()
+                curs.execute("LISTEN cctv_update;")
+                print("🔄 Reconnected & Listening again.", flush=True)
+        except Exception as e:
+            print(f"❌ Error in listener loop: {e}", flush=True)
+            time.sleep(5)
