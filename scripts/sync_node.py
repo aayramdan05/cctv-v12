@@ -121,9 +121,9 @@ def sync_go2rtc_config_from_db():
         streams_from_api = data.get('streams', {})
         cameras_list = data.get('cameras_list', [])
 
-        # Simpan nama kamera untuk keperluan log
+        # Simpan kode kamera untuk keperluan log agar lebih mudah dibaca (e.g. [CAM.LOBBY.01])
         for cam in cameras_list:
-            camera_names[cam['id']] = cam.get('nama_cctv', f"ID_{cam['id']}")
+            camera_names[cam['id']] = cam.get('kode_cctv', f"ID_{cam['id']}")
 
         if not streams_from_api:
             print(f"⚠️ Tidak ada kamera yang ditugaskan untuk Node IP: {NODE_IP}")
