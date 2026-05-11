@@ -5,21 +5,27 @@ use App\Models\Cctv;
 use Illuminate\Support\Facades\Route;
 
 // Endpoint untuk Node mengambil config
-// Contoh akses: http://ip-master/api/node-config?server_id=1&secret=RAHASIA
+// Contoh akses: http://ip-master/api/node-config?ip=192.168.1.1&token=secret_unpad_cctv_2026
 Route::get('/node-config', function (Request $request) {
-    // Validasi token sederhana biar gak sembarang orang ambil
-    if ($request->query('secret') !== 'apicctvD@pnu1957') {
+    // 1. Validasi Token (Harus sama dengan SYNC_TOKEN di Node)
+    if ($request->query('token') !== 'secret_unpad_cctv_2026') {
         return response()->json(['error' => 'Unauthorized'], 401);
     }
 
-    $serverId = $request->query('server_id');
+    $ip = $request->query('ip');
     
-    // Ambil kamera khusus untuk server tersebut (ID, Kode, Nama, dan URL)
-    $cctvs = Cctv::where('server_id', $serverId)
+    // 2. Cari Server ID berdasarkan IP
+    $server = \App\Models\Server::where('ip_address', $ip)->first();
+    if (!$server) {
+        return response()->json(['error' => 'Server not found'], 404);
+    }
+
+    // 3. Ambil kamera khusus untuk server tersebut
+    $cctvs = Cctv::where('server_id', $server->id)
                  ->where('status', 'online')
                  ->get(['id', 'kode_cctv', 'nama_cctv', 'stream_url']); 
 
-    // Susun format yang diminta script Python (streams & cameras_list)
+    // 4. Susun format untuk Go2RTC & Log Node
     $streams = [];
     foreach ($cctvs as $cam) {
         $streams["camera_{$cam->id}"] = [

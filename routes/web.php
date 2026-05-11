@@ -110,27 +110,25 @@ Route::get('/auth-video', function (Request $request) {
     }
     
     // 2. CEK HAK AKSES KAMERA (RBAC)
-    // Nginx mengirim parameter asli: /auth-video?src=camera_7
-    $src = $request->query('src'); 
+    // Ambil sumber dari parameter 'src' (untuk Live) atau dari URI asli (untuk Recording)
+    $src = $request->query('src') ?: $request->header('X-Original-Uri'); 
     
     if ($src) {
-        // Gunakan Regex untuk mengekstrak ID dari string "camera_7" atau path "/storage/.../camera_7/..."
-        if (preg_match('/camera_(\d+)/', $src, $matches)) {
+        // Mendukung format 'camera_12' (Live) ATAU 'cam_12' (Recording)
+        if (preg_match('/(?:camera_|cam_)(\d+)/', $src, $matches)) {
             $id = $matches[1];
             
             // Validasi ID dengan RBAC
             $exists = Cctv::accessibleByAuth()->where('id', $id)->exists();
             
             if (!$exists) {
-                // User login, tapi mencoba akses kamera fakultas lain -> TOLAK
-                return response('Forbidden: Access Denied to this Camera', 403);
+                return response('Forbidden: Access Denied to Camera #' . $id, 403);
             }
         } else {
-            // Jika request tidak mengandung format camera_{id} yang sah, blokir demi keamanan.
-            return response('Forbidden: Invalid source format', 403);
+            return response('Forbidden: Invalid camera ID format in ' . $src, 403);
         }
     } else {
-        return response('Forbidden: No source provided', 403);
+        return response('Forbidden: No source/URI provided', 403);
     }
 
     // Jika Lolos Semua Cek (RBAC valid)
