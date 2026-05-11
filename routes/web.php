@@ -176,6 +176,7 @@ Route::get('/api/node-config', function (Request $request) {
             'kode_cctv' => $cam->kode_cctv ?? "CAM-{$cam->id}", // Gunakan fallback jika null
             'nama_cctv' => $cam->nama_cctv ?? "Camera {$cam->id}",
             'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}",
+            'original_url' => $cam->stream_url,
             'ip' => $cam->ip,
             'onvif' => [
                 'port' => $cam->onvif_port ?? 80,

@@ -60,27 +60,32 @@ def cleanup_old_snapshots():
 
 def capture_screenshot(cam_id, rtsp_url):
     """Mengambil screenshot dari stream RTSP menggunakan FFmpeg"""
-    # Jalankan cleanup sebelum ambil yang baru
     cleanup_old_snapshots()
     
     if not os.path.exists(SNAPSHOT_DIR):
-        os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+        try:
+            os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+            os.chmod(SNAPSHOT_DIR, 0o777)
+        except: pass
     
     filename = f"event_{cam_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
     filepath = os.path.join(SNAPSHOT_DIR, filename)
     
     try:
-        # Gunakan timeout agar tidak hang jika stream mati
+        # Gunakan original RTSP agar lebih cepat dan stabil untuk snapshot
         command = [
-            'ffmpeg', '-y', '-rtsp_transport', 'tcp', '-timeout', '5000000',
+            'ffmpeg', '-y', '-rtsp_transport', 'tcp', '-timeout', '8000000',
             '-i', rtsp_url, '-ss', '00:00:01', '-frames:v', '1',
             '-q:v', '2', filepath
         ]
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
         
-        if os.path.exists(filepath):
+        # Validasi: Cek apakah file ada dan tidak kosong (0 bytes)
+        if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
             print(f"📸 [CAM {cam_id}] Screenshot berhasil: {filename}")
             return filename
+        else:
+            print(f"⚠️ [CAM {cam_id}] FFmpeg selesai tapi file kosong/tidak ada.")
     except Exception as e:
         print(f"❌ [CAM {cam_id}] Gagal ambil screenshot: {e}")
     
@@ -102,7 +107,10 @@ def subscribe_to_camera(cam):
     """Berlangganan event dari kamera via ONVIF"""
     cam_id = cam['id']
     cam_ip = cam['ip']
-    rtsp_url = cam.get('url') # URL RTSP dari Master
+    
+    # Ambil original_url untuk screenshot, fallback ke url go2rtc
+    snap_url = cam.get('original_url') or cam.get('url')
+    
     onvif_data = cam.get('onvif', {})
     
     port = onvif_data.get('port', 80)
@@ -148,7 +156,7 @@ def subscribe_to_camera(cam):
                                         # COOLDOWN 10 DETIK
                                         if current_time - last_time >= 10:
                                             print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN!")
-                                            img_name = capture_screenshot(cam_id, rtsp_url)
+                                            img_name = capture_screenshot(cam_id, snap_url)
                                             report_to_master(cam_id, 'motion', img_name)
                                             last_motion_time[cam_id] = current_time
                             except:
@@ -158,7 +166,7 @@ def subscribe_to_camera(cam):
                                     last_time = last_motion_time.get(cam_id, 0)
                                     if current_time - last_time >= 10:
                                         print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN (Raw)!")
-                                        img_name = capture_screenshot(cam_id, rtsp_url)
+                                        img_name = capture_screenshot(cam_id, snap_url)
                                         report_to_master(cam_id, 'motion', img_name)
                                         last_motion_time[cam_id] = current_time
                                     
