@@ -15,9 +15,10 @@
         </div>
         
         <div id="stats-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1">
+            <div onclick="location.href='{{ route('cctv.index') }}'" 
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
                         <i class="fas fa-video text-white text-xl"></i>
                     </div>
                     <span class="px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-bold uppercase tracking-wide">Active</span>
@@ -48,9 +49,10 @@
                 <p class="text-slate-500 text-sm font-medium">Active Streams</p>
             </div>
             
-            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1">
+            <div onclick="location.href='{{ route('building.index') }}'"
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
                         <i class="fas fa-building text-white text-xl"></i>
                     </div>
                     <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wide">Total</span>
@@ -77,7 +79,8 @@
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($buildings as $building)
-                    <div class="bg-white border border-slate-100 rounded-xl p-4 hover:border-cyan-300 hover:shadow-md transition-all group cursor-pointer">
+                    <div onclick="location.href='{{ route('monitoring.index', ['building_id' => $building->id]) }}'"
+                         class="bg-white border border-slate-100 rounded-xl p-4 hover:border-cyan-300 hover:shadow-md transition-all group cursor-pointer">
                         <div class="flex items-start justify-between mb-3">
                             <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 transition-colors">
                                 <i class="fas fa-building text-lg"></i>
@@ -116,7 +119,6 @@
                         </div>
                         <h3 class="text-xl font-bold text-slate-800">Alerts</h3>
                     </div>
-                    <button class="text-xs text-cyan-600 font-bold hover:underline">View Log</button>
                 </div>
 
                 <div class="space-y-3">

@@ -9,12 +9,17 @@ use Carbon\Carbon;
 
 class MonitoringController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $cctvs = Cctv::accessibleByAuth()
+        $query = Cctv::accessibleByAuth()
                      ->with(['building', 'server'])
-                     ->orderBy('nama_cctv')
-                     ->get();
+                     ->orderBy('nama_cctv');
+
+        if ($request->filled('building_id')) {
+            $query->where('building_id', $request->building_id);
+        }
+
+        $cctvs = $query->get();
         return view('monitoring.index', compact('cctvs'));
     }
 
