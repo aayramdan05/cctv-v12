@@ -348,6 +348,7 @@
             const videoInfo = document.getElementById('current-video-info');
             const zoomSlider = document.getElementById('zoom-slider');
             const zoomText = document.getElementById('zoom-level-text');
+            const totalFilesLabel = document.getElementById('total-files');
             
             let recordings = [];
             let currentIndex = -1;
@@ -362,6 +363,7 @@
                 .then(res => res.json())
                 .then(data => {
                     recordings = data;
+                    if (totalFilesLabel) totalFilesLabel.innerText = recordings.length;
                     renderAll();
                 })
                 .catch(err => {
