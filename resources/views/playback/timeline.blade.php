@@ -79,12 +79,17 @@
             </div>
 
             <!-- PLAYLIST SIDEBAR -->
-            <div class="flex-1 bg-white rounded-2xl border border-slate-200 flex flex-col overflow-hidden shadow-sm max-w-md lg:max-w-xs">
-                <div class="p-4 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center backdrop-blur-sm">
-                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fas fa-list text-slate-400"></i> Playlist
-                    </h3>
-                    <span class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-500" id="total-files">0</span>
+                <div class="p-3 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center backdrop-blur-sm sticky top-0 z-20">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="select-all-recordings" onchange="toggleSelectAll()" class="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer">
+                        <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                            <i class="fas fa-list text-slate-400"></i> Playlist
+                        </h3>
+                    </div>
+                    <button id="btn-download-selected" onclick="downloadSelected()" disabled 
+                            class="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-400 hover:text-emerald-600 hover:border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1">
+                        <i class="fas fa-download"></i> <span id="download-count">0</span>
+                    </button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar" id="playlist-container">
                     <div class="text-center py-10 text-slate-400 text-xs flex flex-col items-center">
@@ -262,6 +267,62 @@
             });
         @endif
 
+        // --- BULK DOWNLOAD LOGIC ---
+        function toggleSelectAll() {
+            const masterCheckbox = document.getElementById('select-all-recordings');
+            const checkboxes = document.querySelectorAll('.rec-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            updateDownloadCount();
+        }
+
+        function updateDownloadCount() {
+            const selected = document.querySelectorAll('.rec-checkbox:checked').length;
+            const btn = document.getElementById('btn-download-selected');
+            const countLabel = document.getElementById('download-count');
+            
+            countLabel.innerText = selected;
+            btn.disabled = selected === 0;
+            
+            if (selected > 0) {
+                btn.classList.remove('text-slate-400', 'border-slate-200');
+                btn.classList.add('text-emerald-600', 'border-emerald-500', 'bg-emerald-50');
+            } else {
+                btn.classList.add('text-slate-400', 'border-slate-200');
+                btn.classList.remove('text-emerald-600', 'border-emerald-500', 'bg-emerald-50');
+            }
+        }
+
+        async function downloadSelected() {
+            const selectedCheckboxes = document.querySelectorAll('.rec-checkbox:checked');
+            if (selectedCheckboxes.length === 0) return;
+
+            const urls = Array.from(selectedCheckboxes).map(cb => cb.dataset.url);
+            
+            Swal.fire({
+                title: 'Memulai Download',
+                text: `Mendownload ${urls.length} file. Harap izinkan browser jika muncul pop-up multiple download.`,
+                icon: 'info',
+                timer: 3000,
+                showConfirmButton: false
+            });
+
+            // Loop untuk men-download satu per satu
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                const filename = url.split('/').pop();
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Jeda sebentar agar tidak membebani browser
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+        }
+
         // --- EXISTING PLAYER LOGIC ---
         document.addEventListener("DOMContentLoaded", function() {
             const dateParam = "{{ $date }}";
@@ -274,7 +335,6 @@
             const videoInfo = document.getElementById('current-video-info');
             const zoomSlider = document.getElementById('zoom-slider');
             const zoomText = document.getElementById('zoom-level-text');
-            const totalFilesLabel = document.getElementById('total-files');
             
             let recordings = [];
             let currentIndex = -1;
@@ -289,7 +349,6 @@
                 .then(res => res.json())
                 .then(data => {
                     recordings = data;
-                    totalFilesLabel.innerText = `${recordings.length}`;
                     renderAll();
                 })
                 .catch(err => {
@@ -316,22 +375,27 @@
                     // 1. Render Playlist Item
                     let item = document.createElement('div');
                     let isActive = index === currentIndex;
-                    item.className = `p-3 rounded-lg cursor-pointer border transition flex justify-between items-center group ${isActive ? 'bg-cyan-50 border-cyan-200 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`;
+                    item.className = `p-3 rounded-lg border transition flex justify-between items-center group ${isActive ? 'bg-cyan-50 border-cyan-200 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`;
                     
                     let buildingName = rec.building_name || 'Unknown';
                     
                     item.innerHTML = `
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <div class="w-8 h-8 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs group-hover:text-cyan-600 group-hover:bg-cyan-100 transition-colors">
-                                <i class="fas ${isActive ? 'fa-chart-bar animate-pulse' : 'fa-play'}"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-bold text-slate-700 truncate font-mono">${rec.start_time} - ${rec.end_time}</p>
-                                <p class="text-[9px] text-slate-400 truncate uppercase tracking-wider" title="${buildingName}">${buildingName}</p>
+                            <input type="checkbox" class="rec-checkbox w-3.5 h-3.5 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer" 
+                                   data-url="${rec.url}" onchange="updateDownloadCount()" onclick="event.stopPropagation()">
+                            
+                            <div class="flex items-center gap-3 overflow-hidden cursor-pointer" onclick="playVideo(${index})">
+                                <div class="w-8 h-8 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs group-hover:text-cyan-600 group-hover:bg-cyan-100 transition-colors">
+                                    <i class="fas ${isActive ? 'fa-chart-bar animate-pulse' : 'fa-play'}"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-700 truncate font-mono">${rec.start_time} - ${rec.end_time}</p>
+                                    <p class="text-[9px] text-slate-400 truncate uppercase tracking-wider" title="${buildingName}">${buildingName}</p>
+                                </div>
                             </div>
                         </div>
                     `;
-                    item.onclick = () => playVideo(index);
+                    
                     if(isActive) { setTimeout(() => item.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100); }
                     container.appendChild(item);
 
