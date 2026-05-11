@@ -31,6 +31,7 @@ class MonitoringController extends Controller
         // Ambil riwayat rekaman dari Database
         $recordings = \App\Models\Recording::where('cctv_id', $cctvId)
             ->where('date', $date)
+            ->where('size_mb', '>', 0) // Sembunyikan yang masih 0 MB
             ->orderBy('start_time')
             ->get();
 

@@ -76,6 +76,7 @@ class PlaybackController extends Controller
             // Ambil dari database Recording berdasarkan tanggal
             $recordings = \App\Models\Recording::where('cctv_id', $targetCamId)
                 ->where('date', $date)
+                ->where('size_mb', '>', 0)
                 ->orderBy('start_time', 'asc')
                 ->get();
 
