@@ -10,6 +10,10 @@ import glob
 import threading
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import builtins
+
+# Global dictionary untuk menyimpan nama kamera berdasarkan ID
+camera_names = {}
 
 # Load Environment Variables dari file .env
 load_dotenv('/home/aay/cctv-scripts/.env')
@@ -117,6 +121,10 @@ def sync_go2rtc_config_from_db():
         streams_from_api = data.get('streams', {})
         cameras_list = data.get('cameras_list', [])
 
+        # Simpan nama kamera untuk keperluan log
+        for cam in cameras_list:
+            camera_names[cam['id']] = cam.get('nama_cctv', f"ID_{cam['id']}")
+
         if not streams_from_api:
             print(f"⚠️ Tidak ada kamera yang ditugaskan untuk Node IP: {NODE_IP}")
             return []
@@ -171,100 +179,87 @@ def sync_go2rtc_config_from_db():
         return []
 
 def record_worker(cam_id, stream_url):
-    """Worker rekaman individu per kamera"""
-    print(f"🔴 Memulai thread auto-recording Kamera {cam_id}")
+    """Worker rekaman individu per kamera (Direct Fragmented MP4)"""
+    cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
+    print(f"🔴 Memulai thread auto-recording Kamera: {cam_label}", flush=True)
     while True:
-        now = datetime.now()
-        date_folder = now.strftime('%Y-%m-%d')
-        start_seconds = now.hour * 3600 + now.minute * 60 + now.second
-        
-        folder_path = f"{STORAGE_BASE_PATH}/{date_folder}"
-        os.makedirs(folder_path, exist_ok=True)
-        
-        end_time = now + timedelta(seconds=RECORD_DURATION)
-        part_counter = 1
-        recorded_parts = []
-        
-        # 1. Perekaman per Part (Format TS HLS)
-        while datetime.now() < end_time:
-            remaining_sec = int((end_time - datetime.now()).total_seconds())
-            if remaining_sec < 5:
-                break
-                
-            temp_path = f"{folder_path}/temp_{cam_id}_{int(time.time())}.ts"
+        # Cek apakah ada sinyal untuk berhenti
+        if stop_signals.get(cam_id):
+            print(f"👋 [{cam_label}] Thread dihentikan (Sinyal STOP diterima).", flush=True)
+            break
+
+        try:
+            now = datetime.now()
+            date_folder = now.strftime('%Y-%m-%d')
+            folder_path = f"{STORAGE_BASE_PATH}/{date_folder}"
+            os.makedirs(folder_path, exist_ok=True)
             
-            cmd = [
+            final_filename = f"cam_{cam_id}_{now.strftime('%H-%M-%S')}.mp4"
+            final_path = f"{folder_path}/{final_filename}"
+            
+            # 🎬 DAFTARKAN AWAL KE DATABASE (Agar muncul di dashboard Playback seketika)
+            start_time = int(time.time())
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO recordings (cctv_id, date, filename, start_time, duration, size_mb, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (cam_id, date_folder, final_filename, start_time, RECORD_DURATION, 0, now_str, now_str))
+                conn.commit()
+                cur.close()
+                conn.close()
+                print(f"📡 [{cam_label}] Rekaman terdaftar di Master: {final_filename}", flush=True)
+            except psycopg2.errors.ForeignKeyViolation:
+                print(f"❌ [{cam_label}] Kamera sudah tidak ada di Database Master. Mematikan thread...", flush=True)
+                stop_signals[cam_id] = True
+                break
+            except Exception as e:
+                print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
+
+            # 🎥 MULAI REKAMAN (Fragmented MP4)
+            ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
                 '-i', stream_url,
-                '-t', str(remaining_sec),
-                '-c', 'copy',
-                '-f', 'mpegts',
-                temp_path
-            ]
-            
-            subprocess.run(cmd, stderr=subprocess.PIPE)
-            
-            # Pastikan file berhasil direkam dan isinya lebih dari 50KB
-            if os.path.exists(temp_path) and os.path.getsize(temp_path) > 50 * 1024:
-                recorded_parts.append(temp_path)
-            else:
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                time.sleep(5)
-                
-            part_counter += 1
-            
-        # 2. Penggabungan & Konversi ke MP4 Final
-        if len(recorded_parts) > 0:
-            final_filename = f"cam_{cam_id}_{now.strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
-            final_path = f"{folder_path}/{final_filename}"
-            list_txt_path = f"{folder_path}/list_{cam_id}_{int(time.time())}.txt"
-            
-            with open(list_txt_path, 'w') as f:
-                for part in recorded_parts:
-                    f.write(f"file '{part}'\n")
-                    
-            concat_cmd = [
-                'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
-                '-f', 'concat', '-safe', '0',
-                '-i', list_txt_path,
-                '-c', 'copy',
-                '-movflags', '+faststart',
+                '-c', 'copy', '-map', '0',
+                '-f', 'mp4',
+                '-movflags', '+frag_keyframe+empty_moov+default_base_moof',
+                '-t', str(RECORD_DURATION),
                 final_path
             ]
             
-            subprocess.run(concat_cmd)
+            p = subprocess.Popen(ffmpeg_cmd)
+            active_processes[cam_id] = p
+            p.wait()
             
-            # 3. PEMBERSIHAN FILE TEMP DENGAN PENGECEKAN EKSTRA AMAN
-            if os.path.exists(list_txt_path):
-                os.remove(list_txt_path)
-            for part in recorded_parts:
-                if os.path.exists(part):
-                    try:
-                        os.remove(part)
-                    except Exception:
-                        pass
-                        
-            # 4. SIMPAN LAPORAN KE DATABASE MASTER
-            if os.path.exists(final_path) and os.path.getsize(final_path) > 1024 * 1024:
+            # Hapus dari daftar proses setelah selesai
+            if cam_id in active_processes:
+                active_processes.pop(cam_id)
+
+            # 🏁 UPDATE DATABASE SAAT SELESAI
+            if os.path.exists(final_path):
                 file_size_mb = round(os.path.getsize(final_path) / (1024 * 1024), 2)
-                
-                conn = get_db_connection()
-                if conn:
-                    try:
-                        cur = conn.cursor()
-                        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        cur.execute("""
-                            INSERT INTO recordings (cctv_id, date, filename, start_time, duration, size_mb, created_at, updated_at)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                        """, (cam_id, date_folder, final_filename, start_seconds, RECORD_DURATION, file_size_mb, now_str, now_str))
-                        print(f"🎬 Berhasil rekam & simpan ke DB: {final_filename} ({file_size_mb} MB)")
-                        cur.close()
-                    except Exception as e:
-                        print(f"❌ Gagal simpan {final_filename} ke DB: {e}")
-                    finally:
-                        conn.close()
+                try:
+                    conn = get_db_connection()
+                    cur = conn.cursor()
+                    cur.execute("""
+                        UPDATE recordings 
+                        SET size_mb = %s, updated_at = %s 
+                        WHERE cctv_id = %s AND filename = %s
+                    """, (file_size_mb, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cam_id, final_filename))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                    print(f"🎬 [{cam_label}] Rekaman selesai & diperbarui: {final_filename} ({file_size_mb} MB)", flush=True)
+                except Exception as e:
+                    print(f"❌ [{cam_label}] Gagal update hasil ke DB: {e}", flush=True)
+            
+        except Exception as e:
+            print(f"❌ [{cam_label}] Worker Error: {e}", flush=True)
+            time.sleep(10)
 
 if __name__ == '__main__':
     print(f"🚀 CCTV Node Agent Started (Node IP: {NODE_IP})", flush=True)
@@ -283,16 +278,49 @@ if __name__ == '__main__':
     threading.Thread(target=auto_cleanup, daemon=True).start()
     
     active_threads = {}
+    active_processes = {} # Melacak proses FFmpeg yang sedang jalan
+    stop_signals = {} # Sinyal untuk menghentikan thread zombi
     
     def manage_recording_threads(cameras_list):
+        current_cam_ids = [cam['id'] for cam in cameras_list]
+        
+        # A. Matikan thread untuk kamera yang sudah tidak ada di list Node ini
+        stopped_count = 0
+        for cam_id in list(active_threads.keys()):
+            if cam_id not in current_cam_ids:
+                cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
+                print(f"🛑 [{cam_label}] Tidak lagi di Node ini. Mematikan paksa...", flush=True)
+                stop_signals[cam_id] = True # Kirim sinyal stop ke thread
+                
+                # BUKAN CUMA SINYAL, TAPI KILL PROSESNYA JUGA
+                if cam_id in active_processes:
+                    try:
+                        active_processes[cam_id].terminate()
+                        print(f"💀 [{cam_label}] Proses FFmpeg dihentikan paksa.", flush=True)
+                    except:
+                        pass
+                
+                active_threads.pop(cam_id)
+                stopped_count += 1
+        
+        # B. Mulai thread untuk kamera baru
+        started_count = 0
         for cam in cameras_list:
-            if cam['id'] not in active_threads or not active_threads[cam['id']].is_alive():
-                t = threading.Thread(target=record_worker, args=(cam['id'], cam['url']), daemon=True)
+            cam_id = cam['id']
+            if cam_id not in active_threads or not active_threads[cam_id].is_alive():
+                print(f"🌟 [CAM {cam_id}] Memulai thread auto-recording baru", flush=True)
+                stop_signals[cam_id] = False # Reset sinyal stop
+                t = threading.Thread(target=record_worker, args=(cam_id, cam['url']), daemon=True)
                 t.start()
-                active_threads[cam['id']] = t
+                active_threads[cam_id] = t
+                started_count += 1
+        
+        if started_count > 0 or stopped_count > 0:
+            print(f"📊 Summary: {started_count} Started, {stopped_count} Stopped.", flush=True)
 
     # Jalankan recording pertama kali
     print(f"📡 DEBUG: Memulai thread perekaman...", flush=True)
+    time.sleep(2) # Beri waktu Go2RTC startup
     manage_recording_threads(cameras)
 
     # 3. Setup Listener Real-time
@@ -314,17 +342,21 @@ if __name__ == '__main__':
         try:
             # Poll koneksi database
             conn.poll()
-            
             while conn.notifies:
                 notify = conn.notifies.pop(0)
-                print(f"🔔 NOTIFIKASI DITERIMA: Payload='{notify.payload}'", flush=True)
+                payload = notify.payload.strip()
+                print(f"🔔 NOTIFIKASI MASUK: Payload='{payload}' (IP Node ini: '{NODE_IP}')", flush=True)
                 
-                if notify.payload == NODE_IP or notify.payload == 'ALL':
-                    print("🔄 Sinkronisasi Instan Dimulai...", flush=True)
+                if payload == NODE_IP or payload == 'ALL':
+                    print("🔄 SINKRONISASI OTOMATIS DIMULAI...", flush=True)
                     updated_cameras = sync_go2rtc_config_from_db()
+                    
+                    # ⏳ Jeda 2 detik agar Go2RTC siap sebelum direkam
+                    time.sleep(2)
+                    
                     manage_recording_threads(updated_cameras)
                 else:
-                    print(f"⏭️ Diabaikan (Payload '{notify.payload}' tidak cocok dengan IP '{NODE_IP}')", flush=True)
+                    print(f"⏭️ Notifikasi diabaikan. Payload '{payload}' tidak cocok.", flush=True)
             
             # Tidur sebentar agar tidak membebani CPU (1 detik)
             time.sleep(1)

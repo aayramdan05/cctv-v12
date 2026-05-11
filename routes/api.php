@@ -14,10 +14,10 @@ Route::get('/node-config', function (Request $request) {
 
     $serverId = $request->query('server_id');
     
-    // Ambil kamera khusus untuk server tersebut
+    // Ambil kamera khusus untuk server tersebut (ID, Nama, dan URL)
     $cctvs = Cctv::where('server_id', $serverId)
                  ->where('status', 'online')
-                 ->get(['id', 'stream_url']); // Cukup ID dan URL
+                 ->get(['id', 'nama_cctv', 'stream_url']); 
 
     return response()->json($cctvs);
 });
