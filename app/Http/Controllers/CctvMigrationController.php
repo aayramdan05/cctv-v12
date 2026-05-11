@@ -59,6 +59,19 @@ class CctvMigrationController extends Controller
             ];
         }
 
+        // Data Referensi Merk & Format RTSP
+        $merkData = [
+            ['Merk' => 'Hikvision', 'Format Otomatis' => 'rtsp://IP:554/Streaming/Channels/101'],
+            ['Merk' => 'Dahua / IMOU', 'Format Otomatis' => 'rtsp://IP:554/cam/realmonitor?channel=1&subtype=0'],
+            ['Merk' => 'TP-Link VIGI', 'Format Otomatis' => 'rtsp://IP:554/stream1'],
+            ['Merk' => 'Uniview (UNV)', 'Format Otomatis' => 'rtsp://IP:554/unicast/c1/s0/live'],
+            ['Merk' => 'Ezviz', 'Format Otomatis' => 'rtsp://IP:554/h264/ch1/main/av_stream'],
+            ['Merk' => 'Bardi / Tuya', 'Format Otomatis' => 'rtsp://IP:554/live/ch0'],
+            ['Merk' => 'SPC', 'Format Otomatis' => 'rtsp://IP:554/live/ch00_0'],
+            ['Merk' => 'Hanwha / Samsung', 'Format Otomatis' => 'rtsp://IP:554/snw/live/cam/realmonitor'],
+            ['Merk' => 'Generic / ONVIF', 'Format Otomatis' => 'rtsp://IP:554/live (Default)'],
+        ];
+
         // Fallback jika belum ada gedung sama sekali
         if (empty($buildingData)) {
             $buildingData[] = [
@@ -71,7 +84,8 @@ class CctvMigrationController extends Controller
 
         $sheets = new \Rap2hpoutre\FastExcel\SheetCollection([
             'Template Input' => $templateData,
-            'Referensi Gedung' => $buildingData
+            'Referensi Gedung' => $buildingData,
+            'Referensi Merk' => $merkData
         ]);
 
         return (new FastExcel($sheets))->download('Template_Migrasi_CCTV.xlsx');
@@ -99,7 +113,7 @@ class CctvMigrationController extends Controller
         $testsToRun = [];
 
         foreach ($collection as $index => $row) {
-            $rowNum = $index + 2; // +2 karena index mulai 0 dan baris 1 adalah header
+            $rowNum = $index + 2; 
 
             $fakultas = $row['Fakultas'] ?? '';
             $namaGedung = $row['Gedung'] ?? '';
@@ -110,10 +124,8 @@ class CctvMigrationController extends Controller
             $username = (string)($row['Username'] ?? '');
             $password = (string)($row['Password'] ?? '');
 
-            // Copy data original ke row feedback
             $feedbackRow = $row;
 
-            // Validasi Dasar Kosong
             if (empty($kodeCctv) || empty($ipAddress)) {
                 $feedbackRow['Status'] = 'Gagal';
                 $feedbackRow['Alasan'] = 'Kode CCTV dan IP Address wajib diisi.';
@@ -121,7 +133,6 @@ class CctvMigrationController extends Controller
                 continue;
             }
 
-            // Validasi Kode Unik
             if (Cctv::where('kode_cctv', $kodeCctv)->exists()) {
                 $feedbackRow['Status'] = 'Gagal';
                 $feedbackRow['Alasan'] = 'Kode CCTV sudah ada di database.';
@@ -129,7 +140,6 @@ class CctvMigrationController extends Controller
                 continue;
             }
 
-            // Cari Gedung
             $building = Building::where('fakultas', $fakultas)
                                 ->where('nama_gedung', $namaGedung)
                                 ->first();
@@ -144,7 +154,6 @@ class CctvMigrationController extends Controller
             // Auto-Generate RTSP URL
             $url = $this->generateRtspUrl($merk, $ipAddress);
 
-            // Buat URL dengan Authentication khusus untuk test FFmpeg
             $testUrl = $url;
             if (!empty($username) && !empty($password)) {
                 $userEnc = rawurlencode($username);
@@ -155,7 +164,7 @@ class CctvMigrationController extends Controller
 
             $testsToRun[] = [
                 'feedback_index' => count($feedbacks),
-                'feedback_row' => $feedbackRow, // Simpan copy original
+                'feedback_row' => $feedbackRow, 
                 'building_id' => $building->id,
                 'kode_cctv' => $kodeCctv,
                 'nama_cctv' => $namaCctv,
@@ -167,14 +176,9 @@ class CctvMigrationController extends Controller
                 'temp_image_path' => storage_path('app/public/temp/migrasi_' . time() . '_' . $kodeCctv . '.jpg')
             ];
 
-            // Masukkan slot kosong ke feedbacks dulu
             $feedbacks[] = null;
         }
 
-        // --- MULAI PENGETESAN MASSAL DENGAN CONCURRENCY (POOL) ---
-        // Kita pecah menjadi 10 CCTV sekaligus agar server tidak crash
-        
-        // Pastikan folder temp ada
         if (!file_exists(storage_path('app/public/temp'))) {
             mkdir(storage_path('app/public/temp'), 0775, true);
         }
@@ -194,7 +198,6 @@ class CctvMigrationController extends Controller
                 }
             })->start()->wait();
 
-            // Cek Hasil
             foreach ($chunk as $test) {
                 $kode = $test['kode_cctv'];
                 $result = $poolResults[$kode];
@@ -202,7 +205,6 @@ class CctvMigrationController extends Controller
                 $feedbackRow = $test['feedback_row'];
 
                 if ($result->successful() && file_exists($test['temp_image_path'])) {
-                    // BERHASIL - Simpan ke Database
                     Cctv::create([
                         'building_id' => $test['building_id'],
                         'kode_cctv' => $test['kode_cctv'],
@@ -211,8 +213,8 @@ class CctvMigrationController extends Controller
                         'rtsp_url' => $test['rtsp_url'],
                         'rtsp_user' => $test['username'],
                         'rtsp_password' => $test['password'],
-                        'onvif_user' => $test['username'],     // Sesuai request user: samakan dengan rtsp
-                        'onvif_password' => $test['password'], // Sesuai request user: samakan dengan rtsp
+                        'onvif_user' => $test['username'],     
+                        'onvif_password' => $test['password'], 
                         'status' => 'online'
                     ]);
 
@@ -220,23 +222,19 @@ class CctvMigrationController extends Controller
                     $feedbackRow['Alasan'] = 'Koneksi Berhasil, Data Disimpan.';
                     $successCount++;
                 } else {
-                    // GAGAL
                     $feedbackRow['Status'] = 'Gagal';
-                    $feedbackRow['Alasan'] = 'Gagal terhubung ke Kamera (Timeout/Password Salah). Data TIDAK Disimpan.';
+                    $feedbackRow['Alasan'] = 'Gagal terhubung ke Kamera (Timeout/Password Salah).';
                     $failCount++;
                 }
 
-                // Cleanup file image (agar disk tidak penuh)
                 if (file_exists($test['temp_image_path'])) {
                     @unlink($test['temp_image_path']);
                 }
 
-                // Update row di feedbacks
                 $feedbacks[$feedbackIndex] = $feedbackRow;
             }
         }
 
-        // Generate Feedback Excel File
         $feedbackFileName = 'Feedback_Migrasi_' . date('Ymd_His') . '.xlsx';
         $feedbackPath = storage_path('app/public/temp/' . $feedbackFileName);
         
@@ -251,21 +249,31 @@ class CctvMigrationController extends Controller
     {
         $merk = strtolower(trim($merk));
         
-        if (str_contains($merk, 'hikvision')) {
-            return "rtsp://{$ip}:554/Streaming/Channels/101";
-        } elseif (str_contains($merk, 'dahua')) {
-            return "rtsp://{$ip}:554/cam/realmonitor?channel=1&subtype=0";
-        } elseif (str_contains($merk, 'spc')) {
-            // Karena SPC butuh user password di query string, kita skip dulu di sini 
-            // biarkan authentication digabung di proses FFmpeg. Kita set URL dasarnya:
-            // Seringkali SPC bisa menggunakan URL /live/ch00_0
-            return "rtsp://{$ip}:554/live/ch00_0";
-        } elseif (str_contains($merk, 'ezviz')) {
-            // Format EZVIZ lama
-            return "rtsp://{$ip}:554/h264_stream";
+        // Daftar Format RTSP Berdasarkan Merk
+        $rules = [
+            'hikvision' => "rtsp://{$ip}:554/Streaming/Channels/101",
+            'dahua'     => "rtsp://{$ip}:554/cam/realmonitor?channel=1&subtype=0",
+            'imou'      => "rtsp://{$ip}:554/cam/realmonitor?channel=1&subtype=0",
+            'vigi'      => "rtsp://{$ip}:554/stream1",
+            'tp-link'   => "rtsp://{$ip}:554/stream1",
+            'unv'       => "rtsp://{$ip}:554/unicast/c1/s0/live",
+            'uniview'   => "rtsp://{$ip}:554/unicast/c1/s0/live",
+            'ezviz'     => "rtsp://{$ip}:554/h264/ch1/main/av_stream",
+            'bardi'     => "rtsp://{$ip}:554/live/ch0",
+            'tuya'      => "rtsp://{$ip}:554/live/ch0",
+            'spc'       => "rtsp://{$ip}:554/live/ch00_0",
+            'hanwha'    => "rtsp://{$ip}:554/snw/live/cam/realmonitor",
+            'samsung'   => "rtsp://{$ip}:554/snw/live/cam/realmonitor",
+        ];
+
+        foreach ($rules as $key => $path) {
+            if (str_contains($merk, $key)) {
+                return $path;
+            }
         }
 
-        // Default RTSP
+        // Default RTSP jika merk tidak dikenal
         return "rtsp://{$ip}:554/live";
     }
+
 }

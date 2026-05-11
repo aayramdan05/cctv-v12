@@ -182,7 +182,7 @@ def sync_go2rtc_config_from_db():
         return []
 
 def record_worker(cam_id, stream_url):
-    """Worker rekaman individu per kamera (Direct Fragmented MP4)"""
+    """Worker rekaman individu per kamera (Standard MP4 with FastStart)"""
     print(f"🔴 Thread auto-recording Kamera {cam_id} dimulai.", flush=True)
     while True:
         # Update nama label setiap loop agar sinkron dengan Master
@@ -236,7 +236,7 @@ def record_worker(cam_id, stream_url):
                 '-i', stream_url,
                 '-c', 'copy', '-map', '0',
                 '-f', 'mp4',
-                '-movflags', '+frag_keyframe+empty_moov+default_base_moof',
+                '-movflags', '+faststart',
                 '-t', str(RECORD_DURATION),
                 final_path
             ]
