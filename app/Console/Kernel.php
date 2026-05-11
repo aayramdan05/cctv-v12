@@ -63,8 +63,14 @@ class Kernel extends ConsoleKernel
                 // Jika tidak ada MY_RECORDER_IP, kita asumsikan mode Single Server (Legacy)
                 // Atau Master Server yang tidak merekam apa-apa (kosongkan blok ini jika Master murni)
                 
-                // UNTUK SINGLE SERVER (Mode saat ini di laptop/dev):
-                $cctvs = Cctv::where('status', 'online')->whereNull('server_id')->get(); // Atau ambil semua ->get()
+                // UNTUK MASTER / SINGLE SERVER:
+                // Ambil kamera yang server_id-nya NULL (Master) ATAU yang statusnya online
+                // tapi tidak memiliki server_id yang valid (Opsional: disesuaikan dengan kebutuhan)
+                $cctvs = Cctv::where('status', 'online')
+                             ->where(function($q) {
+                                 $q->whereNull('server_id')
+                                   ->orWhere('server_id', 0); // Anggap 0 juga Master jika ada
+                             })->get();
                 
                 foreach ($cctvs as $cctv) {
                     $schedule->command("cctv:record {$cctv->id} --duration=900")
