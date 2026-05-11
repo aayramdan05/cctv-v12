@@ -121,6 +121,9 @@ def sync_go2rtc_config_from_db():
         streams_from_api = data.get('streams', {})
         cameras_list = data.get('cameras_list', [])
 
+        # DEBUG: Lihat daftar stream yang masuk
+        print(f"📡 [DEBUG] Streams received from Master: {list(streams_from_api.keys())}", flush=True)
+
         # Simpan kode kamera untuk keperluan log agar lebih mudah dibaca (e.g. [CAM.LOBBY.01])
         for cam in cameras_list:
             camera_names[cam['id']] = cam.get('kode_cctv', f"ID_{cam['id']}")
@@ -180,9 +183,11 @@ def sync_go2rtc_config_from_db():
 
 def record_worker(cam_id, stream_url):
     """Worker rekaman individu per kamera (Direct Fragmented MP4)"""
-    cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
-    print(f"🔴 Memulai thread auto-recording Kamera: {cam_label}", flush=True)
+    print(f"🔴 Thread auto-recording Kamera {cam_id} dimulai.", flush=True)
     while True:
+        # Update nama label setiap loop agar sinkron dengan Master
+        cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
+        
         # Cek apakah ada sinyal untuk berhenti
         if stop_signals.get(cam_id):
             print(f"👋 [{cam_label}] Thread dihentikan (Sinyal STOP diterima).", flush=True)
@@ -194,15 +199,20 @@ def record_worker(cam_id, stream_url):
             folder_path = f"{STORAGE_BASE_PATH}/{date_folder}"
             os.makedirs(folder_path, exist_ok=True)
             
-            final_filename = f"cam_{cam_id}_{now.strftime('%H-%M-%S')}.mp4"
+            # Format: cam_3_2026-05-11_11-45-02.mp4 (Sesuai kemauan Dashboard Master)
+            final_filename = f"cam_{cam_id}_{now.strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
             final_path = f"{folder_path}/{final_filename}"
             
             # 🎬 DAFTARKAN AWAL KE DATABASE (Agar muncul di dashboard Playback seketika)
-            start_time = int(time.time())
+            # Hitung detik sejak tengah malam (Agar timeline Dashboard benar)
+            start_time = (now.hour * 3600) + (now.minute * 60) + now.second
             now_str = now.strftime('%Y-%m-%d %H:%M:%S')
             try:
                 conn = get_db_connection()
                 cur = conn.cursor()
+                # DEBUG SQL
+                print(f"🛠️ [SQL DEBUG] Inserting: {cam_id}, {date_folder}, {final_filename}, {start_time}", flush=True)
+                
                 cur.execute("""
                     INSERT INTO recordings (cctv_id, date, filename, start_time, duration, size_mb, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
@@ -234,6 +244,11 @@ def record_worker(cam_id, stream_url):
             p = subprocess.Popen(ffmpeg_cmd)
             active_processes[cam_id] = p
             p.wait()
+            
+            # Proteksi: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
+            if (datetime.now() - now).seconds < 10:
+                print(f"⚠️ [CAM {cam_id}] Rekaman terhenti terlalu cepat. Jeda 10 detik...", flush=True)
+                time.sleep(10)
             
             # Hapus dari daftar proses setelah selesai
             if cam_id in active_processes:

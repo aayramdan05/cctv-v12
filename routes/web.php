@@ -167,21 +167,20 @@ Route::get('/api/node-config', function (Request $request) {
     foreach ($cameras as $cam) {
         $fullUrl = $cam->stream_url; 
         
-        // Gunakan prefix 'ffmpeg:' agar Go2RTC menggunakan FFmpeg sebagai engine penarik stream.
-        // FFmpeg jauh lebih tangguh dalam menangani password dengan karakter spesial (seperti # atau @).
         $urlWithSuffix = "ffmpeg:{$fullUrl}#video=copy#audio=aac#rtsp_transport=tcp";
         
-        // Format sebagai LIST (Array) agar sesuai permintaan go2rtc
         $config['streams']["camera_{$cam->id}"] = [$urlWithSuffix];
         
         $config['cameras_list'][] = [
             'id' => $cam->id,
+            'kode_cctv' => $cam->kode_cctv ?? "CAM-{$cam->id}", // Gunakan fallback jika null
+            'nama_cctv' => $cam->nama_cctv ?? "Camera {$cam->id}",
             'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}",
             'ip' => $cam->ip,
             'onvif' => [
                 'port' => $cam->onvif_port ?? 80,
                 'user' => $cam->onvif_user ?? $cam->rtsp_user,
-                'password' => $cam->onvif_password ?: $cam->rtsp_password // Menggunakan logic yang sama untuk decrypt
+                'password' => $cam->onvif_password ?: $cam->rtsp_password
             ]
         ];
     }
