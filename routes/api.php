@@ -14,12 +14,23 @@ Route::get('/node-config', function (Request $request) {
 
     $serverId = $request->query('server_id');
     
-    // Ambil kamera khusus untuk server tersebut (ID, Nama, dan URL)
+    // Ambil kamera khusus untuk server tersebut
     $cctvs = Cctv::where('server_id', $serverId)
                  ->where('status', 'online')
                  ->get(['id', 'nama_cctv', 'stream_url']); 
 
-    return response()->json($cctvs);
+    // Susun format yang diminta script Python (streams & cameras_list)
+    $streams = [];
+    foreach ($cctvs as $cam) {
+        $streams["camera_{$cam->id}"] = [
+            "ffmpeg:{$cam->stream_url}#video=copy#audio=aac#rtsp_transport=tcp"
+        ];
+    }
+
+    return response()->json([
+        'streams' => $streams,
+        'cameras_list' => $cctvs
+    ]);
 });
 
 // Endpoint Data CCTV (Protected by Sanctum)
