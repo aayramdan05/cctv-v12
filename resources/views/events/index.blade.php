@@ -63,9 +63,17 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <a href="{{ route('cctv.index', ['search' => $event->cctv->nama_cctv]) }}" class="text-cyan-600 hover:text-cyan-700 font-bold text-xs flex items-center gap-1">
-                                        <i class="fas fa-eye"></i> Lihat Kamera
-                                    </a>
+                                    <div class="flex items-center gap-4">
+                                        @if($event->snapshot_path)
+                                            <button onclick="viewSnapshot('{{ $event->image_url }}', '{{ $event->cctv->nama_cctv }}', '{{ $event->event_time->format('H:i:s') }}')" 
+                                                    class="text-emerald-600 hover:text-emerald-700 font-bold text-xs flex items-center gap-1 transition-colors">
+                                                <i class="fas fa-camera"></i> Lihat Bukti
+                                            </button>
+                                        @endif
+                                        <a href="{{ route('monitoring.index', ['building_id' => $event->cctv->building_id]) }}" class="text-cyan-600 hover:text-cyan-700 font-bold text-xs flex items-center gap-1">
+                                            <i class="fas fa-eye"></i> Pantau Live
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -87,4 +95,27 @@
             </div>
         </div>
     </main>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function viewSnapshot(url, camera, time) {
+            Swal.fire({
+                title: `<span class="text-lg font-bold">${camera}</span>`,
+                html: `<p class="text-xs text-slate-500 mb-3">Terdeteksi pada pukul ${time}</p>`,
+                imageUrl: url,
+                imageAlt: 'Event Snapshot',
+                imageWidth: 800,
+                width: 'auto',
+                padding: '1rem',
+                showCloseButton: true,
+                showConfirmButton: false,
+                background: '#f8fafc',
+                customClass: {
+                    image: 'rounded-xl shadow-lg border border-slate-200'
+                }
+            });
+        }
+    </script>
+    @endpush
 </x-app-layout>

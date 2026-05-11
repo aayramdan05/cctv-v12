@@ -206,6 +206,7 @@ Route::get('/api/report-event', function (Request $request) {
         'cctv_id' => $cctvId,
         'event_type' => $type,
         'event_time' => now(),
+        'snapshot_path' => $request->query('image'),
         'metadata' => $request->all()
     ]);
 

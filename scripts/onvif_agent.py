@@ -12,13 +12,12 @@ from dotenv import load_dotenv
 import builtins
 
 # Load Environment Variables
+import subprocess
+
+# Load Environment Variables
 load_dotenv('/home/aay/cctv-scripts/.env')
 
-# Memaksa print() untuk selalu melakukan flush agar log langsung muncul di systemd
-def print(*args, **kwargs):
-    kwargs['flush'] = True
-    builtins.print(*args, **kwargs)
-
+# ... (print function remains same)
 
 # CONFIGURATION
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
@@ -31,16 +30,69 @@ NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.41')
 MASTER_URL = os.getenv('MASTER_URL', 'http://10.69.69.21')
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026')
 
+SNAPSHOT_DIR = '/var/www/html/storage/recordings/snapshots'
+
 # Melacak thread yang sedang berjalan
 active_threads = {}
 
 # Melacak waktu terakhir pergerakan terdeteksi per kamera (untuk cooldown)
 last_motion_time = {}
 
-def report_to_master(cctv_id, event_type):
-    """Melaporkan kejadian ke Master Server"""
+def cleanup_old_snapshots():
+    """Menghapus screenshot yang sudah lebih dari 1 jam"""
+    try:
+        now = time.time()
+        # 1 Jam = 3600 Detik
+        retention_period = 3600 
+        
+        if not os.path.exists(SNAPSHOT_DIR):
+            return
+            
+        for f in os.listdir(SNAPSHOT_DIR):
+            file_path = os.path.join(SNAPSHOT_DIR, f)
+            if os.path.isfile(file_path):
+                # Cek umur file
+                if now - os.path.getmtime(file_path) > retention_period:
+                    os.remove(file_path)
+                    print(f"🧹 [CLEANUP] Menghapus screenshot lama: {f}")
+    except Exception as e:
+        print(f"⚠️ Gagal melakukan cleanup: {e}")
+
+def capture_screenshot(cam_id, rtsp_url):
+    """Mengambil screenshot dari stream RTSP menggunakan FFmpeg"""
+    # Jalankan cleanup sebelum ambil yang baru
+    cleanup_old_snapshots()
+    
+    if not os.path.exists(SNAPSHOT_DIR):
+        os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+    
+    filename = f"event_{cam_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+    filepath = os.path.join(SNAPSHOT_DIR, filename)
+    
+    try:
+        # Gunakan timeout agar tidak hang jika stream mati
+        command = [
+            'ffmpeg', '-y', '-rtsp_transport', 'tcp', '-timeout', '5000000',
+            '-i', rtsp_url, '-ss', '00:00:01', '-frames:v', '1',
+            '-q:v', '2', filepath
+        ]
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+        
+        if os.path.exists(filepath):
+            print(f"📸 [CAM {cam_id}] Screenshot berhasil: {filename}")
+            return filename
+    except Exception as e:
+        print(f"❌ [CAM {cam_id}] Gagal ambil screenshot: {e}")
+    
+    return None
+
+def report_to_master(cctv_id, event_type, image_file=None):
+    """Melaporkan kejadian ke Master Server dengan opsional gambar"""
     try:
         url = f"{MASTER_URL}/api/report-event?cctv_id={cctv_id}&type={event_type}&token={SYNC_TOKEN}"
+        if image_file:
+            url += f"&image={image_file}"
+            
         requests.get(url, timeout=5)
         print(f"🔔 [CAM {cctv_id}] Event {event_type} dilaporkan ke Master!")
     except Exception as e:
@@ -50,6 +102,7 @@ def subscribe_to_camera(cam):
     """Berlangganan event dari kamera via ONVIF"""
     cam_id = cam['id']
     cam_ip = cam['ip']
+    rtsp_url = cam.get('url') # URL RTSP dari Master
     onvif_data = cam.get('onvif', {})
     
     port = onvif_data.get('port', 80)
@@ -67,7 +120,6 @@ def subscribe_to_camera(cam):
             
             # Inisialisasi Event Service
             event_service = mycam.create_events_service()
-            properties = event_service.GetEventProperties()
             
             # Membuat PullPoint (Cara paling stabil untuk ambil event)
             pullpoint = mycam.create_pullpoint_service()
@@ -75,49 +127,39 @@ def subscribe_to_camera(cam):
             print(f"✅ [CAM {cam_id}] Berhasil subscribe ONVIF!")
 
             while True:
-                # Tarik pesan (Gunakan format yang lebih kompatibel)
                 try:
-                    # Beberapa kamera butuh timeout dalam format string, beberapa tidak suka keyword 'Timeout'
                     messages = pullpoint.PullMessages({'Timeout': 'PT5S', 'MessageLimit': 10})
                 except:
-                    # Fallback: coba tanpa argumen jika gagal
                     messages = pullpoint.PullMessages()
                 
                 if hasattr(messages, 'NotificationMessage'):
                     for msg in messages.NotificationMessage:
                         try:
-                            # Cara lebih aman mengambil Topic
-                            topic = "Unknown"
-                            if hasattr(msg, 'Topic') and msg.Topic is not None:
-                                # Coba beberapa kemungkinan lokasi Topic string
-                                topic = getattr(msg.Topic, '_value_1', str(msg.Topic))
-                            
                             # Deteksi via XML (X-Ray Mode)
                             try:
                                 msg_obj = msg.Message._value_1
-                                # Ambil semua item di dalam XML Message secara universal
                                 for item in msg_obj.xpath('.//tt:SimpleItem', namespaces={'tt': 'http://www.onvif.org/ver10/schema'}):
                                     name = item.get('Name')
                                     value = item.get('Value')
                                     
-                                    # Cek Motion atau Tamper
                                     if name in ["IsMotion", "IsTamper"] and (value == "true" or value == "1"):
                                         current_time = time.time()
                                         last_time = last_motion_time.get(cam_id, 0)
                                         # COOLDOWN 10 DETIK
                                         if current_time - last_time >= 10:
                                             print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN!")
-                                            report_to_master(cam_id, 'motion')
+                                            img_name = capture_screenshot(cam_id, rtsp_url)
+                                            report_to_master(cam_id, 'motion', img_name)
                                             last_motion_time[cam_id] = current_time
                             except:
-                                # Jika bukan objek XML, fallback ke deteksi teks mentah
                                 raw_msg = str(msg)
                                 if any(x in raw_msg for x in ['IsMotion="true"', 'Value="true"', 'IsMotion="1"']):
                                     current_time = time.time()
                                     last_time = last_motion_time.get(cam_id, 0)
                                     if current_time - last_time >= 10:
                                         print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN (Raw)!")
-                                        report_to_master(cam_id, 'motion')
+                                        img_name = capture_screenshot(cam_id, rtsp_url)
+                                        report_to_master(cam_id, 'motion', img_name)
                                         last_motion_time[cam_id] = current_time
                                     
                         except Exception as parse_err:
@@ -129,6 +171,7 @@ def subscribe_to_camera(cam):
             print(f"❌ [CAM {cam_id}] ONVIF Error: {e}")
             print(f"🔄 [CAM {cam_id}] Mencoba ulang dalam 1 menit...")
             time.sleep(60)
+
             # Loop akan mengulang koneksi dari awal tanpa memakan memori call stack baru
 
 def sync_cameras():
