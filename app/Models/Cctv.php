@@ -6,10 +6,34 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Cctv extends Model
 {
     use HasFactory;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Trigger Real-time Sync ke Node saat data berubah
+        static::saved(function ($cctv) {
+            try {
+                // Beritahu Node spesifik atau semua node untuk sync
+                $payload = $cctv->server ? $cctv->server->ip_address : 'ALL';
+                DB::statement("NOTIFY cctv_update, '{$payload}'");
+            } catch (\Exception $e) {
+                // Jangan sampai error notify menggagalkan save
+            }
+        });
+
+        static::deleted(function ($cctv) {
+            try {
+                DB::statement("NOTIFY cctv_update, 'ALL'");
+            } catch (\Exception $e) {
+            }
+        });
+    }
 
     protected $fillable = [
         'building_id',

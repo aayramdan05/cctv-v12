@@ -2,8 +2,10 @@ import os
 import time
 import subprocess
 import psycopg2
+import psycopg2.extensions
 import yaml
-import glob
+import requests
+import select
 import threading
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -20,10 +22,13 @@ DB_PASS = os.getenv('DB_PASSWORD')
 NODE_IP = os.getenv('SERVER_RECORDER_IP')
 RETENTION_DAYS = int(os.getenv('RETENTION_DAYS', 2))
 RECORD_DURATION = 900  # 15 menit per chunk file mp4
-CHECK_INTERVAL = 5     # Cek update konfigurasi database setiap 5 menit
+CHECK_INTERVAL = 30    # Jeda pengecekan update dari database (detik)
 
 GO2RTC_CONFIG_PATH = os.getenv('GO2RTC_CONFIG_PATH', '/home/aay/go2rtc.yaml')
 STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/home/aay/storage/recordings')
+
+MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
+SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026') # Harus sama dengan di Master
 
 def get_db_connection():
     """Membuat koneksi ke database Master dengan Autocommit (Anti-Zombie)"""
@@ -94,10 +99,6 @@ def auto_cleanup():
 
         # Tidur 6 jam sebelum mengecek lagi
         time.sleep(6 * 3600)
-
-# Tambahkan ini di bagian atas (Environment Variables)
-MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
-SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026') # Harus sama dengan di Master
 
 def sync_go2rtc_config_from_db():
     """Menarik konfigurasi kamera dari API Master (DIPROTEKSI) dan mengupdate go2rtc.yaml"""
