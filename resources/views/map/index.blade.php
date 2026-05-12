@@ -53,7 +53,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-hidden font-sans" x-data="{ sidebarOpen: true }">
+    <body class="bg-slate-50 text-slate-900 overflow-hidden font-sans" x-data="{ sidebarOpen: true, editMode: false }">
 
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'w-80' : 'w-0 -ml-80'" class="fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-[1001] flex flex-col transition-all duration-300 shadow-xl overflow-hidden">
@@ -130,6 +130,16 @@
                     <button onclick="switchToCampus('jatinangor')" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all campus-btn" id="btn-jatinangor">Jatinangor</button>
                     <button onclick="switchToCampus('dipatiukur')" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all campus-btn" id="btn-dipatiukur">Dipati Ukur</button>
                 </div>
+
+                <!-- Admin Edit Mode Toggle -->
+                @if(auth()->user()->role === 'admin')
+                <button @click="editMode = !editMode" 
+                        :class="editMode ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'"
+                        class="px-4 py-2 rounded-2xl shadow-lg border font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span x-text="editMode ? 'Exit Edit Mode' : 'Admin Edit Mode'"></span>
+                </button>
+                @endif
             </div>
             
             <div class="flex items-center gap-3 pointer-events-auto">
@@ -185,15 +195,22 @@
                 </div>
 
                 <div class="p-4 bg-slate-50 flex justify-between items-center border-t border-slate-100">
-                    <div class="flex flex-col overflow-hidden max-w-[70%]">
+                    <div class="flex flex-col overflow-hidden max-w-[60%]">
                         <span class="text-[8px] text-orange-600 font-bold uppercase tracking-widest leading-none flex items-center gap-1">
                             <i class="fa-solid fa-location-dot"></i> Lokasi
                         </span>
                         <p id="modal-location-text" class="text-[10px] font-black text-slate-800 truncate mt-1.5">Universitas Padjadjaran</p>
                     </div>
-                    <span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-tight flex items-center gap-1.5">
-                        <i class="fa-solid fa-signal text-[8px]"></i> Online
-                    </span>
+                    <div class="flex items-center gap-2">
+                        @if(auth()->user()->role === 'admin')
+                        <a id="modal-edit-btn" href="#" class="bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-tight hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </a>
+                        @endif
+                        <span class="bg-emerald-100 text-emerald-800 px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-tight flex items-center gap-1.5">
+                            <i class="fa-solid fa-signal text-[8px]"></i> Online
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,6 +251,45 @@
         }
         switchToCampus('jatinangor');
 
+        // Map Click Listener (Coordinate Inspector)
+        map.on('click', (e) => {
+            const editMode = Alpine.store('cctvCounts') ? document.body.__x.$data.editMode : false; // Ambil data dari Alpine
+            if (editMode) {
+                const lat = e.latlng.lat.toFixed(8);
+                const lng = e.latlng.lng.toFixed(8);
+                
+                L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(`
+                        <div class="p-2 min-w-[150px]">
+                            <p class="text-[9px] font-bold text-orange-600 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <i class="fa-solid fa-crosshairs"></i> Map Inspector
+                            </p>
+                            <div class="space-y-1.5">
+                                <div class="flex items-center justify-between bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+                                    <span class="text-[9px] font-mono text-slate-500">LAT: ${lat}</span>
+                                    <button onclick="copyToClipboard('${lat}')" class="text-orange-500 hover:text-orange-700 p-0.5"><i class="fa-solid fa-copy text-[10px]"></i></button>
+                                </div>
+                                <div class="flex items-center justify-between bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+                                    <span class="text-[9px] font-mono text-slate-500">LNG: ${lng}</span>
+                                    <button onclick="copyToClipboard('${lng}')" class="text-orange-500 hover:text-orange-700 p-0.5"><i class="fa-solid fa-copy text-[10px]"></i></button>
+                                </div>
+                                <div class="pt-1 text-[8px] text-slate-400 italic">Klik koordinat untuk menyalin.</div>
+                            </div>
+                        </div>
+                    `)
+                    .openOn(map);
+            } else {
+                if (!modal.classList.contains('hidden')) closeModal();
+            }
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Koordinat disalin: ' + text);
+            });
+        }
+
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         async function fetchWeather() {
@@ -258,6 +314,7 @@
         const hlsPlayer = document.getElementById('hls-player');
         const iframePlayer = document.getElementById('iframe-player');
         const videoLoader = document.getElementById('video-loader');
+        const editBtn = document.getElementById('modal-edit-btn');
 
         // Fetch Data CCTV dari internal API
         fetch('{{ route("api.map.cctvs") }}').then(res => res.json()).then(data => {
@@ -294,31 +351,46 @@
                     openModal(camera, e);
                 });
 
+                const isAdmin = @json(auth()->user()->role === 'admin');
+                const editUrl = `{{ url('cctv') }}/${camera.id}/edit`;
+
                 const item = document.createElement('div');
-                item.className = 'group p-3 hover:bg-orange-50 rounded-2xl cursor-pointer border border-transparent hover:border-orange-100 mb-1 transition-all mx-1';
+                item.className = 'group p-3 hover:bg-orange-50 rounded-2xl cursor-pointer border border-transparent hover:border-orange-100 mb-1 transition-all mx-1 flex items-center gap-3';
                 item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-all group-hover:scale-105 group-hover:shadow-md group-hover:shadow-orange-100"><i class="fa-solid fa-video text-xs"></i></div>
-                        <div class="flex-1 min-w-0"><h4 class="text-xs font-bold text-slate-700 truncate group-hover:text-orange-800 tracking-tight">${camera.name}</h4><p class="text-[9px] font-medium text-slate-400 truncate group-hover:text-orange-600 mt-0.5">${camera.building}</p></div>
+                    <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-all group-hover:scale-105 group-hover:shadow-md group-hover:shadow-orange-100"><i class="fa-solid fa-video text-xs"></i></div>
+                    <div class="flex-1 min-w-0" onclick="focusCamera('${camera.id}')">
+                        <h4 class="text-xs font-bold text-slate-700 truncate group-hover:text-orange-800 tracking-tight">${camera.name}</h4>
+                        <p class="text-[9px] font-medium text-slate-400 truncate group-hover:text-orange-600 mt-0.5">${camera.building}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${isAdmin ? `<a href="${editUrl}" class="hidden group-hover:flex w-7 h-7 bg-white border border-slate-200 rounded-lg items-center justify-center text-slate-400 hover:text-orange-500 hover:border-orange-200 transition-all"><i class="fa-solid fa-pen-to-square text-[10px]"></i></a>` : ''}
                         <span class="relative flex h-2 w-2 flex-shrink-0 ml-1">
                             <span class="${camera.status !== 'online' ? 'bg-rose-400' : 'bg-emerald-400 animate-pulse'} absolute inline-flex h-full w-full rounded-full opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 ${camera.status !== 'online' ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
                         </span>
                     </div>`;
-                item.onclick = () => {
-                    map.flyTo([camera.lat, camera.lng], 18);
-                    setTimeout(() => {
-                        const point = map.latLngToContainerPoint([camera.lat, camera.lng]);
-                        openModal(camera, { containerPoint: point });
-                    }, 500);
-                };
                 list.appendChild(item);
             });
+        }
+
+        function focusCamera(id) {
+            const camera = allCameras.find(c => c.id == id);
+            if (camera) {
+                map.flyTo([camera.lat, camera.lng], 18);
+                setTimeout(() => {
+                    const point = map.latLngToContainerPoint([camera.lat, camera.lng]);
+                    openModal(camera, { containerPoint: point });
+                }, 500);
+            }
         }
 
         function openModal(camera, event) {
             document.getElementById('modal-title-text').innerText = camera.name;
             document.getElementById('modal-location-text').innerText = camera.building;
+            
+            if (editBtn) {
+                editBtn.href = `{{ url('cctv') }}/${camera.id}/edit`;
+            }
 
             // Perhitungan Posisi Agar Tetap di Tengah/Dalam Layar
             const point = event.containerPoint; 
