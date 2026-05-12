@@ -206,21 +206,95 @@
                         <input type="text" name="ip" value="{{ old('ip', $cctv->ip) }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200">
                     </div>
 
-                    <div class="md:col-span-2 pt-4 border-t border-slate-100">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <i class="fas fa-map-marked-alt text-slate-400"></i> Koordinat Map (Outdoor Monitoring)
-                        </h3>
+                    <div class="md:col-span-2 pt-4 border-t border-slate-100" x-data="{ 
+                        showMapModal: false,
+                        map: null,
+                        marker: null,
+                        initMap() {
+                            if (this.map) return;
+                            
+                            $nextTick(() => {
+                                let latVal = document.getElementsByName('lat')[0].value || -6.9261;
+                                let lngVal = document.getElementsByName('lng')[0].value || 107.7743;
+
+                                this.map = L.map('picker-map-edit').setView([latVal, lngVal], 16);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: '© OpenStreetMap'
+                                }).addTo(this.map);
+
+                                // Load existing coordinates
+                                if (document.getElementsByName('lat')[0].value && document.getElementsByName('lng')[0].value) {
+                                    this.marker = L.marker([latVal, lngVal]).addTo(this.map);
+                                    this.map.setView([latVal, lngVal], 18);
+                                }
+
+                                this.map.on('click', (e) => {
+                                    if (this.marker) this.map.removeLayer(this.marker);
+                                    this.marker = L.marker(e.latlng).addTo(this.map);
+                                    
+                                    document.getElementsByName('lat')[0].value = e.latlng.lat.toFixed(8);
+                                    document.getElementsByName('lng')[0].value = e.latlng.lng.toFixed(8);
+                                    
+                                    showToast('Koordinat diperbarui', 'success');
+                                });
+
+                                setTimeout(() => { this.map.invalidateSize(); }, 200);
+                            });
+                        }
+                    }">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-map-marked-alt text-slate-400"></i> Koordinat Map (Outdoor)
+                            </h3>
+                            <button type="button" @click="showMapModal = true; initMap()" 
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-50 text-cyan-600 text-xs font-bold hover:bg-cyan-100 transition-all flex items-center gap-2 border border-cyan-200">
+                                <i class="fas fa-location-dot"></i> Ubah via Peta
+                            </button>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Latitude</label>
-                                <input type="text" name="lat" value="{{ old('lat', $cctv->lat) }}" placeholder="-6.92610000" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200">
+                                <input type="text" name="lat" value="{{ old('lat', $cctv->lat) }}" placeholder="-6.92610000" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 font-mono text-sm">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Longitude</label>
-                                <input type="text" name="lng" value="{{ old('lng', $cctv->lng) }}" placeholder="107.77430000" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200">
+                                <input type="text" name="lng" value="{{ old('lng', $cctv->lng) }}" placeholder="107.77430000" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 font-mono text-sm">
                             </div>
                         </div>
-                        <p class="text-xs text-slate-400 mt-2 italic">Dapatkan koordinat dari Google Maps (Klik kanan di peta > Pilih koordinat).</p>
+
+                        <!-- Map Picker Modal -->
+                        <div x-show="showMapModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto">
+                            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                <div x-show="showMapModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="showMapModal = false"></div>
+                                
+                                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                                
+                                <div x-show="showMapModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                                     class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-white/20">
+                                    
+                                    <div class="bg-white px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                            <i class="fas fa-crosshairs text-cyan-500"></i> Reposisi Kamera di Peta
+                                        </h3>
+                                        <button @click="showMapModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                                            <i class="fas fa-times text-lg"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="p-0">
+                                        <div id="picker-map-edit" style="height: 500px;" class="w-full"></div>
+                                    </div>
+
+                                    <div class="bg-slate-50 px-6 py-4 flex justify-between items-center">
+                                        <p class="text-xs text-slate-500 italic">Klik pada lokasi baru di peta untuk memperbarui koordinat kamera.</p>
+                                        <button @click="showMapModal = false" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all">
+                                            Simpan Koordinat
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="md:col-span-2 pt-4 border-t border-slate-100 mt-2">
