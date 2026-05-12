@@ -1,4 +1,7 @@
 <x-app-layout>
+    <!-- Leaflet Assets -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <main id="main-content" class="pt-20 p-6 md:p-8">
         <div id="breadcrumb" class="mb-6">
             <div class="flex items-center space-x-2 text-sm">
@@ -271,24 +274,24 @@
                                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
                                 
                                 <div x-show="showMapModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
-                                     class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-white/20">
+                                     class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-white/20">
                                     
                                     <div class="bg-white px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
                                             <i class="fas fa-crosshairs text-cyan-500"></i> Reposisi Kamera di Peta
                                         </h3>
                                         <button @click="showMapModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
-                                            <i class="fas fa-times text-lg"></i>
+                                            <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                     
-                                    <div class="p-0">
-                                        <div id="picker-map-edit" style="height: 500px;" class="w-full"></div>
+                                    <div class="p-2">
+                                        <div id="picker-map-edit" style="height: 400px;" class="w-full rounded-2xl overflow-hidden border border-slate-100"></div>
                                     </div>
 
                                     <div class="bg-slate-50 px-6 py-4 flex justify-between items-center">
-                                        <p class="text-xs text-slate-500 italic">Klik pada lokasi baru di peta untuk memperbarui koordinat kamera.</p>
-                                        <button @click="showMapModal = false" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition-all">
+                                        <p class="text-[10px] text-slate-500 italic max-w-[200px]">Klik pada lokasi baru di peta untuk memperbarui koordinat kamera.</p>
+                                        <button @click="showMapModal = false" class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
                                             Simpan Koordinat
                                         </button>
                                     </div>
