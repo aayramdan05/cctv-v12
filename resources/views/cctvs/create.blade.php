@@ -20,12 +20,21 @@
                     
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung</label>
-                        <select name="building_id" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required>
+                        <select name="building_id" id="building_select" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required onchange="detectPlacement()">
                             <option value="" disabled selected>Pilih Gedung...</option>
                             @foreach($buildings as $building)
-                                <option value="{{ $building->id }}">{{ $building->nama_gedung }}</option>
+                                <option value="{{ $building->id }}" data-kode="{{ $building->kode_gedung }}">{{ $building->nama_gedung }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Penempatan</label>
+                        <select name="penempatan" id="penempatan_select" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required>
+                            <option value="Indoor">Indoor</option>
+                            <option value="Outdoor">Outdoor</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-1">Otomatis terdeteksi berdasarkan kode gedung.</p>
                     </div>
 
                     <div>
@@ -202,24 +211,32 @@
                 url = `rtsp://${ip}:554/media/video${videoStream}`;
             }
             else if (brand === 'axis') {
-                // Axis H.264 Specific
                 url = `rtsp://${ip}:554/axis-media/media.amp?videocodec=h264`;
                 if (type === 'sub') url += '&resolution=640x480&compression=30';
                 else url += '&resolution=1280x720';
                 if (channel > 1) url += `&camera=${channel}`;
             }
             else if (brand === 'panasonic') {
-                // Panasonic HTTP MJPEG (Sesuai request)
-                // Format: http://IP/axis-cgi/mjpg/video.cgi?camera=1
-                url = `rtsp://${ip}:554/cam/realmonitor?channel=${channel}&subtype=${subtype}`;
-                if (type === 'sub') url += '&resolution=640x480';
-                else url += '&resolution=1280x720';
+                url = `rtsp://${ip}:554/cam/realmonitor?channel=${channel}&subtype=1`;
             }
             else if (brand === 'onvif') {
                 url = `rtsp://${ip}:554/live/ch${channel}`;
             }
 
             urlInput.value = url;
+        }
+
+        function detectPlacement() {
+            const select = document.getElementById('building_select');
+            const selectedOption = select.options[select.selectedIndex];
+            const kodeGedung = selectedOption.getAttribute('data-kode') || '';
+            const penempatanSelect = document.getElementById('penempatan_select');
+
+            if (kodeGedung.startsWith('WM')) {
+                penempatanSelect.value = 'Indoor';
+            } else {
+                penempatanSelect.value = 'Outdoor';
+            }
         }
 
         // 2. TEST CONNECTION LOGIC (AJAX)

@@ -50,6 +50,7 @@ class Cctv extends Model
         'onvif_password',
         'status',
         'recorder_ip',
+        'penempatan',
     ];
 
     protected $casts = [

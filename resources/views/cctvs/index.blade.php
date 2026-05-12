@@ -192,6 +192,7 @@
                                     Server Node
                                     <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'server_id' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
                                 </th>
+                                <th class="pb-4 font-semibold">Penempatan</th>
                                 @if(auth()->user()->role === 'admin')
                                 <th class="pb-4 pr-4 text-right font-semibold">Aksi</th>
                                 @endif
@@ -215,6 +216,17 @@
                                         <span class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-500">
                                             NODE {{ $cctv->server_id }}
                                         </span>
+                                    </td>
+                                    <td class="py-4">
+                                        @if($cctv->penempatan === 'Indoor')
+                                            <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">
+                                                <i class="fas fa-door-open mr-1"></i> INDOOR
+                                            </span>
+                                        @else
+                                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-[10px] font-bold">
+                                                <i class="fas fa-cloud-sun mr-1"></i> OUTDOOR
+                                            </span>
+                                        @endif
                                     </td>
                                     @if(auth()->user()->role === 'admin')
                                     <td class="py-4 pr-4 text-right space-x-2">
