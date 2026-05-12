@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     // Map Monitoring
     Route::get('/map-monitoring', [MapController::class, 'index'])->name('map.index');
     Route::get('/api/map/cctvs', [MapController::class, 'getCctvData'])->name('api.map.cctvs');
+    Route::post('/api/map/update-coords', [MapController::class, 'updateCoordinates'])->name('api.map.update-coords');
     Route::get('/api/map/proxy-stream', [MapController::class, 'streamProxy'])->name('api.map.proxy');
 });
 

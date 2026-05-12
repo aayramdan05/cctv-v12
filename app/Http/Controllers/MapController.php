@@ -97,4 +97,28 @@ class MapController extends Controller
             return response('Stream proxy error', 500);
         }
     }
+
+    /**
+     * Update coordinates only (Admin Quick Edit)
+     */
+    public function updateCoordinates(Request $request)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'id' => 'required|exists:cctvs,id',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+        ]);
+
+        $cctv = Cctv::findOrFail($request->id);
+        $cctv->update([
+            'lat' => $request->lat,
+            'lng' => $request->lng
+        ]);
+
+        return response()->json(['message' => 'Koordinat berhasil diperbarui']);
+    }
 }

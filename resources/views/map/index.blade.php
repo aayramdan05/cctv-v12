@@ -13,6 +13,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.store('cctvCounts', { up: 0, down: 0 });
             Alpine.store('weather', { temp: '--', desc: 'Loading...', icon: 'fa-cloud' });
+            Alpine.store('mapState', { editMode: false });
         });
     </script>
 
@@ -35,13 +36,16 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
-        #cctv-modal {
+        #cctv-modal, #edit-coord-modal {
             position: absolute;
             z-index: 2000;
-            width: 400px;
             pointer-events: auto;
         }
         
+        #edit-coord-modal {
+            width: 300px;
+        }
+
         @keyframes marquee {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
@@ -53,7 +57,7 @@
         }
     </style>
 </head>
-    <body class="bg-slate-50 text-slate-900 overflow-hidden font-sans" x-data="{ sidebarOpen: true, editMode: false }">
+<body class="bg-slate-50 text-slate-900 overflow-hidden font-sans" x-data="{ sidebarOpen: true }">
 
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'w-80' : 'w-0 -ml-80'" class="fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-[1001] flex flex-col transition-all duration-300 shadow-xl overflow-hidden">
@@ -133,11 +137,11 @@
 
                 <!-- Admin Edit Mode Toggle -->
                 @if(auth()->user()->role === 'admin')
-                <button @click="editMode = !editMode" 
-                        :class="editMode ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'"
+                <button @click="$store.mapState.editMode = !$store.mapState.editMode" 
+                        :class="$store.mapState.editMode ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'"
                         class="px-4 py-2 rounded-2xl shadow-lg border font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
-                    <span x-text="editMode ? 'Exit Edit Mode' : 'Admin Edit Mode'"></span>
+                    <span x-text="$store.mapState.editMode ? 'Exit Edit Mode' : 'Admin Edit Mode'"></span>
                 </button>
                 @endif
             </div>
@@ -164,7 +168,7 @@
         <div id="map"></div>
 
         <!-- Video Modal -->
-        <div id="cctv-modal" class="hidden opacity-0 scale-95 transition-all duration-200 pointer-events-auto origin-center">
+        <div id="cctv-modal" class="hidden opacity-0 scale-95 transition-all duration-200 pointer-events-auto origin-center w-[400px]">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col shadow-orange-500/10">
                 <div class="h-11 px-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                     <div class="flex items-center gap-2.5 overflow-hidden">
@@ -203,9 +207,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         @if(auth()->user()->role === 'admin')
-                        <a id="modal-edit-btn" href="#" class="bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-tight hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1.5">
+                        <button id="modal-edit-btn" onclick="" class="bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-tight hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1.5">
                             <i class="fa-solid fa-pen-to-square"></i> Edit
-                        </a>
+                        </button>
                         @endif
                         <span class="bg-emerald-100 text-emerald-800 px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-tight flex items-center gap-1.5">
                             <i class="fa-solid fa-signal text-[8px]"></i> Online
@@ -214,6 +218,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Edit Coordinate Modal -->
+        @if(auth()->user()->role === 'admin')
+        <div id="edit-coord-modal" class="hidden opacity-0 scale-95 transition-all duration-200 pointer-events-auto origin-center">
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col">
+                <div class="h-10 px-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Update Coordinates</span>
+                    <button onclick="closeEditModal()" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div>
+                        <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Latitude</label>
+                        <input type="text" id="edit-lat" class="w-full bg-slate-100 border border-slate-200 rounded-lg py-1.5 px-3 text-[10px] font-mono focus:ring-1 focus:ring-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Longitude</label>
+                        <input type="text" id="edit-lng" class="w-full bg-slate-100 border border-slate-200 rounded-lg py-1.5 px-3 text-[10px] font-mono focus:ring-1 focus:ring-orange-500 outline-none">
+                    </div>
+                    <input type="hidden" id="edit-id">
+                    <button onclick="saveCoordinates()" id="btn-save-coords" class="w-full bg-orange-500 text-white py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-orange-200">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <footer class="fixed bottom-0 right-0 left-0 z-[1000] transition-all duration-300 shadow-[0_-4px_15px_rgba(249,115,22,0.15)]" :class="sidebarOpen ? 'ml-80' : 'ml-0'">
             <div class="bg-slate-950 border-t border-orange-600 text-white/90 h-9 flex items-center overflow-hidden">
@@ -253,7 +283,7 @@
 
         // Map Click Listener (Coordinate Inspector)
         map.on('click', (e) => {
-            const editMode = Alpine.store('cctvCounts') ? document.body.__x.$data.editMode : false; // Ambil data dari Alpine
+            const editMode = Alpine.store('mapState').editMode;
             if (editMode) {
                 const lat = e.latlng.lat.toFixed(8);
                 const lng = e.latlng.lng.toFixed(8);
@@ -281,6 +311,7 @@
                     .openOn(map);
             } else {
                 if (!modal.classList.contains('hidden')) closeModal();
+                closeEditModal();
             }
         });
 
@@ -352,7 +383,6 @@
                 });
 
                 const isAdmin = @json(auth()->user()->role === 'admin');
-                const editUrl = `{{ url('cctv') }}/${camera.id}/edit`;
 
                 const item = document.createElement('div');
                 item.className = 'group p-3 hover:bg-orange-50 rounded-2xl cursor-pointer border border-transparent hover:border-orange-100 mb-1 transition-all mx-1 flex items-center gap-3';
@@ -363,7 +393,7 @@
                         <p class="text-[9px] font-medium text-slate-400 truncate group-hover:text-orange-600 mt-0.5">${camera.building}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        ${isAdmin ? `<a href="${editUrl}" class="hidden group-hover:flex w-7 h-7 bg-white border border-slate-200 rounded-lg items-center justify-center text-slate-400 hover:text-orange-500 hover:border-orange-200 transition-all"><i class="fa-solid fa-pen-to-square text-[10px]"></i></a>` : ''}
+                        ${isAdmin ? `<button onclick="event.stopPropagation(); openEditCoordModal(${JSON.stringify(camera).replace(/"/g, '&quot;')})" class="hidden group-hover:flex w-7 h-7 bg-white border border-slate-200 rounded-lg items-center justify-center text-slate-400 hover:text-orange-500 hover:border-orange-200 transition-all"><i class="fa-solid fa-pen-to-square text-[10px]"></i></button>` : ''}
                         <span class="relative flex h-2 w-2 flex-shrink-0 ml-1">
                             <span class="${camera.status !== 'online' ? 'bg-rose-400' : 'bg-emerald-400 animate-pulse'} absolute inline-flex h-full w-full rounded-full opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 ${camera.status !== 'online' ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
@@ -389,7 +419,11 @@
             document.getElementById('modal-location-text').innerText = camera.building;
             
             if (editBtn) {
-                editBtn.href = `{{ url('cctv') }}/${camera.id}/edit`;
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeModal();
+                    openEditCoordModal(camera);
+                };
             }
 
             // Perhitungan Posisi Agar Tetap di Tengah/Dalam Layar
@@ -451,6 +485,62 @@
             }
         }
 
+        const editCoordModal = document.getElementById('edit-coord-modal');
+        function openEditCoordModal(camera) {
+            document.getElementById('edit-lat').value = camera.lat;
+            document.getElementById('edit-lng').value = camera.lng;
+            document.getElementById('edit-id').value = camera.id;
+
+            // Posisikan modal di tengah layar
+            editCoordModal.style.top = '50%';
+            editCoordModal.style.left = '50%';
+            editCoordModal.style.transform = 'translate(-50%, -50%)';
+            
+            editCoordModal.classList.remove('hidden');
+            setTimeout(() => { editCoordModal.classList.add('opacity-100', 'scale-100'); }, 10);
+        }
+
+        function closeEditModal() {
+            if (editCoordModal) {
+                editCoordModal.classList.remove('opacity-100', 'scale-100');
+                setTimeout(() => { editCoordModal.classList.add('hidden'); }, 200);
+            }
+        }
+
+        async function saveCoordinates() {
+            const id = document.getElementById('edit-id').value;
+            const lat = document.getElementById('edit-lat').value;
+            const lng = document.getElementById('edit-lng').value;
+            const btn = document.getElementById('btn-save-coords');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+            try {
+                const res = await fetch('{{ route("api.map.update-coords") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ id, lat, lng })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Koordinat berhasil diperbarui!');
+                    location.reload(); 
+                } else {
+                    alert('Gagal: ' + (data.error || 'Terjadi kesalahan'));
+                }
+            } catch (e) {
+                alert('Gagal menghubungi server.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Simpan Perubahan';
+            }
+        }
+
         function closeModal() {
             modal.classList.remove('opacity-100', 'scale-100');
             setTimeout(() => { modal.classList.add('hidden'); stopVideo(); }, 200);
@@ -482,8 +572,16 @@
             renderUI(filtered);
         });
 
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-        map.on('mousedown', () => { if (!modal.classList.contains('hidden')) closeModal(); });
+        document.addEventListener('keydown', (e) => { 
+            if (e.key === 'Escape') {
+                closeModal();
+                closeEditModal();
+            }
+        });
+        map.on('mousedown', () => { 
+            if (!modal.classList.contains('hidden')) closeModal();
+            closeEditModal();
+        });
     </script>
 </body>
 </html>
