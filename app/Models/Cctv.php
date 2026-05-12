@@ -51,6 +51,8 @@ class Cctv extends Model
         'status',
         'recorder_ip',
         'penempatan',
+        'lat',
+        'lng',
     ];
 
     protected $casts = [

@@ -24,6 +24,10 @@
             <i class="fas fa-video w-5 {{ request()->routeIs('monitoring.index') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
             <span class="font-medium text-sm">Live Monitoring</span>
         </a>
+        <a href="{{ route('map.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('map.index') ? 'active' : '' }}">
+            <i class="fas fa-map-location-dot w-5 {{ request()->routeIs('map.index') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+            <span class="font-medium text-sm">Map Monitoring</span>
+        </a>
 
         @if(auth()->user()->role !== 'user')
             <div class="pt-4 mt-4 border-t border-cyan-100">

@@ -20,6 +20,7 @@ use App\Models\Cctv;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\StreamAuthController;
+use App\Http\Controllers\MapController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -56,6 +57,11 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Map Monitoring
+    Route::get('/map-monitoring', [MapController::class, 'index'])->name('map.index');
+    Route::get('/api/map/cctvs', [MapController::class, 'getCctvData'])->name('api.map.cctvs');
+    Route::get('/api/map/proxy-stream', [MapController::class, 'streamProxy'])->name('api.map.proxy');
 });
 
 // --- GROUP 2: SUPER ADMIN (Infrastruktur) ---
