@@ -25,4 +25,10 @@ class EventController extends Controller
         CameraEvent::where('id', $id)->update(['is_read' => true]);
         return back();
     }
+
+    public function markAllRead()
+    {
+        CameraEvent::where('is_read', false)->update(['is_read' => true]);
+        return back()->with('success', 'Semua event telah ditandai sebagai dibaca.');
+    }
 }

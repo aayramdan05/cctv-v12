@@ -8,11 +8,24 @@
             </div>
         </div>
 
-        <div class="flex justify-between items-center mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-800">Intelligence Events</h1>
                 <p class="text-slate-500 mt-1">Daftar deteksi pergerakan dari semua kamera ONVIF.</p>
             </div>
+
+            @php
+                $unreadCount = \App\Models\CameraEvent::where('is_read', false)->count();
+            @endphp
+            
+            @if($unreadCount > 0)
+            <form action="{{ route('events.markAllRead') }}" method="POST">
+                @csrf
+                <button type="submit" class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-200 transition-all flex items-center gap-2">
+                    <i class="fas fa-check-double"></i> Tandai Semua Dibaca ({{ number_format($unreadCount) }})
+                </button>
+            </form>
+            @endif
         </div>
 
         <div class="grid grid-cols-1 gap-6">
