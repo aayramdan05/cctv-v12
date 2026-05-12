@@ -15,16 +15,39 @@ class MonitoringController extends Controller
                      ->with(['building', 'server'])
                      ->orderBy('nama_cctv');
 
+        // Filter by Node (Server)
+        if ($request->filled('server_id')) {
+            $query->where('server_id', $request->server_id);
+        }
+
+        // Filter by Penempatan (Indoor/Outdoor)
+        if ($request->filled('penempatan')) {
+            $query->where('penempatan', $request->penempatan);
+        }
+
+        // Filter by Fakultas (via Building)
+        if ($request->filled('faculty')) {
+            $query->whereHas('building', function($q) use ($request) {
+                $q->where('fakultas', $request->faculty);
+            });
+        }
+
+        // Filter by Building
         if ($request->filled('building_id')) {
             $query->where('building_id', $request->building_id);
         }
 
+        // Filter by specific CCTV (from Intelligence Event)
         if ($request->filled('cctv_id')) {
             $query->where('id', $request->cctv_id);
         }
 
         $cctvs = $query->get();
-        return view('monitoring.index', compact('cctvs'));
+        $servers = \App\Models\Server::all();
+        $buildings = \App\Models\Building::orderBy('nama_gedung')->get();
+        $faculties = \App\Models\Building::select('fakultas')->distinct()->whereNotNull('fakultas')->orderBy('fakultas')->pluck('fakultas');
+
+        return view('monitoring.index', compact('cctvs', 'servers', 'buildings', 'faculties'));
     }
 
     public function getTimelineJson(Request $request, $cctvId)

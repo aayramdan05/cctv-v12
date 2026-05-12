@@ -272,34 +272,49 @@
                                class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all placeholder-slate-400 text-slate-700 shadow-sm">
                     </div>
                     
-                    <div class="flex gap-2">
-                        <div class="relative w-1/3 group">
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- 1. NODE FILTER -->
+                        <div class="relative group">
+                            <i class="fas fa-server absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
+                            <select x-model="filterServer" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
+                                <option value="">Semua Node</option>
+                                @foreach($servers as $srv)
+                                    <option value="{{ $srv->id }}">Node {{ $srv->id }}</option>
+                                @endforeach
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                        </div>
+
+                        <!-- 2. PENEMPATAN FILTER -->
+                        <div class="relative group">
+                            <i class="fas fa-door-open absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
+                            <select x-model="filterPlacement" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
+                                <option value="">Penempatan</option>
+                                <option value="Indoor">Indoor</option>
+                                <option value="Outdoor">Outdoor</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                        </div>
+
+                        <!-- 3. FAKULTAS FILTER -->
+                        <div class="relative group">
                             <i class="fas fa-layer-group absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
                             <select x-model="filterFaculty" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
                                 <option value="">Semua Fakultas</option>
-                                @foreach($cctvs->pluck('building.fakultas')->filter()->unique()->sort() as $fakultas)
+                                @foreach($faculties as $fakultas)
                                     <option value="{{ $fakultas }}">{{ $fakultas }}</option>
                                 @endforeach
                             </select>
                             <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
                         </div>
-                        <div class="relative w-1/3 group">
-                            <i class="fas fa-server absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
-                            <select x-model="filterServer" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
-                                <option value="">Semua Node</option>
-                                @foreach($cctvs->pluck('server')->filter()->unique('id')->sort() as $srv)
-                                    <option value="{{ $srv->id }}">Node {{ $srv->id }} ({{ $srv->ip_address }})</option>
-                                @endforeach
-                                <option value="master">Master Server</option>
-                            </select>
-                            <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
-                        </div>
-                        <div class="relative w-1/3 group">
+
+                        <!-- 4. GEDUNG FILTER -->
+                        <div class="relative group">
                             <i class="fas fa-building absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
                             <select x-model="filterBuilding" class="w-full pl-7 pr-6 py-1.5 text-[10px] font-medium text-slate-600 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 appearance-none transition-all cursor-pointer truncate shadow-sm">
                                 <option value="">Semua Gedung</option>
-                                @foreach($cctvs->pluck('building.nama_gedung')->filter()->unique()->sort() as $gedung)
-                                    <option value="{{ $gedung }}">{{ $gedung }}</option>
+                                @foreach($buildings as $b)
+                                    <option value="{{ $b->nama_gedung }}">{{ $b->nama_gedung }}</option>
                                 @endforeach
                             </select>
                             <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
@@ -313,6 +328,7 @@
                             (search === '' || '{{ strtolower($cctv->nama_cctv) }}'.includes(search.toLowerCase())) &&
                             (filterFaculty === '' || '{{ $cctv->building->fakultas ?? '' }}' === filterFaculty) &&
                             (filterBuilding === '' || '{{ $cctv->building->nama_gedung ?? '' }}' === filterBuilding) &&
+                            (filterPlacement === '' || '{{ $cctv->penempatan ?? '' }}' === filterPlacement) &&
                             (filterServer === '' || (filterServer === 'master' && '{{ $cctv->server_id }}' === '') || '{{ $cctv->server_id }}' === filterServer)
                         "
                         draggable="true" 
@@ -347,7 +363,7 @@
         function hybridMonitoring() {
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
-                search: '', filterFaculty: '', filterBuilding: '', filterServer: '', currentHost: window.location.hostname, isFullscreen: false,
+                search: '', filterFaculty: '', filterBuilding: '', filterServer: '', filterPlacement: '', currentHost: window.location.hostname, isFullscreen: false,
                 isDragging: false,
                 
                 selectedDate: new Date().toISOString().split('T')[0],
