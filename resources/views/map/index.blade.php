@@ -14,6 +14,17 @@
             Alpine.store('cctvCounts', { up: 0, down: 0 });
             Alpine.store('weather', { temp: '--', desc: 'Loading...', icon: 'fa-cloud' });
             Alpine.store('mapState', { editMode: false });
+            Alpine.store('toast', {
+                show: false,
+                message: '',
+                type: 'success',
+                trigger(msg, type = 'success') {
+                    this.show = true;
+                    this.message = msg;
+                    this.type = type;
+                    setTimeout(() => { this.show = false; }, 3000);
+                }
+            });
         });
     </script>
 
@@ -245,6 +256,28 @@
         </div>
         @endif
 
+        <!-- Toast Notification -->
+        <div x-data x-show="$store.toast.show" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-10"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-10"
+             x-cloak
+             class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[3000] pointer-events-none">
+            <div :class="$store.toast.type === 'success' ? 'bg-slate-900 text-white shadow-orange-500/20' : 'bg-rose-600 text-white shadow-rose-500/20'"
+                 class="px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10 backdrop-blur-md">
+                <div :class="$store.toast.type === 'success' ? 'bg-orange-500' : 'bg-white/20'" class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
+                    <i :class="$store.toast.type === 'success' ? 'fa-solid fa-check text-white' : 'fa-solid fa-triangle-exclamation text-white'"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase tracking-widest opacity-50" x-text="$store.toast.type === 'success' ? 'Success' : 'Attention'"></span>
+                    <p class="text-xs font-bold" x-text="$store.toast.message"></p>
+                </div>
+            </div>
+        </div>
+
         <footer class="fixed bottom-0 right-0 left-0 z-[1000] transition-all duration-300 shadow-[0_-4px_15px_rgba(249,115,22,0.15)]" :class="sidebarOpen ? 'ml-80' : 'ml-0'">
             <div class="bg-slate-950 border-t border-orange-600 text-white/90 h-9 flex items-center overflow-hidden">
                 <div class="animate-marquee px-4 text-[10px] font-medium tracking-wide uppercase">
@@ -317,7 +350,7 @@
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('Koordinat disalin: ' + text);
+                Alpine.store('toast').trigger('Koordinat disalin ke clipboard!');
             });
         }
 
@@ -528,13 +561,13 @@
 
                 const data = await res.json();
                 if (res.ok) {
-                    alert('Koordinat berhasil diperbarui!');
-                    location.reload(); 
+                    Alpine.store('toast').trigger('Koordinat berhasil diperbarui!');
+                    setTimeout(() => { location.reload(); }, 1500); 
                 } else {
-                    alert('Gagal: ' + (data.error || 'Terjadi kesalahan'));
+                    Alpine.store('toast').trigger('Gagal: ' + (data.error || 'Terjadi kesalahan'), 'error');
                 }
             } catch (e) {
-                alert('Gagal menghubungi server.');
+                Alpine.store('toast').trigger('Gagal menghubungi server.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Simpan Perubahan';

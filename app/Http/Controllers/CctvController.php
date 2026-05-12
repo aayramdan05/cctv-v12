@@ -37,6 +37,11 @@ class CctvController extends Controller
             $query->where('server_id', $request->server_id);
         }
 
+        // Filter Penempatan
+        if ($request->filled('penempatan')) {
+            $query->where('penempatan', $request->penempatan);
+        }
+
         $sortField = $request->get('sort_by', 'created_at');
         $sortDir = $request->get('sort_dir', 'desc');
 

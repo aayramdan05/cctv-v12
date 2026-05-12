@@ -99,21 +99,52 @@
                     </div>
                 </div>
 
-                <!-- Dropdown Slims -->
-                <div class="relative">
-                    <select name="building_id" @change="updateTable()" 
-                            class="w-44 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
-                        <option value="">Semua Gedung</option>
+                <!-- Dropdown Searchable Gedung -->
+                <div class="relative" x-data="{ 
+                    open: false, 
+                    search: '', 
+                    selectedId: '{{ request('building_id') }}',
+                    selectedName: '{{ request('building_id') ? $buildings->find(request('building_id'))->nama_gedung : 'Semua Gedung' }}',
+                    buildings: [
                         @foreach($buildings as $b)
-                            <option value="{{ $b->id }}" {{ request('building_id') == $b->id ? 'selected' : '' }}>{{ $b->nama_gedung }}</option>
+                            { id: '{{ $b->id }}', name: '{{ $b->nama_gedung }}' },
                         @endforeach
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
+                    ],
+                    get filtered() {
+                        if (this.search === '') return this.buildings;
+                        return this.buildings.filter(b => b.name.toLowerCase().includes(this.search.toLowerCase()));
+                    }
+                }">
+                    <input type="hidden" name="building_id" :value="selectedId">
+                    <button type="button" @click="open = !open" 
+                            class="w-48 pl-4 pr-10 py-2 rounded-xl border border-slate-200 text-left text-sm bg-white shadow-sm focus:ring-2 focus:ring-cyan-100 flex justify-between items-center">
+                        <span x-text="selectedName" class="truncate"></span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                    </button>
+                    <div x-show="open" @click.away="open = false" x-cloak 
+                         class="absolute z-50 w-64 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden">
+                        <div class="p-2 border-b border-slate-50 bg-slate-50">
+                            <input type="text" x-model="search" placeholder="Cari gedung..." 
+                                   class="w-full px-3 py-1.5 text-xs rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-100">
+                        </div>
+                        <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                            <button type="button" @click="selectedId = ''; selectedName = 'Semua Gedung'; open = false; updateTable()" 
+                                    class="w-full px-4 py-2 text-left text-xs hover:bg-cyan-50 font-medium text-slate-500 italic">
+                                -- Semua Gedung --
+                            </button>
+                            <template x-for="b in filtered" :key="b.id">
+                                <button type="button" @click="selectedId = b.id; selectedName = b.name; open = false; updateTable()" 
+                                        class="w-full px-4 py-2 text-left text-xs hover:bg-cyan-50 transition-colors">
+                                    <span x-text="b.name"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="relative">
                     <select name="server_id" @change="updateTable()" 
-                            class="w-44 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
+                            class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white cursor-pointer shadow-sm appearance-none">
                         <option value="">Semua Node</option>
                         @foreach($servers as $s)
                             <option value="{{ $s->id }}" {{ request('server_id') == $s->id ? 'selected' : '' }}>Node {{ $s->id }}</option>
@@ -122,7 +153,17 @@
                     <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
                 </div>
 
-                @if(request()->anyFilled(['search', 'building_id', 'server_id']))
+                <div class="relative">
+                    <select name="penempatan" @change="updateTable()" 
+                            class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white cursor-pointer shadow-sm appearance-none">
+                        <option value="">Penempatan...</option>
+                        <option value="Indoor" {{ request('penempatan') == 'Indoor' ? 'selected' : '' }}>Indoor</option>
+                        <option value="Outdoor" {{ request('penempatan') == 'Outdoor' ? 'selected' : '' }}>Outdoor</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
+                </div>
+
+                @if(request()->anyFilled(['search', 'building_id', 'server_id', 'penempatan']))
                     <a href="{{ route('cctv.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors ml-2">
                         <i class="fas fa-times-circle mr-1"></i> Reset
                     </a>
