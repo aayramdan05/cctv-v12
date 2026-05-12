@@ -12,12 +12,13 @@ from dotenv import load_dotenv
 import builtins
 
 # Load Environment Variables
-import subprocess
-
-# Load Environment Variables
 load_dotenv('/home/aay/cctv-scripts/.env')
 
-# ... (print function remains same)
+# Memaksa print() untuk selalu melakukan flush agar log langsung muncul di systemd
+def print(*args, **kwargs):
+    kwargs['flush'] = True
+    builtins.print(*args, **kwargs)
+
 
 # CONFIGURATION
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
@@ -30,74 +31,16 @@ NODE_IP = os.getenv('SERVER_RECORDER_IP', '10.69.69.41')
 MASTER_URL = os.getenv('MASTER_URL', 'http://10.69.69.21')
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026')
 
-SNAPSHOT_DIR = '/var/www/html/storage/recordings/snapshots'
-
 # Melacak thread yang sedang berjalan
 active_threads = {}
 
 # Melacak waktu terakhir pergerakan terdeteksi per kamera (untuk cooldown)
 last_motion_time = {}
 
-def cleanup_old_snapshots():
-    """Menghapus screenshot yang sudah lebih dari 1 jam"""
-    try:
-        now = time.time()
-        # 1 Jam = 3600 Detik
-        retention_period = 3600 
-        
-        if not os.path.exists(SNAPSHOT_DIR):
-            return
-            
-        for f in os.listdir(SNAPSHOT_DIR):
-            file_path = os.path.join(SNAPSHOT_DIR, f)
-            if os.path.isfile(file_path):
-                # Cek umur file
-                if now - os.path.getmtime(file_path) > retention_period:
-                    os.remove(file_path)
-                    print(f"🧹 [CLEANUP] Menghapus screenshot lama: {f}")
-    except Exception as e:
-        print(f"⚠️ Gagal melakukan cleanup: {e}")
-
-def capture_screenshot(cam_id, rtsp_url):
-    """Mengambil screenshot dari stream RTSP menggunakan FFmpeg"""
-    cleanup_old_snapshots()
-    
-    if not os.path.exists(SNAPSHOT_DIR):
-        try:
-            os.makedirs(SNAPSHOT_DIR, exist_ok=True)
-            os.chmod(SNAPSHOT_DIR, 0o777)
-        except: pass
-    
-    filename = f"event_{cam_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-    filepath = os.path.join(SNAPSHOT_DIR, filename)
-    
-    try:
-        # Gunakan original RTSP agar lebih cepat dan stabil untuk snapshot
-        command = [
-            'ffmpeg', '-y', '-rtsp_transport', 'tcp', '-timeout', '8000000',
-            '-i', rtsp_url, '-ss', '00:00:01', '-frames:v', '1',
-            '-q:v', '2', filepath
-        ]
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
-        
-        # Validasi: Cek apakah file ada dan tidak kosong (0 bytes)
-        if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
-            print(f"📸 [CAM {cam_id}] Screenshot berhasil: {filename}")
-            return filename
-        else:
-            print(f"⚠️ [CAM {cam_id}] FFmpeg selesai tapi file kosong/tidak ada.")
-    except Exception as e:
-        print(f"❌ [CAM {cam_id}] Gagal ambil screenshot: {e}")
-    
-    return None
-
-def report_to_master(cctv_id, event_type, image_file=None):
-    """Melaporkan kejadian ke Master Server dengan opsional gambar"""
+def report_to_master(cctv_id, event_type):
+    """Melaporkan kejadian ke Master Server"""
     try:
         url = f"{MASTER_URL}/api/report-event?cctv_id={cctv_id}&type={event_type}&token={SYNC_TOKEN}"
-        if image_file:
-            url += f"&image={image_file}"
-            
         requests.get(url, timeout=5)
         print(f"🔔 [CAM {cctv_id}] Event {event_type} dilaporkan ke Master!")
     except Exception as e:
@@ -107,10 +50,6 @@ def subscribe_to_camera(cam):
     """Berlangganan event dari kamera via ONVIF"""
     cam_id = cam['id']
     cam_ip = cam['ip']
-    
-    # Ambil original_url untuk screenshot, fallback ke url go2rtc
-    snap_url = cam.get('original_url') or cam.get('url')
-    
     onvif_data = cam.get('onvif', {})
     
     port = onvif_data.get('port', 80)
@@ -135,6 +74,7 @@ def subscribe_to_camera(cam):
             print(f"✅ [CAM {cam_id}] Berhasil subscribe ONVIF!")
 
             while True:
+                # Tarik pesan
                 try:
                     messages = pullpoint.PullMessages({'Timeout': 'PT5S', 'MessageLimit': 10})
                 except:
@@ -156,18 +96,17 @@ def subscribe_to_camera(cam):
                                         # COOLDOWN 10 DETIK
                                         if current_time - last_time >= 10:
                                             print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN!")
-                                            img_name = capture_screenshot(cam_id, snap_url)
-                                            report_to_master(cam_id, 'motion', img_name)
+                                            report_to_master(cam_id, 'motion')
                                             last_motion_time[cam_id] = current_time
                             except:
+                                # Fallback deteksi teks mentah
                                 raw_msg = str(msg)
                                 if any(x in raw_msg for x in ['IsMotion="true"', 'Value="true"', 'IsMotion="1"']):
                                     current_time = time.time()
                                     last_time = last_motion_time.get(cam_id, 0)
                                     if current_time - last_time >= 10:
                                         print(f"✨ [CAM {cam_id}] DETEKSI PERGERAKAN (Raw)!")
-                                        img_name = capture_screenshot(cam_id, snap_url)
-                                        report_to_master(cam_id, 'motion', img_name)
+                                        report_to_master(cam_id, 'motion')
                                         last_motion_time[cam_id] = current_time
                                     
                         except Exception as parse_err:
@@ -179,8 +118,6 @@ def subscribe_to_camera(cam):
             print(f"❌ [CAM {cam_id}] ONVIF Error: {e}")
             print(f"🔄 [CAM {cam_id}] Mencoba ulang dalam 1 menit...")
             time.sleep(60)
-
-            # Loop akan mengulang koneksi dari awal tanpa memakan memori call stack baru
 
 def sync_cameras():
     """Mengambil daftar kamera dan mengupdate thread"""
