@@ -63,8 +63,8 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <a href="{{ route('cctv.index', ['search' => $event->cctv->nama_cctv]) }}" class="text-cyan-600 hover:text-cyan-700 font-bold text-xs flex items-center gap-1">
-                                        <i class="fas fa-eye"></i> Lihat Kamera
+                                    <a href="{{ route('monitoring.index', ['cctv_id' => $event->cctv_id]) }}" class="text-emerald-600 hover:text-emerald-700 font-bold text-xs flex items-center gap-1 transition-colors">
+                                        <i class="fas fa-video"></i> Pantau Live
                                     </a>
                                 </td>
                             </tr>

@@ -19,6 +19,10 @@ class MonitoringController extends Controller
             $query->where('building_id', $request->building_id);
         }
 
+        if ($request->filled('cctv_id')) {
+            $query->where('id', $request->cctv_id);
+        }
+
         $cctvs = $query->get();
         return view('monitoring.index', compact('cctvs'));
     }
