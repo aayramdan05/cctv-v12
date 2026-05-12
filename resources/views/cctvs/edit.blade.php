@@ -66,9 +66,8 @@
 
                     <div class="md:col-span-2" x-data="{ 
                         open: false, 
-                        search: '', 
+                        search: '{{ old('building_id', $cctv->building_id) ? $cctv->building->nama_gedung : '' }}', 
                         selectedId: '{{ old('building_id', $cctv->building_id) }}',
-                        selectedName: '{{ $cctv->building->nama_gedung }}',
                         buildings: [
                             @foreach($buildings as $building)
                                 { id: '{{ $building->id }}', name: '{{ $building->nama_gedung }}', fakultas: '{{ $building->fakultas }}', kode: '{{ $building->kode_gedung }}' },
@@ -76,45 +75,55 @@
                         ],
                         get filteredBuildings() {
                             if (this.search === '') return this.buildings;
-                            return this.buildings.filter(b => b.name.toLowerCase().includes(this.search.toLowerCase()) || b.fakultas.toLowerCase().includes(this.search.toLowerCase()));
+                            return this.buildings.filter(b => 
+                                b.name.toLowerCase().includes(this.search.toLowerCase()) || 
+                                b.fakultas.toLowerCase().includes(this.search.toLowerCase())
+                            );
                         },
                         selectBuilding(b) {
                             this.selectedId = b.id;
-                            this.selectedName = b.name;
+                            this.search = b.name;
                             this.open = false;
-                            this.search = '';
                             $nextTick(() => { detectPlacement(b.kode); });
                         }
                     }">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung (Searchable)</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung</label>
                         <div class="relative">
                             <input type="hidden" name="building_id" :value="selectedId">
-                            <button type="button" @click="open = !open" 
-                                    class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-left flex justify-between items-center focus:ring-2 focus:ring-cyan-200">
-                                <span x-text="selectedName || 'Pilih Gedung...'" class="truncate"></span>
-                                <i class="fas fa-chevron-down text-xs text-slate-400"></i>
-                            </button>
-                            
-                            <div x-show="open" @click.away="open = false" x-cloak 
-                                 class="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-                                <div class="p-2 border-b border-slate-100 bg-slate-50">
-                                    <input type="text" x-model="search" placeholder="Ketik nama gedung atau fakultas..." 
-                                           class="w-full px-3 py-2 text-sm rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-200">
+                            <div class="relative">
+                                <input type="text" 
+                                       x-model="search"
+                                       @focus="open = true"
+                                       @input="open = true; selectedId = ''"
+                                       placeholder="Ketik nama gedung..." 
+                                       class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:bg-white transition-all text-sm pr-10"
+                                       autocomplete="off">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-slate-400 text-xs"></i>
                                 </div>
+                            </div>
+                            
+                            <div x-show="open && (search.length > 0 || filteredBuildings.length > 0)" 
+                                 @click.away="open = false" x-cloak 
+                                 class="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden shadow-cyan-500/10">
                                 <div class="max-h-60 overflow-y-auto custom-scrollbar">
                                     <template x-for="b in filteredBuildings" :key="b.id">
                                         <button type="button" @click="selectBuilding(b)" 
-                                                class="w-full px-4 py-2.5 text-left text-sm hover:bg-cyan-50 transition-colors flex flex-col">
-                                            <span class="font-bold text-slate-700" x-text="b.name"></span>
-                                            <span class="text-[10px] text-slate-400 uppercase tracking-wider" x-text="b.fakultas"></span>
+                                                class="w-full px-4 py-3 text-left hover:bg-cyan-50 transition-colors flex flex-col border-b border-slate-50 last:border-none">
+                                            <span class="text-sm font-bold text-slate-700" x-text="b.name"></span>
+                                            <span class="text-[10px] text-slate-400 uppercase tracking-widest font-medium" x-text="b.fakultas"></span>
                                         </button>
                                     </template>
-                                    <div x-show="filteredBuildings.length === 0" class="p-4 text-center text-xs text-slate-400 italic">
+                                    <div x-show="filteredBuildings.length === 0" class="p-6 text-center text-xs text-slate-400 italic">
+                                        <i class="fas fa-search mb-2 block text-lg opacity-20"></i>
                                         Gedung tidak ditemukan...
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        @error('building_id')
+                            <p class="text-xs text-red-500 mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
