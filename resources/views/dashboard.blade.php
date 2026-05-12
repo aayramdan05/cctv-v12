@@ -14,58 +14,77 @@
             <p class="text-slate-500">Real-time monitoring and analytics dashboard</p>
         </div>
         
-        <div id="stats-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div id="stats-cards" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <!-- 1. Total Cameras -->
             <div onclick="location.href='{{ route('cctv.index') }}'" 
-                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
-                        <i class="fas fa-video text-white text-xl"></i>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
-                            <i class="fas fa-door-open"></i> {{ $indoorCount }} In
-                        </span>
-                        <span class="px-2 py-0.5 rounded-md bg-orange-100 text-orange-600 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
-                            <i class="fas fa-cloud-sun"></i> {{ $outdoorCount }} Out
-                        </span>
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-video text-white text-base"></i>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold text-slate-800 mb-1">{{ $totalCctv }}</h3>
-                <p class="text-slate-500 text-sm font-medium">Total Cameras</p>
+                <h3 class="text-2xl font-bold text-slate-800 mb-0.5">{{ $totalCctv }}</h3>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Cameras</p>
             </div>
-            
-            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
-                        <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+
+            <!-- 2. Active Streams -->
+            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                        <i class="fas fa-play-circle text-white text-base"></i>
                     </div>
-                    <span class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs font-bold uppercase tracking-wide">Alert</span>
+                    <span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[9px] font-bold uppercase">Live</span>
                 </div>
-                <h3 class="text-3xl font-bold text-slate-800 mb-1">{{ $offlineCctv }}</h3>
-                <p class="text-slate-500 text-sm font-medium">Cameras Offline</p>
+                <h3 class="text-2xl font-bold text-slate-800 mb-0.5">{{ $activeCctv }}</h3>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Active Streams</p>
             </div>
-            
-            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                        <i class="fas fa-play-circle text-white text-xl"></i>
+
+            <!-- 3. Total Indoor -->
+            <div onclick="location.href='{{ route('cctv.index', ['penempatan' => 'Indoor']) }}'"
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-door-open text-white text-base"></i>
                     </div>
-                    <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-600 text-xs font-bold uppercase tracking-wide">Live</span>
                 </div>
-                <h3 class="text-3xl font-bold text-slate-800 mb-1">{{ $activeCctv }}</h3>
-                <p class="text-slate-500 text-sm font-medium">Active Streams</p>
+                <h3 class="text-2xl font-bold text-slate-800 mb-0.5">{{ $indoorCount }}</h3>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Indoor Units</p>
+            </div>
+
+            <!-- 4. Total Outdoor -->
+            <div onclick="location.href='{{ route('cctv.index', ['penempatan' => 'Outdoor']) }}'"
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-cloud-sun text-white text-base"></i>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-0.5">{{ $outdoorCount }}</h3>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Outdoor Units</p>
             </div>
             
+            <!-- 5. Offline Alert -->
+            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+                        <i class="fas fa-exclamation-triangle text-white text-base"></i>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[9px] font-bold uppercase">Down</span>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-0.5">{{ $offlineCctv }}</h3>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Cameras Offline</p>
+            </div>
+            
+            <!-- 6. Buildings -->
             <div onclick="location.href='{{ route('building.index') }}'"
-                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-                        <i class="fas fa-building text-white text-xl"></i>
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-building text-white text-base"></i>
                     </div>
-                    <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wide">Total</span>
                 </div>
-                <h3 class="text-3xl font-bold text-slate-800 mb-1">{{ $totalGedung }}</h3>
-                <p class="text-slate-500 text-sm font-medium">Buildings Covered</p>
+                <h3 class="text-2xl font-bold text-slate-800 mb-0.5">{{ $totalGedung }}</h3>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Gedung / Lokasi</p>
             </div>
         </div>
         
