@@ -21,7 +21,14 @@
                     <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
                         <i class="fas fa-video text-white text-xl"></i>
                     </div>
-                    <span class="px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-bold uppercase tracking-wide">Active</span>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                            <i class="fas fa-door-open"></i> {{ $indoorCount }} In
+                        </span>
+                        <span class="px-2 py-0.5 rounded-md bg-orange-100 text-orange-600 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                            <i class="fas fa-cloud-sun"></i> {{ $outdoorCount }} Out
+                        </span>
+                    </div>
                 </div>
                 <h3 class="text-3xl font-bold text-slate-800 mb-1">{{ $totalCctv }}</h3>
                 <p class="text-slate-500 text-sm font-medium">Total Cameras</p>
@@ -164,8 +171,8 @@
                         <i class="fas fa-play-circle text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-slate-800">Live Feed Preview</h3>
-                        <p class="text-xs text-slate-500 hidden sm:block">Monitoring realtime dari kamera terbaru</p>
+                        <h3 class="text-xl font-bold text-slate-800">Fixed Outdoor Previews</h3>
+                        <p class="text-xs text-slate-500 hidden sm:block">Live monitoring dari 3 kamera outdoor utama</p>
                     </div>
                 </div>
                 
@@ -176,7 +183,7 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($latestCctvs as $cctv)
+                @forelse($previewCctvs as $cctv)
                 <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 hover:border-cyan-300 hover:shadow-md transition-all group">
                     
                     <div class="bg-slate-900 rounded-xl aspect-video flex items-center justify-center mb-3 relative overflow-hidden">
@@ -225,7 +232,7 @@
                     <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400">
                         <i class="fas fa-video-slash text-2xl"></i>
                     </div>
-                    <p class="text-slate-500 font-medium">Belum ada data kamera.</p>
+                    <p class="text-slate-500 font-medium">Belum ada data kamera outdoor.</p>
                 </div>
                 @endforelse
             </div>
@@ -247,7 +254,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             
             // ---------------------------------------------------------
-            @foreach($latestCctvs as $cctv)
+            @foreach($previewCctvs as $cctv)
             {
                 let iframe = document.getElementById('preview-{{ $cctv->id }}');
                 

@@ -19,6 +19,8 @@ class DashboardController extends Controller
             $totalCctv = Cctv::accessibleByAuth()->count();
             $activeCctv = Cctv::accessibleByAuth()->where('status', 'online')->count();
             $offlineCctv = Cctv::accessibleByAuth()->where('status', 'offline')->count();
+            $indoorCount = Cctv::accessibleByAuth()->where('penempatan', 'Indoor')->count();
+            $outdoorCount = Cctv::accessibleByAuth()->where('penempatan', 'Outdoor')->count();
 
             // 2. DATA GEDUNG
             if ($user->role === 'faculty_operator') {
@@ -31,10 +33,11 @@ class DashboardController extends Controller
                 $totalGedung = Building::count();
             }
 
-            // 3. LIVE PREVIEW (3 Kamera Terakhir)
-            $latestCctvs = Cctv::accessibleByAuth()
+            // 3. LIVE PREVIEW (3 Kamera Outdoor Tetap)
+            $previewCctvs = Cctv::accessibleByAuth()
+                            ->where('penempatan', 'Outdoor')
                             ->with(['building', 'server']) 
-                            ->latest()
+                            ->orderBy('id', 'asc') // Urutkan berdasarkan ID agar tetap (fix)
                             ->take(3)
                             ->get();
 
@@ -56,8 +59,8 @@ class DashboardController extends Controller
             }
 
             return view('dashboard', compact(
-                'totalCctv', 'totalGedung', 'activeCctv', 'offlineCctv',
-                'buildings', 'latestCctvs', 'alerts', 'chartDates', 'chartData'
+                'totalCctv', 'totalGedung', 'activeCctv', 'offlineCctv', 'indoorCount', 'outdoorCount',
+                'buildings', 'previewCctvs', 'alerts', 'chartDates', 'chartData'
             ));
         } catch (\Exception $e) {
             \Log::error("Dashboard Error: " . $e->getMessage());
