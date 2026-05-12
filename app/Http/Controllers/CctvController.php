@@ -175,21 +175,29 @@ class CctvController extends Controller
 
     public function bulkMove(Request $request): RedirectResponse
     {
-        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan memindahkan kamera.');
+        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan mengubah kamera secara masal.');
 
         $request->validate([
             'cctv_ids' => 'required|array',
             'cctv_ids.*' => 'exists:cctvs,id',
-            'target_server_id' => 'required|exists:servers,id',
+            'target_server_id' => 'nullable|exists:servers,id',
+            'target_penempatan' => 'nullable|in:Indoor,Outdoor',
         ]);
 
-        Cctv::whereIn('id', $request->cctv_ids)->update([
-            'server_id' => $request->target_server_id
-        ]);
+        $updateData = [];
+        if ($request->filled('target_server_id')) {
+            $updateData['server_id'] = $request->target_server_id;
+        }
+        if ($request->filled('target_penempatan')) {
+            $updateData['penempatan'] = $request->target_penempatan;
+        }
 
-        // Opsional: Jalankan sync config setelah pindah masal
-        \Artisan::call('cctv:sync-config');
+        if (!empty($updateData)) {
+            Cctv::whereIn('id', $request->cctv_ids)->update($updateData);
+            \Artisan::call('cctv:sync-config');
+            return redirect()->route('cctv.index')->with('success', count($request->cctv_ids) . ' Kamera berhasil diperbarui secara masal.');
+        }
 
-        return redirect()->route('cctv.index')->with('success', count($request->cctv_ids) . ' Kamera berhasil dipindahkan ke Node baru.');
+        return redirect()->route('cctv.index')->with('info', 'Tidak ada perubahan yang dipilih.');
     }
 }

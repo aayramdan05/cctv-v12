@@ -148,21 +148,32 @@
                         <input type="hidden" name="cctv_ids[]" :value="id">
                     </template>
 
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-slate-400">Pindahkan ke:</span>
-                        <select name="target_server_id" required class="bg-slate-800 border-slate-700 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-2">
-                            <option value="">Pilih Server Node...</option>
-                            @foreach($servers as $s)
-                                <option value="{{ $s->id }}">Node {{ $s->id }} ({{ $s->name }})</option>
-                            @endforeach
-                        </select>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Node:</span>
+                            <select name="target_server_id" class="bg-slate-800 border-slate-700 text-white text-xs rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-1.5 w-32">
+                                <option value="">Tetap...</option>
+                                @foreach($servers as $s)
+                                    <option value="{{ $s->id }}">Node {{ $s->id }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Penempatan:</span>
+                            <select name="target_penempatan" class="bg-slate-800 border-slate-700 text-white text-xs rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-1.5 w-32">
+                                <option value="">Tetap...</option>
+                                <option value="Indoor">Indoor</option>
+                                <option value="Outdoor">Outdoor</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <button type="submit" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
-                        <i class="fas fa-exchange-alt"></i> Pindahkan Sekarang
+                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+                        <i class="fas fa-save"></i> Update Terpilih
                     </button>
                     
-                    <button type="button" @click="selectedIds = []; selectAll = false" class="text-slate-400 hover:text-white transition-colors">
+                    <button type="button" @click="selectedIds = []; selectAll = false" class="text-slate-400 hover:text-white transition-colors ml-2">
                         <i class="fas fa-times"></i>
                     </button>
                 </form>
