@@ -66,8 +66,9 @@
 
                     <div class="md:col-span-2" x-data="{ 
                         open: false, 
-                        search: '{{ old('building_id', $cctv->building_id) ? $cctv->building->nama_gedung : '' }}', 
+                        search: '', 
                         selectedId: '{{ old('building_id', $cctv->building_id) }}',
+                        selectedName: '{{ $cctv->building->nama_gedung }}',
                         buildings: [
                             @foreach($buildings as $building)
                                 { id: '{{ $building->id }}', name: '{{ $building->nama_gedung }}', fakultas: '{{ $building->fakultas }}', kode: '{{ $building->kode_gedung }}' },
@@ -82,41 +83,73 @@
                         },
                         selectBuilding(b) {
                             this.selectedId = b.id;
-                            this.search = b.name;
+                            this.selectedName = b.name;
+                            this.search = '';
                             this.open = false;
                             $nextTick(() => { detectPlacement(b.kode); });
+                        },
+                        toggle() {
+                            this.open = !this.open;
+                            if (this.open) {
+                                $nextTick(() => { this.$refs.searchInput.focus(); });
+                            }
+                        },
+                        close() {
+                            this.open = false;
+                            this.search = ''; 
                         }
                     }">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung</label>
                         <div class="relative">
                             <input type="hidden" name="building_id" :value="selectedId">
-                            <div class="relative">
-                                <input type="text" 
-                                       x-model="search"
-                                       @focus="open = true"
-                                       @input="open = true; selectedId = ''"
-                                       placeholder="Ketik nama gedung..." 
-                                       class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:bg-white transition-all text-sm pr-10"
-                                       autocomplete="off">
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-search text-slate-400 text-xs"></i>
-                                </div>
-                            </div>
                             
-                            <div x-show="open && (search.length > 0 || filteredBuildings.length > 0)" 
-                                 @click.away="open = false" x-cloak 
-                                 class="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden shadow-cyan-500/10">
-                                <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                            <!-- Trigger Button -->
+                            <button type="button" @click="toggle()" 
+                                    class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-left flex justify-between items-center focus:ring-2 focus:ring-cyan-200 focus:bg-white transition-all shadow-sm">
+                                <span x-text="selectedName || 'Pilih Gedung...'" 
+                                      :class="selectedName ? 'text-slate-800 font-bold' : 'text-slate-400 font-medium'"
+                                      class="truncate text-sm"></span>
+                                <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+                            
+                            <!-- Dropdown Panel -->
+                            <div x-show="open" 
+                                 @click.away="close()" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-cloak 
+                                 class="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden shadow-cyan-500/10">
+                                
+                                <!-- Search Input -->
+                                <div class="p-3 border-b border-slate-50 bg-slate-50/50">
+                                    <div class="relative">
+                                        <input type="text" 
+                                               x-ref="searchInput"
+                                               x-model="search"
+                                               placeholder="Ketik untuk mencari..." 
+                                               class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-200 transition-all"
+                                               @keydown.escape="close()"
+                                               autocomplete="off">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-search text-slate-300 text-xs"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- List Items -->
+                                <div class="max-h-64 overflow-y-auto custom-scrollbar">
                                     <template x-for="b in filteredBuildings" :key="b.id">
                                         <button type="button" @click="selectBuilding(b)" 
-                                                class="w-full px-4 py-3 text-left hover:bg-cyan-50 transition-colors flex flex-col border-b border-slate-50 last:border-none">
-                                            <span class="text-sm font-bold text-slate-700" x-text="b.name"></span>
+                                                class="w-full px-4 py-3 text-left hover:bg-cyan-50 transition-colors flex flex-col border-b border-slate-50 last:border-none group">
+                                            <span class="text-sm font-bold text-slate-700 group-hover:text-cyan-700" x-text="b.name"></span>
                                             <span class="text-[10px] text-slate-400 uppercase tracking-widest font-medium" x-text="b.fakultas"></span>
                                         </button>
                                     </template>
-                                    <div x-show="filteredBuildings.length === 0" class="p-6 text-center text-xs text-slate-400 italic">
-                                        <i class="fas fa-search mb-2 block text-lg opacity-20"></i>
-                                        Gedung tidak ditemukan...
+                                    
+                                    <div x-show="filteredBuildings.length === 0" class="p-8 text-center">
+                                        <i class="fas fa-search-minus mb-2 block text-2xl text-slate-200"></i>
+                                        <p class="text-xs text-slate-400 italic">Gedung tidak ditemukan...</p>
                                     </div>
                                 </div>
                             </div>
