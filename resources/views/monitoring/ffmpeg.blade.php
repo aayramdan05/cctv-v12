@@ -85,7 +85,7 @@
             <!-- RIGHT SECTION: FILTERS & TABLE -->
             <div class="xl:col-span-9">
                 <!-- Advanced Filters -->
-                <div class="glass-effect rounded-2xl p-6 border border-cyan-100 shadow-sm mb-6">
+                <div class="glass-effect rounded-2xl p-6 border border-cyan-100 shadow-sm mb-6 relative z-[60]">
                     <form action="{{ route('ffmpeg.monitor') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4" x-data="{ 
                         open: false, 
                         search: '{{ request('search') }}',

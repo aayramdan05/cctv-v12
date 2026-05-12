@@ -37,7 +37,6 @@ class FfmpegStatusController extends Controller
 
         $statusData = [];
         $now = now();
-        $totalSizeMb = 0;
         $activeStreams = 0;
 
         foreach ($cctvs as $cctv) {
@@ -58,7 +57,6 @@ class FfmpegStatusController extends Controller
                 $lastUpdateText = $latestRec->created_at->diffForHumans();
                 $fileSize = $latestRec->size_mb . ' MB';
                 $filename = $latestRec->filename;
-                $totalSizeMb += $latestRec->size_mb;
             }
 
             $statusData[] = (object) [
@@ -75,10 +73,12 @@ class FfmpegStatusController extends Controller
             ];
         }
 
-        // 2. RESOURCE STATS (Sidebar)
+        // 2. RESOURCE STATS (Sidebar) - Hitung TOTAL REAL dari DB
+        $totalStorageMb = \App\Models\Recording::sum('size_mb');
+        
         $resources = (object) [
-            'disk_usage' => number_format($totalSizeMb / 1024, 2) . ' GB',
-            'bandwidth' => number_format($activeStreams * 1.8, 1) . ' Mbps',
+            'disk_usage' => number_format($totalStorageMb / 1024, 2) . ' GB',
+            'bandwidth' => number_format($activeStreams * 1.5, 1) . ' Mbps',
             'ffmpeg_status' => $activeStreams > 0 ? 'Running' : 'Idle',
             'onvif_status' => Cctv::whereNotNull('onvif_user')->count() > 0 ? 'Active' : 'Standby',
             'go2rtc_status' => 'Healthy',
