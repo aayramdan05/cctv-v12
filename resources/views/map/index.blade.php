@@ -293,12 +293,24 @@
             dipatiukur: [-6.8925, 107.6186]
         };
         
-        const map = L.map('map', { zoomControl: false }).setView(campusCoords.jatinangor, 15);
+        const map = L.map('map', { 
+            zoomControl: false,
+            maxZoom: 22 
+        }).setView(campusCoords.jatinangor, 15);
 
         const baseLayers = {
-            light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'),
-            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'),
-            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')
+            light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 22,
+                maxNativeZoom: 19
+            }),
+            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 22,
+                maxNativeZoom: 19
+            }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 22,
+                maxNativeZoom: 18
+            })
         };
         baseLayers.light.addTo(map);
 
