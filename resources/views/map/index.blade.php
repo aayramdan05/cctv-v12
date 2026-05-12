@@ -337,11 +337,8 @@
 
             let streamUrl = camera.stream_url;
             
-            // Gunakan Proxy untuk Stream agar lancar
-            const proxyUrl = `{{ route("api.map.proxy") }}?url=${encodeURIComponent(streamUrl)}`;
-
             if (streamUrl.includes('stream.html') || streamUrl.includes('iframe')) {
-                iframePlayer.src = proxyUrl;
+                iframePlayer.src = streamUrl;
                 iframePlayer.classList.remove('hidden');
                 hlsPlayer.classList.add('hidden');
                 iframePlayer.onload = () => videoLoader.classList.add('hidden');

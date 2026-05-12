@@ -272,7 +272,7 @@
                                class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all placeholder-slate-400 text-slate-700 shadow-sm">
                     </div>
                     
-                    <div class="hidden lg:grid grid-cols-2 gap-2">
+                    <div class="hidden sm:grid grid-cols-2 gap-2">
                         <!-- 1. NODE FILTER -->
                         <div class="relative group">
                             <i class="fas fa-server absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-cyan-500 transition-colors pointer-events-none"></i>
