@@ -153,6 +153,21 @@ class Cctv extends Model
         // Fallback: Jika tidak ada server_id, gunakan path standar (Master)
         return "/stream.html?src={$alias}{$params}";
     }
+
+    /**
+     * URL HLS (m3u8) untuk Mobile (Android/iOS)
+     */
+    public function getHlsStreamUrlAttribute()
+    {
+        $alias = "camera_" . $this->id;
+        
+        if ($this->server) {
+            $nodePrefix = "/node" . $this->server->id; 
+            return "{$nodePrefix}/api/stream.m3u8?src={$alias}";
+        }
+
+        return "/api/stream.m3u8?src={$alias}";
+    }
     /**
      * HELPER BARU: Generate URL Rekaman (Multi-Node Support)
      * Ini fungsi yang menyebabkan error 500 jika hilang

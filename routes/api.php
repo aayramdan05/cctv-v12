@@ -54,16 +54,19 @@ Route::middleware('auth:sanctum')->group(function () {
         return $user->cctvs()->with('building')->get()->map(function($cam) use ($currentToken) {
             
             // Logika untuk menempelkan token ke URL
-            $separator = parse_url($cam->live_stream_url, PHP_URL_QUERY) ? '&' : '?';
+            $separatorLive = parse_url($cam->live_stream_url, PHP_URL_QUERY) ? '&' : '?';
+            $separatorHls = parse_url($cam->hls_stream_url, PHP_URL_QUERY) ? '&' : '?';
             
             // Tempelkan token di ujung URL
-            $signedUrl = $cam->live_stream_url . $separator . "api_token=" . $currentToken;
+            $signedLiveUrl = $cam->live_stream_url . $separatorLive . "api_token=" . $currentToken;
+            $signedHlsUrl = $cam->hls_stream_url . $separatorHls . "api_token=" . $currentToken;
 
             return [
                 'id' => $cam->id,
                 'name' => $cam->nama_cctv,
                 'building' => $cam->building->nama_gedung ?? '-',
-                'stream_url' => $signedUrl, // <--- URL SAKTI
+                'live_url' => $signedLiveUrl, // Untuk Web View
+                'hls_url' => $signedHlsUrl,   // <--- UNTUK MOBILE (M3U8)
                 'status' => 'online'
             ];
         });
