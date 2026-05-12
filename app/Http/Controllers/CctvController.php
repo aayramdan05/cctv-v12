@@ -87,6 +87,7 @@ class CctvController extends Controller
                 'onvif_user'     => 'nullable|string',
                 'onvif_password' => 'nullable|string',
                 
+                'penempatan'     => 'required|in:Indoor,Outdoor',
                 'status'        => 'nullable|in:online,offline,maintenance',
             ]);
 
@@ -133,6 +134,7 @@ class CctvController extends Controller
                 'onvif_user'     => 'nullable|string',
                 'onvif_password' => 'nullable|string',
 
+                'penempatan'     => 'required|in:Indoor,Outdoor',
                 'status'        => 'required|in:online,offline,maintenance',
             ]);
 
