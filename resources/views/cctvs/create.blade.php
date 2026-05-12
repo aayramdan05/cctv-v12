@@ -18,33 +18,76 @@
                 <form action="{{ route('cctv.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                     @csrf
                     
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung</label>
-                        <select name="building_id" id="building_select" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required onchange="detectPlacement()">
-                            <option value="" disabled selected>Pilih Gedung...</option>
+                    <div class="md:col-span-2" x-data="{ 
+                        open: false, 
+                        search: '', 
+                        selectedId: '{{ old('building_id') }}',
+                        selectedName: '{{ old('building_id') ? \App\Models\Building::find(old('building_id'))->nama_gedung : '' }}',
+                        buildings: [
                             @foreach($buildings as $building)
-                                <option value="{{ $building->id }}" data-kode="{{ $building->kode_gedung }}">{{ $building->nama_gedung }}</option>
+                                { id: '{{ $building->id }}', name: '{{ $building->nama_gedung }}', fakultas: '{{ $building->fakultas }}', kode: '{{ $building->kode_gedung }}' },
                             @endforeach
-                        </select>
+                        ],
+                        get filteredBuildings() {
+                            if (this.search === '') return this.buildings;
+                            return this.buildings.filter(b => b.name.toLowerCase().includes(this.search.toLowerCase()) || b.fakultas.toLowerCase().includes(this.search.toLowerCase()));
+                        },
+                        selectBuilding(b) {
+                            this.selectedId = b.id;
+                            this.selectedName = b.name;
+                            this.open = false;
+                            this.search = '';
+                            $nextTick(() => { detectPlacement(b.kode); });
+                        }
+                    }">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung (Searchable)</label>
+                        <div class="relative">
+                            <input type="hidden" name="building_id" :value="selectedId">
+                            <button type="button" @click="open = !open" 
+                                    class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-left flex justify-between items-center focus:ring-2 focus:ring-cyan-200">
+                                <span x-text="selectedName || 'Pilih Gedung...'" class="truncate"></span>
+                                <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+                            </button>
+                            
+                            <div x-show="open" @click.away="open = false" x-cloak 
+                                 class="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                                <div class="p-2 border-b border-slate-100 bg-slate-50">
+                                    <input type="text" x-model="search" placeholder="Ketik nama gedung atau fakultas..." 
+                                           class="w-full px-3 py-2 text-sm rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-200">
+                                </div>
+                                <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                                    <template x-for="b in filteredBuildings" :key="b.id">
+                                        <button type="button" @click="selectBuilding(b)" 
+                                                class="w-full px-4 py-2.5 text-left text-sm hover:bg-cyan-50 transition-colors flex flex-col">
+                                            <span class="font-bold text-slate-700" x-text="b.name"></span>
+                                            <span class="text-[10px] text-slate-400 uppercase tracking-wider" x-text="b.fakultas"></span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filteredBuildings.length === 0" class="p-4 text-center text-xs text-slate-400 italic">
+                                        Gedung tidak ditemukan...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Penempatan</label>
                         <select name="penempatan" id="penempatan_select" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required>
-                            <option value="Indoor">Indoor</option>
-                            <option value="Outdoor">Outdoor</option>
+                            <option value="Indoor" {{ old('penempatan') == 'Indoor' ? 'selected' : '' }}>Indoor</option>
+                            <option value="Outdoor" {{ old('penempatan') == 'Outdoor' ? 'selected' : '' }}>Outdoor</option>
                         </select>
                         <p class="text-[10px] text-slate-400 mt-1">Otomatis terdeteksi berdasarkan kode gedung.</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Kode CCTV</label>
-                        <input type="text" name="kode_cctv" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="CAM-001" required>
+                        <input type="text" name="kode_cctv" value="{{ old('kode_cctv') }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="CAM-001" required>
                     </div>
                     
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Kamera</label>
-                        <input type="text" name="nama_cctv" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Lobi Utama" required>
+                        <input type="text" name="nama_cctv" value="{{ old('nama_cctv') }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Lobi Utama" required>
                     </div>
 
                     <div>
@@ -52,8 +95,7 @@
                         <select name="server_id" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200">
                             <option value="">-- Master Server (Lokal) --</option>
                             @foreach($servers as $server)
-                                <option value="{{ $server->id }}" 
-                                    {{ (isset($cctv) && $cctv->server_id == $server->id) ? 'selected' : '' }}>
+                                <option value="{{ $server->id }}" {{ old('server_id') == $server->id ? 'selected' : '' }}>
                                     {{ $server->name }} ({{ $server->ip_address }})
                                 </option>
                             @endforeach
@@ -127,6 +169,7 @@
                         <label class="block text-sm font-semibold text-slate-700 mb-2">RTSP / HTTP URL</label>
                         <div class="flex gap-2">
                             <input type="text" name="rtsp_url" id="rtsp_url_input" 
+                                   value="{{ old('rtsp_url') }}"
                                    class="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 font-mono text-sm text-slate-600 focus:bg-white transition-all" 
                                    placeholder="rtsp://..." required>
                             
@@ -155,7 +198,7 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">RTSP User</label>
-                        <input type="text" name="rtsp_user" id="rtsp_user_input" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:bg-white transition-all" placeholder="admin">
+                        <input type="text" name="rtsp_user" id="rtsp_user_input" value="{{ old('rtsp_user') }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200 focus:bg-white transition-all" placeholder="admin">
                     </div>
 
                     <div>
@@ -172,12 +215,12 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">ONVIF Port</label>
-                        <input type="number" name="onvif_port" value="80" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="80 atau 8000">
+                        <input type="number" name="onvif_port" value="{{ old('onvif_port', 80) }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="80 atau 8000">
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">ONVIF User</label>
-                        <input type="text" name="onvif_user" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="admin">
+                        <input type="text" name="onvif_user" value="{{ old('onvif_user') }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="admin">
                     </div>
 
                     <div class="md:col-span-2">
@@ -239,16 +282,24 @@
             urlInput.value = url;
         }
 
-        function detectPlacement() {
-            const select = document.getElementById('building_select');
-            const selectedOption = select.options[select.selectedIndex];
-            const kodeGedung = selectedOption.getAttribute('data-kode') || '';
-            const penempatanSelect = document.getElementById('penempatan_select');
+        function detectPlacement(kode = null) {
+            let kodeGedung = kode;
+            
+            if (!kodeGedung) {
+                const select = document.getElementById('building_select');
+                if (select) {
+                    const selectedOption = select.options[select.selectedIndex];
+                    kodeGedung = selectedOption.getAttribute('data-kode') || '';
+                }
+            }
 
-            if (kodeGedung.startsWith('WM')) {
-                penempatanSelect.value = 'Indoor';
-            } else {
-                penempatanSelect.value = 'Outdoor';
+            const penempatanSelect = document.getElementById('penempatan_select');
+            if (penempatanSelect && kodeGedung) {
+                if (kodeGedung.startsWith('WM')) {
+                    penempatanSelect.value = 'Indoor';
+                } else {
+                    penempatanSelect.value = 'Outdoor';
+                }
             }
         }
 

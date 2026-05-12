@@ -320,10 +320,28 @@
             document.getElementById('modal-title-text').innerText = camera.name;
             document.getElementById('modal-location-text').innerText = camera.building;
 
+            // Perhitungan Posisi Agar Tetap di Tengah/Dalam Layar
             const point = event.containerPoint; 
-            let top = point.y - 140; let left = point.x + 40;
-            if (left + 420 > window.innerWidth) left = point.x - 440;
-            if (top + 350 > window.innerHeight) top = window.innerHeight - 370;
+            const modalWidth = 400;
+            const modalHeight = 350;
+            
+            let top = point.y - (modalHeight / 2); 
+            let left = point.x + 40;
+
+            // Proteksi agar tidak keluar kanan
+            if (left + modalWidth > window.innerWidth) {
+                left = point.x - modalWidth - 40;
+            }
+            
+            // Proteksi agar tidak keluar kiri
+            if (left < 10) left = 10;
+
+            // Proteksi agar tidak keluar bawah
+            if (top + modalHeight > window.innerHeight) {
+                top = window.innerHeight - modalHeight - 20;
+            }
+            
+            // Proteksi agar tidak keluar atas
             if (top < 20) top = 20;
 
             modal.style.top = `${top}px`;

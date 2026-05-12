@@ -64,22 +64,64 @@
                         </div>
                     </div>
 
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung</label>
-                        <select name="building_id" id="building_select" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required onchange="detectPlacement()">
+                    <div class="md:col-span-2" x-data="{ 
+                        open: false, 
+                        search: '', 
+                        selectedId: '{{ old('building_id', $cctv->building_id) }}',
+                        selectedName: '{{ $cctv->building->nama_gedung }}',
+                        buildings: [
                             @foreach($buildings as $building)
-                                <option value="{{ $building->id }}" data-kode="{{ $building->kode_gedung }}" {{ $cctv->building_id == $building->id ? 'selected' : '' }}>
-                                    {{ $building->nama_gedung }} ({{ $building->fakultas }})
-                                </option>
+                                { id: '{{ $building->id }}', name: '{{ $building->nama_gedung }}', fakultas: '{{ $building->fakultas }}', kode: '{{ $building->kode_gedung }}' },
                             @endforeach
-                        </select>
+                        ],
+                        get filteredBuildings() {
+                            if (this.search === '') return this.buildings;
+                            return this.buildings.filter(b => b.name.toLowerCase().includes(this.search.toLowerCase()) || b.fakultas.toLowerCase().includes(this.search.toLowerCase()));
+                        },
+                        selectBuilding(b) {
+                            this.selectedId = b.id;
+                            this.selectedName = b.name;
+                            this.open = false;
+                            this.search = '';
+                            $nextTick(() => { detectPlacement(b.kode); });
+                        }
+                    }">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Gedung (Searchable)</label>
+                        <div class="relative">
+                            <input type="hidden" name="building_id" :value="selectedId">
+                            <button type="button" @click="open = !open" 
+                                    class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-left flex justify-between items-center focus:ring-2 focus:ring-cyan-200">
+                                <span x-text="selectedName || 'Pilih Gedung...'" class="truncate"></span>
+                                <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+                            </button>
+                            
+                            <div x-show="open" @click.away="open = false" x-cloak 
+                                 class="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                                <div class="p-2 border-b border-slate-100 bg-slate-50">
+                                    <input type="text" x-model="search" placeholder="Ketik nama gedung atau fakultas..." 
+                                           class="w-full px-3 py-2 text-sm rounded-lg border-slate-200 focus:ring-2 focus:ring-cyan-200">
+                                </div>
+                                <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                                    <template x-for="b in filteredBuildings" :key="b.id">
+                                        <button type="button" @click="selectBuilding(b)" 
+                                                class="w-full px-4 py-2.5 text-left text-sm hover:bg-cyan-50 transition-colors flex flex-col">
+                                            <span class="font-bold text-slate-700" x-text="b.name"></span>
+                                            <span class="text-[10px] text-slate-400 uppercase tracking-wider" x-text="b.fakultas"></span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filteredBuildings.length === 0" class="p-4 text-center text-xs text-slate-400 italic">
+                                        Gedung tidak ditemukan...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Penempatan</label>
                         <select name="penempatan" id="penempatan_select" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200" required>
-                            <option value="Indoor" {{ $cctv->penempatan == 'Indoor' ? 'selected' : '' }}>Indoor</option>
-                            <option value="Outdoor" {{ $cctv->penempatan == 'Outdoor' ? 'selected' : '' }}>Outdoor</option>
+                            <option value="Indoor" {{ old('penempatan', $cctv->penempatan) == 'Indoor' ? 'selected' : '' }}>Indoor</option>
+                            <option value="Outdoor" {{ old('penempatan', $cctv->penempatan) == 'Outdoor' ? 'selected' : '' }}>Outdoor</option>
                         </select>
                     </div>
 
@@ -99,7 +141,7 @@
                             <option value="">-- Master Server (Lokal) --</option>
                             @foreach($servers as $server)
                                 <option value="{{ $server->id }}" 
-                                    {{ (isset($cctv) && $cctv->server_id == $server->id) ? 'selected' : '' }}>
+                                    {{ old('server_id', $cctv->server_id) == $server->id ? 'selected' : '' }}>
                                     {{ $server->name }} ({{ $server->ip_address }})
                                 </option>
                             @endforeach
@@ -110,9 +152,9 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Status Sistem</label>
                         <select name="status" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-cyan-200">
-                            <option value="online" {{ $cctv->status == 'online' ? 'selected' : '' }}>🟢 Online</option>
-                            <option value="offline" {{ $cctv->status == 'offline' ? 'selected' : '' }}>🔴 Offline</option>
-                            <option value="maintenance" {{ $cctv->status == 'maintenance' ? 'selected' : '' }}>🟠 Maintenance</option>
+                            <option value="online" {{ old('status', $cctv->status) == 'online' ? 'selected' : '' }}>🟢 Online</option>
+                            <option value="offline" {{ old('status', $cctv->status) == 'offline' ? 'selected' : '' }}>🔴 Offline</option>
+                            <option value="maintenance" {{ old('status', $cctv->status) == 'maintenance' ? 'selected' : '' }}>🟠 Maintenance</option>
                         </select>
                         <p class="text-xs text-slate-400 mt-1">Status akan terupdate otomatis oleh sistem setiap 5 menit.</p>
                     </div>
@@ -254,16 +296,24 @@
             urlInput.value = url;
         }
 
-        function detectPlacement() {
-            const select = document.getElementById('building_select');
-            const selectedOption = select.options[select.selectedIndex];
-            const kodeGedung = selectedOption.getAttribute('data-kode') || '';
-            const penempatanSelect = document.getElementById('penempatan_select');
+        function detectPlacement(kode = null) {
+            let kodeGedung = kode;
+            
+            if (!kodeGedung) {
+                const select = document.getElementById('building_select');
+                if (select) {
+                    const selectedOption = select.options[select.selectedIndex];
+                    kodeGedung = selectedOption.getAttribute('data-kode') || '';
+                }
+            }
 
-            if (kodeGedung.startsWith('WM')) {
-                penempatanSelect.value = 'Indoor';
-            } else {
-                penempatanSelect.value = 'Outdoor';
+            const penempatanSelect = document.getElementById('penempatan_select');
+            if (penempatanSelect && kodeGedung) {
+                if (kodeGedung.startsWith('WM')) {
+                    penempatanSelect.value = 'Indoor';
+                } else {
+                    penempatanSelect.value = 'Outdoor';
+                }
             }
         }
 
