@@ -281,7 +281,7 @@
         <footer class="fixed bottom-0 right-0 left-0 z-[1000] transition-all duration-300 shadow-[0_-4px_15px_rgba(249,115,22,0.15)]" :class="sidebarOpen ? 'ml-80' : 'ml-0'">
             <div class="bg-slate-950 border-t border-orange-600 text-white/90 h-9 flex items-center overflow-hidden">
                 <div class="animate-marquee px-4 text-[10px] font-medium tracking-wide uppercase">
-                    SkyPad System &copy; INFRA Direktorat Transformasi Digital Universitas Padjadjaran 2026
+                    SkyPad System &copy; INFRA Direktorat Perencanaan Sistem Informasi Transformasi Digital Universitas Padjadjaran 2026
                 </div>
             </div>
         </footer>
