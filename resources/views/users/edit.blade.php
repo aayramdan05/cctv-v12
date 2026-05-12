@@ -88,24 +88,40 @@
                         </div>
                     @endif
 
-                    <div id="cctv_access_section" class="bg-slate-50 p-4 rounded-xl border border-slate-200" style="display: none;">
-                        <h3 class="text-sm font-bold text-slate-700 mb-3">Hak Akses CCTV</h3>
-                        <p class="text-xs text-slate-500 mb-4">Centang kamera yang boleh dipantau oleh user/aplikasi ini.</p>
+                    <div id="cctv_access_section" 
+                         class="bg-slate-50 p-6 rounded-2xl border border-slate-200" 
+                         style="display: none;"
+                         x-data="{ search: '' }">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-700">Hak Akses CCTV</h3>
+                                <p class="text-[10px] text-slate-500">Centang kamera yang boleh dipantau oleh user/aplikasi ini.</p>
+                            </div>
+                            <!-- SEARCH INPUT -->
+                            <div class="relative w-full md:w-64">
+                                <input type="text" x-model="search" placeholder="Cari Kode / Nama Kamera..." 
+                                       class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-cyan-200 shadow-sm transition-all">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                            </div>
+                        </div>
                         
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto custom-scrollbar">
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-72 overflow-y-auto custom-scrollbar p-1">
                             @foreach($cctvs as $cctv)
-                                <label class="flex items-center space-x-3 p-2 rounded hover:bg-white transition cursor-pointer border border-transparent hover:border-cyan-100">
+                                <label x-show="search === '' || '{{ strtolower($cctv->kode_cctv) }}'.includes(search.toLowerCase()) || '{{ strtolower($cctv->nama_cctv) }}'.includes(search.toLowerCase())"
+                                       class="flex items-center space-x-3 p-3 rounded-xl bg-white border border-slate-100 hover:border-cyan-200 hover:shadow-sm transition cursor-pointer group">
                                     <input type="checkbox" name="cctv_access[]" value="{{ $cctv->id }}" 
-                                           class="rounded text-cyan-500 focus:ring-cyan-200"
-                                           {{-- PERBAIKAN 2: Gunakan in_array untuk mengecek data pivot --}}
+                                           class="rounded text-cyan-500 focus:ring-cyan-200 transition-all"
                                            {{ in_array($cctv->id, $assignedCctvs) ? 'checked' : '' }}>
                                     
-                                    <div class="text-xs">
-                                        <span class="block font-bold text-slate-700">{{ $cctv->kode_cctv }}</span>
-                                        <span class="block text-slate-500 truncate max-w-[150px]">{{ $cctv->nama_cctv }}</span>
+                                    <div class="text-[10px] leading-tight">
+                                        <span class="block font-bold text-slate-700 group-hover:text-cyan-600">{{ $cctv->kode_cctv }}</span>
+                                        <span class="block text-slate-400 truncate max-w-[120px]">{{ $cctv->nama_cctv }}</span>
                                     </div>
                                 </label>
                             @endforeach
+                        </div>
+                        <div x-show="search !== ''" class="mt-4 text-center">
+                            <p class="text-[10px] text-slate-400 italic" x-text="'Menampilkan hasil pencarian untuk \'' + search + '\''"></p>
                         </div>
                     </div>
 
