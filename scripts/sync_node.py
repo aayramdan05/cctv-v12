@@ -270,7 +270,7 @@ def record_worker(cam_id, stream_url):
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
-                '-stimeout', '30000000', # Timeout koneksi (30 detik dalam mikrodetik)
+                '-timeout', '30000000', # Timeout koneksi (30 detik dalam mikrodetik)
                 '-i', stream_url,
                 '-c', 'copy', '-map', '0',
                 '-f', 'mp4',

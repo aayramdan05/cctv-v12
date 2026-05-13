@@ -50,7 +50,8 @@ class FfmpegStatusController extends Controller
                 ->first();
 
             if ($latestRec) {
-                if ($latestRec->created_at->diffInMinutes($now) < 25) {
+                // Gunakan threshold 30 menit agar mencakup siklus rekaman terakhir yang sudah SELESAI
+                if ($latestRec->created_at->diffInMinutes($now) < 30) {
                     $isRecording = true;
                     $activeStreams++;
                 }
