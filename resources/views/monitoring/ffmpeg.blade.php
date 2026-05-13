@@ -24,7 +24,7 @@
                     </div>
                     <div class="ml-auto">
                         <span class="px-3 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-widest border border-green-100">
-                            {{ $stat->go2rtc }}
+                            {{ $stat->go2rtc_status }}
                         </span>
                     </div>
                 </div>
