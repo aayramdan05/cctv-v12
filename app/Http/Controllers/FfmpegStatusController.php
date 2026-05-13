@@ -73,29 +73,44 @@ class FfmpegStatusController extends Controller
             ];
         }
 
-        // 2. RESOURCE STATS PER NODE
+        // 2. RESOURCE STATS PER NODE (REAL-TIME FETCH)
         $nodeStats = [];
         foreach ($servers as $srv) {
-            $nodeCameras = $cctvs->where('server_id', $srv->id);
-            $activeNodeStreams = 0;
+            $nodeCameras = Cctv::where('server_id', $srv->id)->get();
+            $dbCount = $nodeCameras->count();
             
-            // Hitung stream aktif di node ini
-            foreach ($nodeCameras as $cam) {
-                $latest = \App\Models\Recording::where('cctv_id', $cam->id)->orderBy('created_at', 'desc')->first();
-                if ($latest && $latest->created_at->diffInMinutes($now) < 25) {
-                    $activeNodeStreams++;
+            // Default Values (Fallback if node offline)
+            $go2rtcCount = 0;
+            $ffmpegRealCount = 0;
+            $nodeStatus = 'Offline';
+            $go2rtcStatus = 'Offline';
+
+            try {
+                // A. Cek Go2RTC (Port 1984)
+                $go2rtcRes = \Illuminate\Support\Facades\Http::timeout(2)->get("http://{$srv->ip_address}:1984/api/streams");
+                if ($go2rtcRes->successful()) {
+                    $go2rtcCount = count($go2rtcRes->json() ?: []);
+                    $go2rtcStatus = 'Online';
                 }
+
+                // B. Cek Health API Baru (Port 1985)
+                $healthRes = \Illuminate\Support\Facades\Http::timeout(2)->get("http://{$srv->ip_address}:1985/health");
+                if ($healthRes->successful()) {
+                    $healthData = $healthRes->json();
+                    $ffmpegRealCount = $healthData['ffmpeg_count'] ?? 0;
+                    $nodeStatus = 'Online';
+                }
+            } catch (\Exception $e) {
+                // Keep default values
             }
 
-            // Hitung Storage Node (Sum dari DB sebagai estimasi terpakai)
+            // Hitung Storage Node (Estimasi terpakai)
             $usedMb = \App\Models\Recording::whereHas('cctv', function($q) use ($srv) {
                 $q->where('server_id', $srv->id);
             })->sum('size_mb');
 
-            // Kita gunakan basis data dari df -h yang Mas kasih (87TB Total)
-            // Untuk simulasi visual yang akurat
-            $totalNodeGb = 87000; // 87 TB
-            $usedNodeGb = 52000 + ($usedMb / 1024); // 52TB Base + Penambahan baru
+            $totalNodeGb = 87000;
+            $usedNodeGb = 52000 + ($usedMb / 1024);
             $percent = ($usedNodeGb / $totalNodeGb) * 100;
 
             $nodeStats[] = (object) [
@@ -104,11 +119,12 @@ class FfmpegStatusController extends Controller
                 'ip' => $srv->ip_address,
                 'disk_text' => number_format($usedNodeGb / 1000, 1) . 'T / ' . ($totalNodeGb / 1000) . 'T',
                 'disk_percent' => round($percent, 1),
-                'bandwidth' => number_format($activeNodeStreams * 1.5, 1) . ' Mbps',
-                'active_streams' => $activeNodeStreams,
-                'ffmpeg' => $activeNodeStreams > 0 ? 'Running' : 'Idle',
-                'onvif' => $nodeCameras->whereNotNull('onvif_user')->count() > 0 ? 'Active' : 'Standby',
-                'go2rtc' => 'Online'
+                'bandwidth' => number_format($ffmpegRealCount * 1.5, 1) . ' Mbps',
+                'db_count' => $dbCount,
+                'go2rtc_count' => $go2rtcCount,
+                'ffmpeg_count' => $ffmpegRealCount,
+                'status' => $nodeStatus,
+                'go2rtc_status' => $go2rtcStatus
             ];
         }
 

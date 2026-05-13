@@ -31,33 +31,48 @@
 
                 <div class="grid grid-cols-2 gap-8">
                     <!-- Storage Info -->
-                    <div class="space-y-3">
+                    <div class="space-y-3 border-r border-slate-100 pr-4">
                         <div class="flex justify-between items-end">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Storage NFS</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Storage Cluster</span>
                             <span class="text-xs font-mono font-bold text-slate-700">{{ $stat->disk_text }}</span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-50">
                             <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-1000" style="width: {{ $stat->disk_percent }}%"></div>
                         </div>
-                        <p class="text-[10px] text-slate-400 text-right">{{ $stat->disk_percent }}% Used</p>
-                    </div>
-
-                    <!-- Services & Bandwidth -->
-                    <div class="grid grid-cols-1 gap-3">
-                        <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase">Bandwidth</span>
+                        <p class="text-[10px] text-slate-400 text-right">{{ $stat->disk_percent }}% Full</p>
+                        
+                        <div class="mt-4 flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Est. Bandwidth</span>
                             <span class="text-xs font-bold text-cyan-700">{{ $stat->bandwidth }}</span>
                         </div>
-                        <div class="flex items-center justify-between px-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">FFMPEG Record</span>
-                            <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[9px] font-bold uppercase tracking-tighter border border-blue-200">
-                                {{ $stat->ffmpeg }}
+                    </div>
+
+                    <!-- SYNC VERIFICATION (NEW) -->
+                    <div class="space-y-3">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Sync Verification</span>
+                        
+                        <!-- DB vs Go2RTC -->
+                        <div class="flex items-center justify-between p-2 rounded-xl border {{ $stat->db_count == $stat->go2rtc_count ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-200' }}">
+                            <span class="text-[9px] font-bold {{ $stat->db_count == $stat->go2rtc_count ? 'text-emerald-600' : 'text-amber-600' }}">DB vs Go2RTC</span>
+                            <span class="text-xs font-bold {{ $stat->db_count == $stat->go2rtc_count ? 'text-emerald-700' : 'text-amber-700' }}">
+                                {{ $stat->db_count }} / {{ $stat->go2rtc_count }}
                             </span>
                         </div>
-                        <div class="flex items-center justify-between px-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">ONVIF Agent</span>
-                            <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[9px] font-bold uppercase tracking-tighter border border-indigo-200">
-                                {{ $stat->onvif }}
+
+                        <!-- FFMPEG Process -->
+                        <div class="flex items-center justify-between p-2 rounded-xl border {{ $stat->ffmpeg_count == $stat->db_count ? 'bg-blue-50 border-blue-100' : 'bg-rose-50 border-rose-200' }}">
+                            <span class="text-[9px] font-bold {{ $stat->ffmpeg_count == $stat->db_count ? 'text-blue-600' : 'text-rose-600' }}">Active Recording</span>
+                            <span class="text-xs font-bold {{ $stat->ffmpeg_count == $stat->db_count ? 'text-blue-700' : 'text-rose-700' }}">
+                                {{ $stat->ffmpeg_count }} Proc
+                            </span>
+                        </div>
+
+                        <div class="flex gap-2">
+                             <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] font-bold uppercase border border-slate-200">
+                                API 1985: {{ $stat->status }}
+                            </span>
+                             <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] font-bold uppercase border border-slate-200">
+                                RTC 1984: {{ $stat->go2rtc_status }}
                             </span>
                         </div>
                     </div>
