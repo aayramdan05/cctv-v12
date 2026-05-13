@@ -35,7 +35,7 @@ return [
         'client_id' => env('PAUS_CLIENT_ID'),
         'client_secret' => env('PAUS_CLIENT_SECRET'),
         'redirect' => env('PAUS_REDIRECT'),
-        'base_url' => env('PAUS_BASE_URL', 'https://pintu.unpad.ac.id'),
+        'base_url' => env('PAUS_BASE_URL', 'https://paus.unpad.ac.id'),
     ],
 
 ];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
 
@@ -15,6 +16,8 @@ class PausAuthController extends Controller
      */
     public function redirectToPaus()
     {
+        Log::info('Redirecting to PAUS SSO with redirect_uri: ' . config('services.paus.redirect'));
+        
         return Socialite::driver('paus')
             ->scopes(['email', 'profile'])
             ->with(['redirect_uri' => config('services.paus.redirect')])
@@ -26,8 +29,12 @@ class PausAuthController extends Controller
      */
     public function handlePausCallback()
     {
+        Log::info('Received callback from PAUS SSO');
+
         try {
             $pausUser = Socialite::driver('paus')->user();
+            
+            Log::info('PAUS User authenticated: ' . $pausUser->getEmail());
             
             // 1. Cari user berdasarkan paus_id atau email
             $user = User::where('paus_id', $pausUser->getId())

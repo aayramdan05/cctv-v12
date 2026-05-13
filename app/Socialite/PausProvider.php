@@ -14,7 +14,7 @@ class PausProvider extends AbstractProvider implements ProviderInterface
      *
      * @var string
      */
-    protected $scopeSeparator = ' ';
+    protected $scopeSeparator = ',';
 
     /**
      * Get the authentication URL for the provider.
