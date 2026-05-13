@@ -19,7 +19,7 @@ class PausAuthController extends Controller
         Log::info('Redirecting to PAUS SSO with redirect_uri: ' . config('services.paus.redirect'));
         
         return Socialite::driver('paus')
-            ->scopes(['email', 'profile'])
+            ->scopes(['openid', 'profile', 'email'])
             ->with(['redirect_uri' => config('services.paus.redirect')])
             ->redirect();
     }
