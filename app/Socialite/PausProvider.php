@@ -10,6 +10,13 @@ use Illuminate\Support\Arr;
 class PausProvider extends AbstractProvider implements ProviderInterface
 {
     /**
+     * The separator used for the scopes.
+     *
+     * @var string
+     */
+    protected $scopeSeparator = ' ';
+
+    /**
      * Get the authentication URL for the provider.
      *
      * @param  string  $state

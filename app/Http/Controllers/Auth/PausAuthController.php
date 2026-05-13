@@ -15,14 +15,11 @@ class PausAuthController extends Controller
      */
     public function redirectToPaus()
     {
-        // Paksa redirect_uri pakai HTTPS
-        $url = Socialite::driver('paus')
+        return Socialite::driver('paus')
             ->scopes(['email', 'profile'])
+            ->stateless() // Coba mode stateless dulu biar tidak bentrok session
             ->with(['redirect_uri' => config('services.paus.redirect')])
-            ->redirect()
-            ->getTargetUrl();
-
-        return "Cek URL ini: <br><a href='$url'>$url</a><br><br>Pastikan redirect_uri di dalam URL tersebut sudah sesuai dengan yang terdaftar di PAUS.";
+            ->redirect();
     }
 
     /**
@@ -31,7 +28,7 @@ class PausAuthController extends Controller
     public function handlePausCallback()
     {
         try {
-            $pausUser = Socialite::driver('paus')->user();
+            $pausUser = Socialite::driver('paus')->stateless()->user();
             
             // 1. Cari user berdasarkan paus_id atau email
             $user = User::where('paus_id', $pausUser->getId())
