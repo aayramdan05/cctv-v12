@@ -21,11 +21,17 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\StreamAuthController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\Auth\PausAuthController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+// SSO Unpad (PAUS) Authentication
+Route::get('/auth/paus', [PausAuthController::class, 'redirectToPaus'])->name('auth.paus');
+Route::get('/auth/paus/callback', [PausAuthController::class, 'handlePausCallback']);
 
 Route::get('/', function () {
     return view('welcome');

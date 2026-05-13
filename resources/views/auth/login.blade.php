@@ -124,6 +124,24 @@
                         Sign In
                     </button>
                 </form>
+
+                <div class="mt-6">
+                    <div class="relative mb-6">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-slate-200"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-slate-400">Atau login dengan</span>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('auth.paus') }}" class="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group">
+                        <div class="w-6 h-6 rounded bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-[10px] group-hover:scale-110 transition-transform">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        PAUS ID (SSO Unpad)
+                    </a>
+                </div>
                 
                 <div class="mt-8 text-center">
                     <p class="text-sm text-slate-400">

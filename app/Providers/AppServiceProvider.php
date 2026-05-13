@@ -20,9 +20,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Deteksi header dari Proxy Kampus
-        // Jika proxy mengirim header 'X-Forwarded-Proto: https', paksa HTTPS
         if (request()->header('X-Forwarded-Proto') == 'https') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
+        // Register PAUS Socialite Driver
+        $socialite = $this->app->make('Laravel\Socialite\Contracts\Factory');
+        $socialite->extend('paus', function ($app) use ($socialite) {
+            $config = $app['config']['services.paus'];
+            return $socialite->buildProvider(\App\Socialite\PausProvider::class, $config);
+        });
     }
 }
