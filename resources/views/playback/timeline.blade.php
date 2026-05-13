@@ -103,50 +103,84 @@
             </form>
         </div>
 
-        <!-- PLAYER & PLAYLIST CONTAINER (SIDE BY SIDE) -->
-        <div class="flex flex-1 gap-6 overflow-hidden min-h-0 flex-col lg:flex-row">
-            <!-- VIDEO PLAYER -->
-            <div class="flex-[3] flex flex-col bg-black rounded-2xl overflow-hidden shadow-xl relative group border border-slate-800 min-h-[300px]">
-                <video id="main-player" class="w-full h-full object-contain" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
-                    <source src="" type="video/mp4">
-                </video>
-                <div class="absolute top-4 left-4 px-4 py-2 bg-black/70 backdrop-blur rounded-lg text-white border border-white/10 pointer-events-none transition-opacity duration-500" id="video-info-overlay">
-                    <div id="current-video-info">
-                        <h3 class="font-bold text-sm">Ready to Play</h3>
-                        <p class="text-xs text-gray-300">Pilih rekaman di playlist.</p>
+        <!-- Main Content Grid -->
+        <div class="flex flex-1 gap-4 overflow-hidden min-h-0 flex-col lg:flex-row" 
+             x-data="{ 
+                camSearch: '',
+                selectedCam: {{ $selectedCctvId ?: 'null' }},
+                cameras: {{ $cctvs->map(fn($c) => ['id' => $c->id, 'name' => $c->nama_cctv, 'building' => $c->building->nama_gedung ?? 'N/A'])->toJson() }}
+             }">
+            
+            <!-- LEFT SIDEBAR: CAMERA LIST (SEAMLESS SEARCH) -->
+            <div class="w-full lg:w-64 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden shrink-0">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fas fa-video"></i> Daftar Kamera
+                    </h3>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <input type="text" x-model="camSearch" placeholder="Cari kamera..." 
+                               class="w-full pl-9 pr-4 py-2 rounded-xl bg-white border-slate-200 text-xs focus:ring-cyan-500 focus:border-cyan-500 transition-all">
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                    <template x-for="cam in cameras.filter(i => i.name.toLowerCase().includes(camSearch.toLowerCase()) || i.building.toLowerCase().includes(camSearch.toLowerCase()))" :key="cam.id">
+                        <button type="button" 
+                                @click="window.location.href = `{{ route('playback.index') }}?date={{ $date }}&cctv_id=${cam.id}`"
+                                class="w-full text-left px-3 py-2.5 rounded-xl transition-all group flex flex-col gap-0.5"
+                                :class="cam.id == selectedCam ? 'bg-cyan-600 shadow-lg shadow-cyan-600/20' : 'hover:bg-slate-50 border border-transparent hover:border-slate-100'">
+                            <span class="text-xs font-bold truncate" :class="cam.id == selectedCam ? 'text-white' : 'text-slate-700'" x-text="cam.name"></span>
+                            <span class="text-[10px] truncate" :class="cam.id == selectedCam ? 'text-cyan-100' : 'text-slate-400'" x-text="cam.building"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- MIDDLE: VIDEO PLAYER -->
+            <div class="flex-1 flex flex-col gap-4 min-w-0">
+                <div class="flex-1 flex flex-col bg-black rounded-2xl overflow-hidden shadow-xl relative group border border-slate-800 min-h-[300px]">
+                    <video id="main-player" class="w-full h-full object-contain" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
+                        <source src="" type="video/mp4">
+                    </video>
+                    <div class="absolute top-4 left-4 px-4 py-2 bg-black/70 backdrop-blur rounded-lg text-white border border-white/10 pointer-events-none transition-opacity duration-500" id="video-info-overlay">
+                        <div id="current-video-info">
+                            <h3 class="font-bold text-sm">Ready to Play</h3>
+                            <p class="text-xs text-gray-300">Pilih kamera di samping kiri.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PLAYLIST SIDEBAR -->
-            <div class="flex-1 bg-white rounded-2xl border border-slate-200 flex flex-col overflow-hidden shadow-sm max-w-md lg:max-w-xs relative">
-                <!-- Header Playlist (Berada DI ATAS daftar file) -->
-                <div class="p-3 border-b border-slate-100 bg-slate-50/80 flex flex-col gap-2 backdrop-blur-sm sticky top-0 z-20">
+            <!-- RIGHT SIDEBAR: PLAYLIST -->
+            <div class="w-full lg:w-72 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden shrink-0">
+                <!-- Header Playlist -->
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3">
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-slate-700 text-xs flex items-center gap-2">
-                            <i class="fas fa-list text-slate-400"></i> Playlist
+                            <i class="fas fa-list text-slate-400"></i> File Rekaman
                         </h3>
                         <span class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-500" id="total-files">0</span>
                     </div>
 
                     @if(auth()->user()->role === 'admin')
-                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/50">
+                    <div class="flex items-center justify-between pt-1">
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="select-all-recordings" onchange="toggleSelectAll()" class="w-3.5 h-3.5 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer">
-                            <label for="select-all-recordings" class="text-[10px] font-bold text-slate-500 cursor-pointer">Pilih Semua</label>
+                            <label for="select-all-recordings" class="text-[10px] font-bold text-slate-500 cursor-pointer">Semua</label>
                         </div>
                         <button id="btn-download-selected" onclick="downloadSelected()" disabled 
-                                class="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-400 hover:text-emerald-600 hover:border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1">
+                                class="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition flex items-center gap-1">
                             <i class="fas fa-download"></i> <span id="download-count">0</span>
                         </button>
                     </div>
                     @endif
                 </div>
 
-                <!-- Daftar File (Scrollable) -->
+                <!-- Daftar File -->
                 <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar" id="playlist-container">
                     <div class="text-center py-10 text-slate-400 text-xs flex flex-col items-center">
-                        <i class="fas fa-circle-notch fa-spin mb-2"></i> Memuat data...
+                        <i class="fas fa-arrow-left mb-2 animate-bounce"></i> Pilih kamera terlebih dahulu
                     </div>
                 </div>
             </div>
