@@ -21,13 +21,23 @@
                 @endif
             </div>
             
-            <!-- FORM FILTER -->
-            <form method="GET" id="filter-form" class="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4 w-full xl:w-auto">
+            <!-- FORM FILTER MODERN (Alpine.js) -->
+            <form method="GET" id="filter-form" class="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-1 w-full xl:w-auto"
+                  x-data="{ 
+                      showBuilding: false, 
+                      showCctv: false,
+                      searchBuilding: '',
+                      searchCctv: '',
+                      selectedBuildingName: '{{ $buildings->firstWhere('id', $selectedBuildingId)->nama_gedung ?? 'Semua Gedung' }}',
+                      selectedCctvName: '{{ $cctvs->firstWhere('id', $selectedCctvId)->nama_cctv ?? 'Pilih Kamera' }}',
+                      buildings: {{ $buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung])->toJson() }},
+                      cctvs: {{ $cctvs->map(fn($c) => ['id' => $c->id, 'name' => $c->nama_cctv])->toJson() }}
+                  }">
+                
                 @if(auth()->user()->role !== 'faculty_operator')
-                    <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Fakultas</label>
-                        <select name="faculty" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-32 truncate" onchange="this.form.submit()">
-                            <option value="">-- Semua --</option>
+                    <div class="flex items-center px-3 py-2 border-r border-slate-100">
+                        <select name="faculty" class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-24 truncate" onchange="this.form.submit()">
+                            <option value="">-- Fakultas --</option>
                             @foreach($faculties as $fac)
                                 <option value="{{ $fac }}" {{ $selectedFaculty == $fac ? 'selected' : '' }}>{{ $fac }}</option>
                             @endforeach
@@ -35,30 +45,60 @@
                     </div>
                 @endif
 
-                <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Gedung</label>
-                    <select name="building_id" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-32 truncate" onchange="this.form.submit()">
-                        <option value="">-- Semua --</option>
-                        @foreach($buildings as $b)
-                            <option value="{{ $b->id }}" {{ $selectedBuildingId == $b->id ? 'selected' : '' }}>{{ $b->nama_gedung }}</option>
-                        @endforeach
-                    </select>
+                <!-- SEARCHABLE BUILDING -->
+                <div class="relative px-3 py-2 border-r border-slate-100 min-w-[150px]" @click.away="showBuilding = false">
+                    <button type="button" @click="showBuilding = !showBuilding" class="flex items-center justify-between w-full text-left">
+                        <span class="text-xs font-bold text-slate-700 truncate" x-text="selectedBuildingName"></span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-2"></i>
+                    </button>
+                    <input type="hidden" name="building_id" :value="{{ $selectedBuildingId ?: 'null' }}" id="building_id_input">
+                    
+                    <div x-show="showBuilding" x-transition class="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] p-2">
+                        <input type="text" x-model="searchBuilding" placeholder="Cari Gedung..." 
+                               class="w-full text-xs border-slate-200 rounded-lg mb-2 focus:ring-cyan-500 focus:border-cyan-500">
+                        <div class="max-h-48 overflow-y-auto custom-scrollbar">
+                            <button type="button" @click="document.getElementById('building_id_input').value=''; document.getElementById('filter-form').submit()" 
+                                    class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-lg font-medium text-slate-600">-- Semua Gedung --</button>
+                            <template x-for="b in buildings.filter(i => i.name.toLowerCase().includes(searchBuilding.toLowerCase()))" :key="b.id">
+                                <button type="button" 
+                                        @click="document.getElementById('building_id_input').value=b.id; document.getElementById('filter-form').submit()"
+                                        class="w-full text-left px-3 py-2 text-xs hover:bg-cyan-50 hover:text-cyan-700 rounded-lg transition-colors font-medium text-slate-700"
+                                        x-text="b.name"></button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
-                    <i class="fas fa-video text-slate-400 text-xs"></i>
-                    <select name="cctv_id" id="cctv_selector" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-40 truncate" onchange="this.form.submit()">
-                        @forelse($cctvs as $cam)
-                            <option value="{{ $cam->id }}" {{ $selectedCctvId == $cam->id ? 'selected' : '' }}>{{ $cam->nama_cctv }}</option>
-                        @empty
-                            <option disabled>Tidak ada kamera</option>
-                        @endforelse
-                    </select>
+                <!-- SEARCHABLE CCTV -->
+                <div class="relative px-3 py-2 border-r border-slate-100 min-w-[180px]" @click.away="showCctv = false">
+                    <button type="button" @click="showCctv = !showCctv" class="flex items-center justify-between w-full text-left">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <i class="fas fa-video text-cyan-500 text-[10px]"></i>
+                            <span class="text-xs font-bold text-slate-800 truncate" x-text="selectedCctvName"></span>
+                        </div>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-2"></i>
+                    </button>
+                    <input type="hidden" name="cctv_id" value="{{ $selectedCctvId }}" id="cctv_id_input">
+
+                    <div x-show="showCctv" x-transition class="absolute top-full left-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] p-2">
+                        <input type="text" x-model="searchCctv" placeholder="Cari Kamera..." 
+                               class="w-full text-xs border-slate-200 rounded-lg mb-2 focus:ring-cyan-500 focus:border-cyan-500">
+                        <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                            <template x-for="c in cctvs.filter(i => i.name.toLowerCase().includes(searchCctv.toLowerCase()))" :key="c.id">
+                                <button type="button" 
+                                        @click="document.getElementById('cctv_id_input').value=c.id; document.getElementById('filter-form').submit()"
+                                        class="w-full text-left px-3 py-2 text-xs hover:bg-cyan-50 hover:text-cyan-700 rounded-lg transition-colors font-medium"
+                                        :class="c.id == {{ $selectedCctvId ?: 0 }} ? 'bg-cyan-50 text-cyan-700 font-bold' : 'text-slate-700'"
+                                        x-text="c.name"></button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-calendar text-slate-400 text-xs"></i>
-                    <input type="date" name="date" id="date_selector" value="{{ $date }}" class="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer p-0" onchange="this.form.submit()">
+                <div class="flex items-center px-4 py-2">
+                    <input type="date" name="date" id="date_selector" value="{{ $date }}" 
+                           class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer p-0" 
+                           onchange="this.form.submit()">
                 </div>
             </form>
         </div>
