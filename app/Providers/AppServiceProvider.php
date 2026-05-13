@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Deteksi header dari Proxy Kampus
-        if (request()->header('X-Forwarded-Proto') == 'https') {
+        if (request()->header('X-Forwarded-Proto') == 'https' || request()->getHost() === 'cctv.unpad.net') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 

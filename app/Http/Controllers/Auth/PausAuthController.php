@@ -15,7 +15,11 @@ class PausAuthController extends Controller
      */
     public function redirectToPaus()
     {
-        return Socialite::driver('paus')->redirect();
+        // Paksa redirect_uri pakai HTTPS
+        return Socialite::driver('paus')
+            ->scopes(['email', 'profile'])
+            ->with(['redirect_uri' => config('services.paus.redirect')]) // Ambil dari .env
+            ->redirect();
     }
 
     /**
