@@ -45,9 +45,10 @@ class PausProvider extends AbstractProvider implements ProviderInterface
      */
     protected function getUserByToken($token)
     {
-        $response = $this->getHttpClient()->get(config('services.paus.base_url') . '/api/user', [
+        $response = $this->getHttpClient()->get(config('services.paus.base_url') . '/api/v1/user', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $token,
+                'Accept' => 'application/json',
             ],
         ]);
 
@@ -62,13 +63,14 @@ class PausProvider extends AbstractProvider implements ProviderInterface
      */
     protected function mapUserToObject(array $user)
     {
-        // Sesuaikan dengan format JSON dari PAUS Unpad
-        // Biasanya: { "id": 123, "username": "aay", "name": "Aay Ramdan", "email": "aay@unpad.ac.id" }
-        return (new User)->setRaw($user)->map([
-            'id'       => $user['id'] ?? $user['username'],
-            'nickname' => $user['username'],
-            'name'     => $user['name'],
-            'email'    => $user['email'],
+        // Mendukung format response 'data' atau flat
+        $data = $user['data'] ?? $user;
+
+        return (new User)->setRaw($data)->map([
+            'id'       => $data['id'] ?? $data['paus_id'] ?? $data['username'],
+            'nickname' => $data['username'] ?? $data['paus_username'],
+            'name'     => $data['name'] ?? $data['fullname'] ?? $data['paus_name'],
+            'email'    => $data['email'],
         ]);
     }
 }

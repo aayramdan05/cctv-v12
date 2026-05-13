@@ -17,7 +17,6 @@ class PausAuthController extends Controller
     {
         return Socialite::driver('paus')
             ->scopes(['email', 'profile'])
-            ->stateless() // Coba mode stateless dulu biar tidak bentrok session
             ->with(['redirect_uri' => config('services.paus.redirect')])
             ->redirect();
     }
@@ -28,7 +27,7 @@ class PausAuthController extends Controller
     public function handlePausCallback()
     {
         try {
-            $pausUser = Socialite::driver('paus')->stateless()->user();
+            $pausUser = Socialite::driver('paus')->user();
             
             // 1. Cari user berdasarkan paus_id atau email
             $user = User::where('paus_id', $pausUser->getId())
