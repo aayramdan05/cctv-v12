@@ -84,6 +84,7 @@ class FfmpegStatusController extends Controller
             $ffmpegRealCount = 0;
             $nodeStatus = 'Offline';
             $go2rtcStatus = 'Offline';
+            $missingIds = [];
 
             try {
                 // A. Cek Go2RTC (Port 1984)
@@ -99,6 +100,14 @@ class FfmpegStatusController extends Controller
                     $healthData = $healthRes->json();
                     $ffmpegRealCount = $healthData['ffmpeg_count'] ?? 0;
                     $nodeStatus = 'Online';
+                    
+                    // Deteksi ID yang hilang
+                    $activeIds = $healthData['active_ids'] ?? [];
+                    foreach ($nodeCameras as $cam) {
+                        if (!in_array($cam->id, $activeIds)) {
+                            $missingIds[] = $cam->id;
+                        }
+                    }
                 }
             } catch (\Exception $e) {
                 // Keep default values
@@ -123,6 +132,7 @@ class FfmpegStatusController extends Controller
                 'db_count' => $dbCount,
                 'go2rtc_count' => $go2rtcCount,
                 'ffmpeg_count' => $ffmpegRealCount,
+                'missing_ids' => $missingIds,
                 'status' => $nodeStatus,
                 'go2rtc_status' => $go2rtcStatus
             ];

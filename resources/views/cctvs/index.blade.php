@@ -228,6 +228,10 @@
                                 <th class="pb-4 pl-4 font-semibold w-10">
                                     <input type="checkbox" @click="toggleAll()" :checked="selectAll" class="rounded border-slate-300 text-cyan-500 focus:ring-cyan-200">
                                 </th>
+                                <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group w-16" @click="handleSort('id')">
+                                    ID
+                                    <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'id' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
+                                </th>
                                 <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('kode_cctv')">
                                     Kode
                                     <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'kode_cctv' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
@@ -256,6 +260,7 @@
                                     <td class="py-4 pl-4">
                                         <input type="checkbox" value="{{ $cctv->id }}" x-model="selectedIds" class="cctv-checkbox rounded border-slate-300 text-cyan-500 focus:ring-cyan-200">
                                     </td>
+                                    <td class="py-4 font-mono text-xs font-bold text-slate-400">#{{ $cctv->id }}</td>
                                     <td class="py-4 font-medium text-cyan-600">{{ $cctv->kode_cctv }}</td>
                                     <td class="py-4">
                                         <div class="font-medium text-slate-800">{{ $cctv->nama_cctv }}</div>

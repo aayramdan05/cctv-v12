@@ -67,6 +67,17 @@
                             </span>
                         </div>
 
+                        @if(count($stat->missing_ids) > 0)
+                        <div class="mt-2 p-2 bg-rose-50 border border-rose-100 rounded-xl">
+                            <span class="text-[8px] font-bold text-rose-500 uppercase block mb-1">Missing Cam IDs (In DB but not recording):</span>
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($stat->missing_ids as $id)
+                                    <span class="px-1.5 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-bold rounded">#{{ $id }}</span>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="flex gap-2">
                              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] font-bold uppercase border border-slate-200">
                                 API 1985: {{ $stat->status }}
