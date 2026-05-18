@@ -2,146 +2,67 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cctv;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
+use App\Models\Cctv;
+use App\Models\Server;
+use App\Models\Recording;
 use Carbon\Carbon;
 
 class FfmpegStatusController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $selectedServerId = $request->query('server_id');
-        $buildingId = $request->query('building_id');
-        $penempatan = $request->query('penempatan');
-        $search = $request->query('search');
+        $now = Carbon::now();
+        $servers = Server::all();
+        $serverStats = [];
 
-        $servers = \App\Models\Server::orderBy('id')->get();
-        $buildings = \App\Models\Building::orderBy('nama_gedung')->get();
+        foreach ($servers as $server) {
+            $cctvs = Cctv::where('server_id', $server->id)->get();
+            $totalCctv = $cctvs->count();
+            $activeStreams = 0;
+            $details = [];
 
-        // 1. Ambil Kamera sesuai Filter
-        $query = Cctv::with(['building', 'server']);
+            foreach ($cctvs as $cctv) {
+                $isRecording = false;
+                $lastUpdateText = 'Never';
+                $fileSize = '0 MB';
+                $filename = '-';
 
-        if ($selectedServerId) $query->where('server_id', $selectedServerId);
-        if ($buildingId) $query->where('building_id', $buildingId);
-        if ($penempatan) $query->where('penempatan', $penempatan);
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('nama_cctv', 'like', "%{$search}%")
-                  ->orWhere('kode_cctv', 'like', "%{$search}%")
-                  ->orWhere('ip', 'like', "%{$search}%");
-            });
-        }
+                $latestRec = Recording::where('cctv_id', $cctv->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
 
-        $cctvs = $query->orderBy('nama_cctv')->get();
-
-        $statusData = [];
-        $now = now();
-        $activeStreams = 0;
-
-        foreach ($cctvs as $cctv) {
-            $isRecording = false;
-            $fileSize = '0 MB';
-            $filename = '-';
-            $lastUpdateText = 'Belum ada rekaman';
-            
-            $latestRec = \App\Models\Recording::where('cctv_id', $cctv->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if ($latestRec) {
-                // Gunakan threshold 30 menit agar mencakup siklus rekaman terakhir yang sudah SELESAI
-                if ($latestRec->created_at->diffInMinutes($now) < 30) {
-                    $isRecording = true;
-                    $activeStreams++;
-                }
-                $lastUpdateText = $latestRec->created_at->diffForHumans();
-                $fileSize = $latestRec->size_mb . ' MB';
-                $filename = $latestRec->filename;
-            }
-
-            $statusData[] = (object) [
-                'id' => $cctv->id,
-                'name' => $cctv->nama_cctv,
-                'kode' => $cctv->kode_cctv,
-                'penempatan' => $cctv->penempatan,
-                'server_ip' => $cctv->server ? $cctv->server->ip_address : 'Master',
-                'building' => $cctv->building ? $cctv->building->nama_gedung : '-',
-                'is_recording' => $isRecording,
-                'last_update' => $lastUpdateText,
-                'file_size' => $fileSize,
-                'filename' => $filename
-            ];
-        }
-
-        // 2. RESOURCE STATS PER NODE (REAL-TIME FETCH)
-        $nodeStats = [];
-        foreach ($servers as $srv) {
-            $nodeCameras = Cctv::where('server_id', $srv->id)->get();
-            $dbCount = $nodeCameras->count();
-            
-            // Default Values (Fallback if node offline)
-            $go2rtcCount = 0;
-            $ffmpegRealCount = 0;
-            $nodeStatus = 'Offline';
-            $go2rtcStatus = 'Offline';
-            $missingIds = [];
-
-            try {
-                // A. Cek Go2RTC (Port 1984)
-                $go2rtcRes = \Illuminate\Support\Facades\Http::timeout(2)->get("http://{$srv->ip_address}:1984/api/streams");
-                if ($go2rtcRes->successful()) {
-                    $go2rtcCount = count($go2rtcRes->json() ?: []);
-                    $go2rtcStatus = 'Online';
-                }
-
-                // B. Cek Health API Baru (Port 1985)
-                $healthRes = \Illuminate\Support\Facades\Http::timeout(2)->get("http://{$srv->ip_address}:1985/health");
-                if ($healthRes->successful()) {
-                    $healthData = $healthRes->json();
-                    $ffmpegRealCount = $healthData['ffmpeg_count'] ?? 0;
-                    $nodeStatus = 'Online';
-                    
-                    // Deteksi ID yang hilang
-                    $activeIds = $healthData['active_ids'] ?? [];
-                    foreach ($nodeCameras as $cam) {
-                        if (!in_array($cam->id, $activeIds)) {
-                            $missingIds[] = $cam->id;
-                        }
+                if ($latestRec) {
+                    if ($latestRec->created_at->diffInMinutes($now) < 25) {
+                        $isRecording = true;
+                        $activeStreams++;
                     }
+                    $lastUpdateText = $latestRec->created_at->diffForHumans();
+                    $fileSize = $latestRec->size_mb . ' MB';
+                    $filename = $latestRec->filename;
                 }
-            } catch (\Exception $e) {
-                // Keep default values
+
+                $details[] = (object) [
+                    'id' => $cctv->id,
+                    'name' => $cctv->nama_cctv,
+                    'ip' => $cctv->ip,
+                    'status' => $isRecording ? 'Recording' : 'Idle',
+                    'last_update' => $lastUpdateText,
+                    'file_size' => $fileSize,
+                    'filename' => $filename
+                ];
             }
 
-            // Hitung Storage Node (Estimasi terpakai)
-            $usedMb = \App\Models\Recording::whereHas('cctv', function($q) use ($srv) {
-                $q->where('server_id', $srv->id);
-            })->sum('size_mb');
-
-            $totalNodeGb = 87000;
-            $usedNodeGb = 52000 + ($usedMb / 1024);
-            $percent = ($usedNodeGb / $totalNodeGb) * 100;
-
-            $nodeStats[] = (object) [
-                'id' => $srv->id,
-                'name' => $srv->name,
-                'ip' => $srv->ip_address,
-                'disk_text' => number_format($usedNodeGb / 1000, 1) . 'T / ' . ($totalNodeGb / 1000) . 'T',
-                'disk_percent' => round($percent, 1),
-                'bandwidth' => number_format($ffmpegRealCount * 1.5, 1) . ' Mbps',
-                'db_count' => $dbCount,
-                'go2rtc_count' => $go2rtcCount,
-                'ffmpeg_count' => $ffmpegRealCount,
-                'missing_ids' => $missingIds,
-                'status' => $nodeStatus,
-                'go2rtc_status' => $go2rtcStatus
+            $serverStats[] = (object) [
+                'id' => $server->id,
+                'name' => $server->name,
+                'ip' => $server->ip_address,
+                'total' => $totalCctv,
+                'active' => $activeStreams,
+                'details' => $details
             ];
         }
 
-        return view('monitoring.ffmpeg', compact(
-            'statusData', 'servers', 'buildings', 
-            'selectedServerId', 'nodeStats'
-        ));
+        return view('monitoring.ffmpeg', compact('serverStats'));
     }
 }

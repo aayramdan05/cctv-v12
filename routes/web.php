@@ -180,7 +180,8 @@ Route::get('/api/node-config', function (Request $request) {
     foreach ($cameras as $cam) {
         $fullUrl = $cam->stream_url; 
         
-        $urlWithSuffix = "ffmpeg:{$fullUrl}#video=copy#audio=aac#rtsp_transport=tcp";
+        // Gunakan RTSP asli (Native) tanpa ffmpeg wrapper untuk meringankan go2rtc
+        $urlWithSuffix = "{$fullUrl}#rtsp_transport=tcp";
         
         $config['streams']["camera_{$cam->id}"] = [$urlWithSuffix];
         

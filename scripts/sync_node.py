@@ -8,11 +8,10 @@ import requests
 import select
 import glob
 import threading
-import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import builtins
+import random
 
 # Global dictionary untuk menyimpan nama kamera berdasarkan ID
 camera_names = {}
@@ -48,40 +47,6 @@ def get_db_connection():
     except Exception as e:
         print(f"❌ Database Connection Error: {e}")
         return None
-
-# --- HEALTH API SERVER ---
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            # Izinkan akses dari Master (CORS)
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            data = {
-                'node_ip': NODE_IP,
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'ffmpeg_count': len(active_processes),
-                'active_ids': list(active_processes.keys()),
-                'threads_alive': len([t for t in active_threads.values() if t.is_alive()])
-            }
-            self.wfile.write(json.dumps(data).encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def log_message(self, format, *args):
-        # Override untuk mematikan log HTTP standar agar tidak mengotori console
-        return
-
-def run_health_server():
-    try:
-        server = HTTPServer(('0.0.0.0', 1985), HealthHandler)
-        print("🏥 Health API Server running on port 1985", flush=True)
-        server.serve_forever()
-    except Exception as e:
-        print(f"❌ Failed to start Health API: {e}", flush=True)
 
 def auto_cleanup():
     """Worker background untuk menghapus file dan record lama"""
@@ -218,8 +183,11 @@ def sync_go2rtc_config_from_db():
         return []
 
 def record_worker(cam_id, stream_url):
-    """Worker rekaman individu per kamera (Standard MP4 with FastStart)"""
+    """Worker rekaman individu per kamera (Fragmented MP4 with AAC audio)"""
+    # 🕒 Jeda acak (0-15 detik) untuk mencegah "Connection Spike" saat start up
+    time.sleep(random.uniform(0.5, 15.0))
     print(f"🔴 Thread auto-recording Kamera {cam_id} dimulai.", flush=True)
+    
     while True:
         # Update nama label setiap loop agar sinkron dengan Master
         cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
@@ -266,15 +234,13 @@ def record_worker(cam_id, stream_url):
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
             # 🎥 MULAI REKAMAN (Fragmented MP4)
-            # Tambahkan timeout agar tidak "Gantung" jika stream putus
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
-                '-timeout', '30000000', # Timeout koneksi (30 detik dalam mikrodetik)
                 '-i', stream_url,
-                '-c', 'copy', '-map', '0',
+                '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
                 '-f', 'mp4',
-                '-movflags', '+faststart',
+                '-movflags', 'empty_moov+default_base_moof+frag_keyframe',
                 '-t', str(RECORD_DURATION),
                 final_path
             ]
@@ -326,10 +292,9 @@ if __name__ == '__main__':
         print(f"⚠️ DEBUG: Gagal ambil config awal: {e}. Tetap lanjut ke listener...", flush=True)
         cameras = []
     
-    # 2. Jalankan Auto-Cleanup & Health API di background
-    print(f"📡 DEBUG: Memulai thread background...", flush=True)
+    # 2. Jalankan Auto-Cleanup di background
+    print(f"📡 DEBUG: Memulai thread Auto-Cleanup...", flush=True)
     threading.Thread(target=auto_cleanup, daemon=True).start()
-    threading.Thread(target=run_health_server, daemon=True).start()
     
     active_threads = {}
     active_processes = {} # Melacak proses FFmpeg yang sedang jalan
@@ -390,19 +355,11 @@ if __name__ == '__main__':
     
     print("👂 DEBUG: Menjalankan perintah LISTEN cctv_update...", flush=True)
     curs.execute("LISTEN cctv_update;")
-    print("✅ LISTENER AKTIF. Menunggu sinyal real-time atau Heartbeat (10 menit)...", flush=True)
+    print("✅ LISTENER AKTIF. Menunggu sinyal real-time...", flush=True)
 
     while True:
         try:
-            # Gunakan select untuk menunggu notifikasi dengan timeout (Heartbeat)
-            # Jika dalam 600 detik (10 menit) tidak ada notifikasi, dia akan bangun sendiri untuk sync
-            if select.select([conn], [], [], 600) == ([], [], []):
-                print("💓 HEARTBEAT: Melakukan sinkronisasi rutin (10 menit)...", flush=True)
-                updated_cameras = sync_go2rtc_config_from_db()
-                time.sleep(2)
-                manage_recording_threads(updated_cameras)
-            
-            # Poll koneksi database jika ada notifikasi masuk
+            # Poll koneksi database
             conn.poll()
             while conn.notifies:
                 notify = conn.notifies.pop(0)
@@ -412,12 +369,15 @@ if __name__ == '__main__':
                 if payload == NODE_IP or payload == 'ALL':
                     print("🔄 SINKRONISASI OTOMATIS DIMULAI...", flush=True)
                     updated_cameras = sync_go2rtc_config_from_db()
+                    
+                    # ⏳ Jeda 2 detik agar Go2RTC siap sebelum direkam
                     time.sleep(2)
+                    
                     manage_recording_threads(updated_cameras)
                 else:
                     print(f"⏭️ Notifikasi diabaikan. Payload '{payload}' tidak cocok.", flush=True)
             
-            # Tidur sebentar agar tidak membebani CPU
+            # Tidur sebentar agar tidak membebani CPU (1 detik)
             time.sleep(1)
                         
         except (psycopg2.DatabaseError, psycopg2.OperationalError) as e:

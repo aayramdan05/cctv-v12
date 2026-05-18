@@ -29,7 +29,7 @@ Route::get('/node-config', function (Request $request) {
     $streams = [];
     foreach ($cctvs as $cam) {
         $streams["camera_{$cam->id}"] = [
-            "ffmpeg:{$cam->stream_url}#video=copy#audio=aac#rtsp_transport=tcp"
+            "{$cam->stream_url}#rtsp_transport=tcp"
         ];
     }
 
