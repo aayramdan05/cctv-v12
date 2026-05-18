@@ -233,14 +233,14 @@ def record_worker(cam_id, stream_url):
             except Exception as e:
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
-            # 🎥 MULAI REKAMAN (Fragmented MP4)
+            # 🎥 MULAI REKAMAN (Standard MP4)
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
                 '-i', stream_url,
                 '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
                 '-f', 'mp4',
-                '-movflags', 'empty_moov+default_base_moof+frag_keyframe',
+                '-movflags', '+faststart',
                 '-t', str(RECORD_DURATION),
                 final_path
             ]

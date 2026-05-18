@@ -644,7 +644,11 @@
                     this.applyTransform(index);
 
                     const videoEl = document.getElementById('video-playback-' + index);
-                    if(videoEl) videoEl.pause();
+                    if(videoEl) {
+                        videoEl.pause();
+                        videoEl.removeAttribute('src'); // Stop background buffering of MP4
+                        videoEl.load();
+                    }
                     
                     if(this.checkInterval) clearInterval(this.checkInterval);
 
