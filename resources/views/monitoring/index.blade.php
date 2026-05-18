@@ -366,7 +366,7 @@
                 search: '', filterFaculty: '', filterBuilding: '', filterServer: '', filterPlacement: '', currentHost: window.location.hostname, isFullscreen: false,
                 isDragging: false,
                 
-                selectedDate: new Date().toISOString().split('T')[0],
+                selectedDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 currentTimelineData: [], currentEventsData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
                 
                 // CONTROL STATE
@@ -382,7 +382,8 @@
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
                 get isToday() {
-                    const today = new Date().toISOString().split('T')[0];
+                    const d = new Date();
+                    const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
                     return this.selectedDate === today;
                 },
 
@@ -394,9 +395,18 @@
                     });
                     
                     setInterval(() => {
+                        const now = new Date();
+                        const todayLocal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                        
+                        // Auto-advance tanggal jika user stay di mode LIVE melewati tengah malam
+                        if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.selectedDate !== todayLocal) {
+                            // Cek apakah dia benar-benar sedang lihat "Hari Ini" sebelum tengah malam
+                            // Jika iya, geser selectedDate ke hari yang baru agar tidak nyangkut di kemarin
+                            this.selectedDate = todayLocal; 
+                        }
+
                         // Logic jam Live
                         if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.isToday) {
-                            const now = new Date();
                             const sec = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
                             this.currentPlayheadPercent = (sec / 86400) * 100;
                             this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
