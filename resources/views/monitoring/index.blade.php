@@ -394,15 +394,21 @@
                         else { this.showTimeline = false; }
                     });
                     
+                    let lastSystemDate = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
+                    
                     setInterval(() => {
                         const now = new Date();
                         const todayLocal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
                         
-                        // Auto-advance tanggal jika user stay di mode LIVE melewati tengah malam
-                        if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.selectedDate !== todayLocal) {
-                            // Cek apakah dia benar-benar sedang lihat "Hari Ini" sebelum tengah malam
-                            // Jika iya, geser selectedDate ke hari yang baru agar tidak nyangkut di kemarin
-                            this.selectedDate = todayLocal; 
+                        // Hanya lakukan rollover jika mendeteksi pergantian hari sistem (tengah malam)
+                        if (todayLocal !== lastSystemDate) {
+                            // Jika user sebelumnya sedang melihat tanggal "hari kemarin" (yang baru saja berganti dari hari ini)
+                            // dan slot terpilih saat ini sedang aktif LIVE stream, barulah geser otomatis ke hari baru.
+                            if (this.selectedSlot && this.activeSlots[this.selectedSlot]?.mode === 'live' && this.selectedDate === lastSystemDate) {
+                                this.selectedDate = todayLocal;
+                                this.refreshTimeline();
+                            }
+                            lastSystemDate = todayLocal;
                         }
 
                         // Logic jam Live
@@ -637,7 +643,11 @@
                     const slot = this.activeSlots[index]; 
                     if(!slot || !slot.id) return;
                     
-                    if(!this.isToday) { this.selectedDate = new Date().toISOString().split('T')[0]; this.refreshTimeline(); }
+                    if(!this.isToday) { 
+                        const now = new Date();
+                        this.selectedDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                        this.refreshTimeline(); 
+                    }
 
                     slot.mode = 'live';
                     slot.zoom = 1; slot.x = 0; slot.y = 0;
