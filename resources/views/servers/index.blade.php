@@ -16,106 +16,181 @@
                 <p class="text-slate-500">Kelola node server perekam (NVR) terdistribusi.</p>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="document.getElementById('deployModal').classList.remove('hidden')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-cyan-500 hover:border-cyan-300 transition-all shadow-sm" title="Panduan Instalasi Node">
-                    <i class="fas fa-info-circle text-lg"></i>
+                <button onclick="document.getElementById('deployModal').classList.remove('hidden'); document.body.classList.add('overflow-hidden');" class="px-4 py-2.5 rounded-xl bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 hover:text-cyan-600 transition-all flex items-center gap-2 shadow-sm" title="Panduan Instalasi Node">
+                    <i class="fas fa-book-open text-cyan-500"></i> Panduan Deploy
                 </button>
                 <a href="{{ route('servers.create') }}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg hover:shadow-cyan-500/50 transition-all flex items-center gap-2">
-                    <i class="fas fa-server"></i> Tambah Node
+                    <i class="fas fa-plus"></i> Tambah Node
                 </a>
             </div>
         </div>
 
-        <!-- Deploy Modal -->
-        <div id="deployModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <h3 class="text-xl font-bold text-slate-800"><i class="fas fa-rocket text-cyan-500 mr-2"></i> Panduan Deploy Node Baru</h3>
-                    <button onclick="document.getElementById('deployModal').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition">
-                        <i class="fas fa-times text-xl"></i>
+        <!-- Deploy Modal (Enhanced UI) -->
+        <div id="deployModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative" @click.outside="document.getElementById('deployModal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');">
+                
+                <!-- Modal Header -->
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-600 shadow-inner">
+                            <i class="fas fa-server text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">Panduan Deploy Node Baru</h3>
+                            <p class="text-xs text-slate-500 mt-1">Langkah-langkah menambahkan NVR worker ke dalam cluster.</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('deployModal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition">
+                        <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
-                <div class="p-6 overflow-y-auto flex-1 custom-scrollbar text-sm text-slate-600 space-y-6">
-                    <p>Ikuti langkah-langkah berikut untuk menambahkan Node CCTV baru (misal: <code>node02</code> di IP <code>10.69.69.42</code>).</p>
-                    
-                    <div class="space-y-4">
-                        <h4 class="font-bold text-slate-800">Tahap 1: Persiapan di Server Node Baru (10.69.69.42)</h4>
-                        <ol class="list-decimal pl-5 space-y-2">
-                            <li>Login ke server node baru via SSH.</li>
-                            <li>Pastikan OS menggunakan Ubuntu 22.04 / 24.04.</li>
-                            <li>Download script instalasi node:<br>
-                                <code class="block bg-slate-800 text-cyan-400 p-2 rounded mt-1 select-all">wget -O install_node.sh https://raw.githubusercontent.com/.../install_node.sh</code>
-                                <em class="text-xs text-slate-400">*Sesuaikan URL dengan lokasi repository script instalasi Anda. Anda bisa memindahkan file <code>scripts/install_node.sh</code> dari master ke node baru.</em>
-                            </li>
-                            <li>Jalankan script instalasi:<br>
-                                <code class="block bg-slate-800 text-cyan-400 p-2 rounded mt-1 select-all">chmod +x install_node.sh && sudo ./install_node.sh</code>
-                            </li>
-                            <li>Saat diminta, masukkan IP Master Server (<code>10.69.69.21</code>).</li>
-                        </ol>
 
-                        <h4 class="font-bold text-slate-800 pt-4">Tahap 2: Konfigurasi Nginx di Master Server (10.69.69.21)</h4>
-                        <p>Setelah node berhasil diinstall, Anda harus memberitahu Master Server (Nginx) tentang keberadaan node ini agar WebRTC dan Storage dapat diakses.</p>
-                        <ol class="list-decimal pl-5 space-y-2">
-                            <li>Buka file Nginx di master:<br>
-                                <code class="block bg-slate-800 text-cyan-400 p-2 rounded mt-1 select-all">sudo nano /etc/nginx/sites-available/cctv-unpad.conf</code>
-                            </li>
-                            <li>Tambahkan blok konfigurasi untuk Node 2 (sesuaikan ID Database dengan angka pada path Nginx):<br>
-<pre class="bg-slate-800 text-green-400 p-3 rounded mt-1 text-xs overflow-x-auto"><code># Whitelist WebSocket Node 2
+                <!-- Modal Body -->
+                <div class="p-0 overflow-y-auto flex-1 custom-scrollbar bg-slate-50/50">
+                    
+                    <div class="p-6 space-y-6">
+                        
+                        <!-- Tahap 1 -->
+                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-slate-100/50 px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow">1</span>
+                                <h4 class="font-bold text-slate-800 text-sm">Persiapan di Server Node Baru (misal: 10.69.69.42)</h4>
+                            </div>
+                            <div class="p-5 text-sm text-slate-600 space-y-4">
+                                <p>Pastikan server baru menggunakan <strong class="text-slate-800">Ubuntu 22.04 LTS atau 24.04 LTS</strong> bersih (belum terinstall web server). Login via SSH, lalu jalankan perintah berikut:</p>
+                                
+                                <div class="space-y-4">
+                                    <div class="border border-slate-100 rounded-lg p-3 bg-slate-50">
+                                        <p class="mb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fab fa-github text-slate-700 text-sm"></i> A. Clone Repository (Hanya folder Script & Nginx)</p>
+                                        <pre class="bg-slate-900 border border-slate-700 text-cyan-300 p-3 rounded-lg text-xs overflow-x-auto font-mono leading-relaxed select-all"><code>mkdir -p ~/cctv-setup && cd ~/cctv-setup
+git init
+git remote add origin https://github.com/aayramdan05/cctv-v12.git
+git config core.sparseCheckout true
+echo "scripts/" >> .git/info/sparse-checkout
+echo "nginx/" >> .git/info/sparse-checkout
+git pull origin main</code></pre>
+                                    </div>
+
+                                    <div class="border border-slate-100 rounded-lg p-3 bg-slate-50">
+                                        <p class="mb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-terminal text-slate-700 text-sm"></i> B. Eksekusi Script Installer</p>
+                                        <pre class="bg-slate-900 border border-slate-700 text-cyan-300 p-3 rounded-lg text-xs overflow-x-auto font-mono leading-relaxed select-all"><code>cd scripts
+chmod +x install_node.sh
+sudo ./install_node.sh</code></pre>
+                                        <div class="mt-3 flex items-start gap-3 text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200 shadow-sm">
+                                            <i class="fas fa-exclamation-triangle mt-0.5 text-amber-500 text-lg"></i>
+                                            <div class="text-xs leading-relaxed">
+                                                <p class="font-bold mb-1">PENTING:</p>
+                                                <ul class="list-disc pl-4 space-y-1">
+                                                    <li>Masukkan <strong>IP Master Server</strong> (contoh: <code>10.69.69.21</code>).</li>
+                                                    <li>Script akan otomatis menginstall <strong>go2rtc</strong> dan mendaftarkan service daemon.</li>
+                                                    <li>Konfigurasi live streaming disimpan di <code>/home/aay/go2rtc.yaml</code>.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tahap 2 -->
+                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-slate-100/50 px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow">2</span>
+                                <h4 class="font-bold text-slate-800 text-sm">Daftarkan Node di Aplikasi</h4>
+                            </div>
+                            <div class="p-5 text-sm text-slate-600">
+                                <p class="mb-3">Sebelum menyambungkan Nginx di Master, kita harus mendapatkan <strong>ID Server</strong> dari database aplikasi.</p>
+                                <div class="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                                    <ol class="list-decimal pl-5 space-y-2">
+                                        <li>Tutup panduan ini dan klik tombol <strong class="text-slate-800 bg-white px-2 py-0.5 border border-slate-200 rounded text-xs shadow-sm"><i class="fas fa-plus text-cyan-500 mr-1"></i> Tambah Node</strong>.</li>
+                                        <li>Isi formulir dengan IP Node baru (contoh: <code>10.69.69.42</code>) dan nama (contoh: <code>Node 02</code>).</li>
+                                        <li>Setelah disimpan, perhatikan tabel server. Lihat angka ID yang diberikan oleh database (misal <strong class="text-cyan-600 font-bold bg-cyan-50 px-1 rounded">ID: 2</strong>). Angka ini sangat krusial untuk langkah Nginx selanjutnya.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tahap 3 -->
+                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-slate-100/50 px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow">3</span>
+                                <h4 class="font-bold text-slate-800 text-sm">Routing Nginx di Master Server (10.69.69.21)</h4>
+                            </div>
+                            <div class="p-5 text-sm text-slate-600 space-y-4">
+                                <p>Login SSH kembali ke <strong class="text-slate-800">Master Server</strong> (tempat aplikasi ini berada), lalu edit konfigurasi Nginx:</p>
+                                <pre class="bg-slate-900 border border-slate-700 text-cyan-300 p-2.5 rounded-lg text-xs font-mono inline-block shadow-sm select-all"><code>sudo nano /etc/nginx/sites-available/cctv-unpad.conf</code></pre>
+                                
+                                <p class="leading-relaxed">Tambahkan blok berikut. <strong class="text-red-500">PENTING:</strong> Ganti tulisan <code>/node2/</code> sesuai dengan <strong class="text-slate-800">ID Database</strong> yang didapat pada Tahap 2, dan ganti <code>10.69.69.42</code> dengan IP Node baru Anda.</p>
+
+<pre class="bg-slate-900 border border-slate-700 text-green-400 p-4 rounded-lg text-[11px] overflow-x-auto font-mono leading-relaxed shadow-inner"><code># =========================================================
+#  NODE 2 (10.69.69.42)
+# =========================================================
+
+# 1. Whitelist WebSocket (di bagian atas file)
 location = /node2/api/ws {
     rewrite ^/node2/(.*) /$1 break;
     proxy_pass http://10.69.69.42:80;
     proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Upgrade \$http_upgrade;
     proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header Origin "";
 }
 
-# Whitelist Static Assets Node 2
+# 2. Whitelist Static Assets (di bagian atas file)
 location ~ ^/node2/.*\.(js|css|json|png|jpg|ico)$ {
     rewrite ^/node2/(.*) /$1 break;
     proxy_pass http://10.69.69.42:80;
-    proxy_set_header Host $host;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
 }
 
-# Storage & Playback Node 2
+# 3. Blok Utama (Storage, Playback, WebRTC - letakkan di tengah file)
 location /node2/storage/ {
     auth_request /auth-video;
     rewrite ^/node2/(.*) /$1 break;
     proxy_pass http://10.69.69.42:80;
-    proxy_set_header Host $host;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
 }
 
 location /node2/playback/ {
     auth_request /auth-video;
     rewrite ^/node2/(.*) /$1 break;
     proxy_pass http://10.69.69.42:80;
-    proxy_set_header Host $host;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_buffering off;
 }
 
-# Live Stream WebRTC Node 2
 location /node2/ {
     auth_request /auth-video;
     rewrite ^/node2/(.*) /$1 break;
     proxy_pass http://10.69.69.42:80;
     proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Upgrade \$http_upgrade;
     proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
+    proxy_set_header Host \$host;
+    proxy_set_header Origin "";
 }</code></pre>
-                            </li>
-                            <li>Uji dan reload Nginx:<br>
-                                <code class="block bg-slate-800 text-cyan-400 p-2 rounded mt-1 select-all">sudo nginx -t && sudo systemctl reload nginx</code>
-                            </li>
-                        </ol>
+                                <p>Simpan file, pastikan syntax benar, lalu restart Nginx:</p>
+                                <pre class="bg-slate-900 border border-slate-700 text-cyan-300 p-2.5 rounded-lg text-xs font-mono inline-block shadow-sm select-all"><code>sudo nginx -t && sudo systemctl reload nginx</code></pre>
+                            </div>
+                        </div>
 
-                        <h4 class="font-bold text-slate-800 pt-4">Tahap 3: Daftarkan di Aplikasi</h4>
-                        <ol class="list-decimal pl-5 space-y-2">
-                            <li>Klik tombol <strong>Tambah Node</strong> di halaman ini.</li>
-                            <li>Masukkan Nama: <code>Node 02</code></li>
-                            <li>Masukkan IP: <code>10.69.69.42</code></li>
-                            <li>Pastikan ID yang dihasilkan oleh database sesuai dengan angka di blok Nginx (misal Nginx <code>/node2/</code> = Database ID <code>2</code>). Jika ID Database melompat (misal 3), ubah path Nginx menjadi <code>/node3/</code>.</li>
-                        </ol>
                     </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="p-5 border-t border-slate-100 bg-white flex justify-end">
+                    <button onclick="document.getElementById('deployModal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');" class="px-6 py-2.5 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition shadow-lg hover:shadow-slate-800/30">
+                        Paham & Tutup
+                    </button>
                 </div>
             </div>
         </div>

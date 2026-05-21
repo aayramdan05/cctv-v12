@@ -1,0 +1,12 @@
+[Unit]
+Description=CCTV ONVIF Event Agent
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/aay/cctv-scripts/onvif_agent.py
+WorkingDirectory=/home/aay/cctv-scripts
+User=aay
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

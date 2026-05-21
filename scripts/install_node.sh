@@ -30,16 +30,25 @@ echo -e "${GREEN}>>> Konfigurasi Koneksi Master Server${NC}"
 read -p "Masukkan IP Master Server (Contoh: 10.69.69.21): " MASTER_IP
 read -p "Masukkan Database Master Name (Default: cctv_prod): " DB_NAME
 DB_NAME=${DB_NAME:-cctv_prod}
-read -p "Masukkan Database Master Username (Default: postgres): " DB_USER
-DB_USER=${DB_USER:-postgres}
+read -p "Masukkan Database Master Username (Default: aay): " DB_USER
+DB_USER=${DB_USER:-aay}
 read -s -p "Masukkan Database Master Password: " DB_PASS
 echo ""
 read -p "Masukkan IP Node ini (IP Server ini): " NODE_IP
 read -p "Berapa hari rekaman disimpan sebelum dihapus? (Default: 2): " RETENTION
 RETENTION=${RETENTION:-2}
 
-CURRENT_USER=$(logname)
-HOME_DIR="/home/$CURRENT_USER"
+# Paksa user aay untuk kemudahan (sesuai instruksi)
+TARGET_USER="aay"
+HOME_DIR="/home/$TARGET_USER"
+
+# Cek apakah user aay ada
+if ! id "$TARGET_USER" &>/dev/null; then
+    echo -e "${GREEN}>>> Membuat user $TARGET_USER...${NC}"
+    useradd -m -s /bin/bash "$TARGET_USER"
+    echo "$TARGET_USER:cctv123" | chpasswd
+    usermod -aG sudo "$TARGET_USER"
+fi
 
 # 3. INSTALASI DEPENDENSI
 echo -e "${GREEN}>>> Menginstal dependensi sistem (Nginx, FFmpeg, Python)...${NC}"
@@ -55,7 +64,7 @@ if [ "$ARCH" == "x86_64" ]; then
 elif [ "$ARCH" == "aarch64" ]; then
     URL="https://github.com/AlexxIT/go2rtc/releases/download/$GO2RTC_VER/go2rtc_linux_arm64"
 else
-    echo -e "${RED}Arsitektur $ARCH tidak didukung otomatis. Silakan download manual.${NC}"
+    echo -e "${RED}Arsitektur $ARCH tidak didukung otomatis.${NC}"
     exit 1
 fi
 
@@ -66,13 +75,28 @@ chmod +x /usr/local/bin/go2rtc
 echo -e "${GREEN}>>> Membuat struktur folder dan izin akses...${NC}"
 mkdir -p "$HOME_DIR/storage/recordings"
 mkdir -p "$HOME_DIR/cctv-scripts"
-chown -R $CURRENT_USER:$CURRENT_USER "$HOME_DIR/storage"
-chown -R $CURRENT_USER:$CURRENT_USER "$HOME_DIR/cctv-scripts"
+mkdir -p "$HOME_DIR/temp_clone"
+
+# 6. CLONE REPOSITORY (SPARSE-CHECKOUT)
+echo -e "${GREEN}>>> Mengambil script dari GitHub...${NC}"
+cd "$HOME_DIR/temp_clone"
+git init
+git remote add origin https://github.com/aayramdan05/cctv-v12.git
+git config core.sparseCheckout true
+echo "scripts/" >> .git/info/sparse-checkout
+echo "nginx/" >> .git/info/sparse-checkout
+git pull origin main
+
+# Pindahkan file ke lokasi akhir
+cp -r scripts/* "$HOME_DIR/cctv-scripts/"
+chown -R $TARGET_USER:$TARGET_USER "$HOME_DIR/storage"
+chown -R $TARGET_USER:$TARGET_USER "$HOME_DIR/cctv-scripts"
+rm -rf "$HOME_DIR/temp_clone"
 
 # Izin agar Nginx bisa masuk ke folder Home
 chmod o+x "$HOME_DIR"
 
-# 6. SETUP PYTHON ENVIRONMENT
+# 7. SETUP PYTHON ENVIRONMENT
 echo -e "${GREEN}>>> Mengatur Python Environment...${NC}"
 pip3 install psycopg2-binary pyyaml python-dotenv --break-system-packages || pip3 install psycopg2-binary pyyaml python-dotenv
 
@@ -86,21 +110,25 @@ DB_PASSWORD=$DB_PASS
 SERVER_RECORDER_IP=$NODE_IP
 RETENTION_DAYS=$RETENTION
 EOF
+chown $TARGET_USER:$TARGET_USER "$HOME_DIR/cctv-scripts/.env"
 
-# 7. KONFIGURASI NGINX NODE
+# 8. KONFIGURASI NGINX NODE
 echo -e "${GREEN}>>> Mengkonfigurasi Nginx...${NC}"
 cat <<EOF > /etc/nginx/sites-available/cctv-node
 server {
     listen 80 default_server;
     server_name _;
 
+    allow $MASTER_IP;
+    allow 127.0.0.1;
+    deny all;
+
     # Jalur File Rekaman MP4
     location /storage/ {
-        root $HOME_DIR/;
+        alias $HOME_DIR/storage/;
         add_header Access-Control-Allow-Origin *;
         add_header Cache-Control no-cache;
         add_header Accept-Ranges bytes;
-        max_ranges 100;
     }
 
     # Jalur Live Stream (Go2RTC)
@@ -111,7 +139,6 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
 }
 EOF
@@ -120,19 +147,19 @@ ln -sf /etc/nginx/sites-available/cctv-node /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 systemctl restart nginx
 
-# 8. SETUP GO2RTC DEFAULT CONFIG
-if [ ! -f "$HOME_DIR/go2rtc.yaml" ]; then
+# 9. SETUP GO2RTC DEFAULT CONFIG
+echo -e "${GREEN}>>> Mengatur konfigurasi Go2RTC...${NC}"
 cat <<EOF > "$HOME_DIR/go2rtc.yaml"
 api:
   listen: ":1984"
+  origin: "*"
 rtsp:
   listen: ":8554"
 streams:
 EOF
-chown $CURRENT_USER:$CURRENT_USER "$HOME_DIR/go2rtc.yaml"
-fi
+chown $TARGET_USER:$TARGET_USER "$HOME_DIR/go2rtc.yaml"
 
-# 9. SETUP SYSTEMD SERVICES
+# 10. SETUP SYSTEMD SERVICES
 echo -e "${GREEN}>>> Mendaftarkan Service ke Systemd...${NC}"
 
 # Service Go2RTC
@@ -144,40 +171,28 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/go2rtc -config $HOME_DIR/go2rtc.yaml
 WorkingDirectory=$HOME_DIR
-User=$CURRENT_USER
+User=$TARGET_USER
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Service CCTV Sync (Python Agent)
-cat <<EOF > /etc/systemd/system/cctv-sync.service
-[Unit]
-Description=CCTV Node Sync Agent
-After=network.target go2rtc.service
-
-[Service]
-ExecStart=/usr/bin/python3 $HOME_DIR/cctv-scripts/sync_node.py
-WorkingDirectory=$HOME_DIR/cctv-scripts
-User=$CURRENT_USER
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
+# Service CCTV Sync
+cp "$HOME_DIR/cctv-scripts/cctv-sync.service" /etc/systemd/system/
+# Service CCTV ONVIF
+cp "$HOME_DIR/cctv-scripts/cctv-onvif.service" /etc/systemd/system/
 
 systemctl daemon-reload
-systemctl enable go2rtc cctv-sync
-systemctl restart go2rtc
+systemctl enable go2rtc cctv-sync cctv-onvif
+systemctl restart go2rtc cctv-sync cctv-onvif
 
 echo -e "${BLUE}====================================================${NC}"
-echo -e "${GREEN}✅ INSTALASI BERHASIL!${NC}"
+echo -e "${GREEN}✅ INSTALASI NODE BERHASIL!${NC}"
 echo -e "${BLUE}====================================================${NC}"
-echo -e "1. Pastikan Anda sudah menyalin file 'sync_node.py' ke: "
-echo -e "   $HOME_DIR/cctv-scripts/sync_node.py"
-echo -e "2. Jalankan service perekam dengan: "
-echo -e "   sudo systemctl start cctv-sync"
-echo -e "3. Pantau log dengan: "
-echo -e "   sudo journalctl -u cctv-sync -f"
+echo -e "User: $TARGET_USER"
+echo -e "Location: $HOME_DIR/cctv-scripts"
+echo -e "Config: $HOME_DIR/go2rtc.yaml"
+echo -e "Services: go2rtc, cctv-sync, cctv-onvif"
+echo -e "Monitor: sudo journalctl -u cctv-sync -f"
 echo -e "${BLUE}====================================================${NC}"

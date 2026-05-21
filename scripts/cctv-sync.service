@@ -1,0 +1,12 @@
+[Unit]
+Description=CCTV Node Sync and Recorder Agent
+After=network.target go2rtc.service
+
+[Service]
+ExecStart=/usr/bin/python3 /home/aay/cctv-scripts/sync_node.py
+WorkingDirectory=/home/aay/cctv-scripts
+User=aay
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
