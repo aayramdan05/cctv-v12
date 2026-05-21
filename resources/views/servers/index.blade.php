@@ -10,40 +10,40 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between mb-8" x-data="{ deployModalOpen: false }">
             <div>
                 <h2 class="text-3xl font-bold text-slate-800 mb-2">Server Nodes</h2>
                 <p class="text-slate-500">Kelola node server perekam (NVR) terdistribusi.</p>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="document.getElementById('deployModal').classList.remove('hidden'); document.body.classList.add('overflow-hidden');" class="px-4 py-2.5 rounded-xl bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 hover:text-cyan-600 transition-all flex items-center gap-2 shadow-sm" title="Panduan Instalasi Node">
+                <button @click="deployModalOpen = true; document.body.classList.add('overflow-hidden');" class="px-4 py-2.5 rounded-xl bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 hover:text-cyan-600 transition-all flex items-center gap-2 shadow-sm" title="Panduan Instalasi Node">
                     <i class="fas fa-book-open text-cyan-500"></i> Panduan Deploy
                 </button>
                 <a href="{{ route('servers.create') }}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg hover:shadow-cyan-500/50 transition-all flex items-center gap-2">
                     <i class="fas fa-plus"></i> Tambah Node
                 </a>
             </div>
-        </div>
 
-        <!-- Deploy Modal (Enhanced UI) -->
-        <div id="deployModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative" @click.outside="document.getElementById('deployModal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');">
-                
-                <!-- Modal Header -->
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-600 shadow-inner">
-                            <i class="fas fa-server text-2xl"></i>
+            <!-- Deploy Modal (Enhanced UI) -->
+            <template x-teleport="body">
+                <div x-show="deployModalOpen" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
+                    <div @click.away="deployModalOpen = false; document.body.classList.remove('overflow-hidden');" class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative">
+                        
+                        <!-- Modal Header -->
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-600 shadow-inner">
+                                    <i class="fas fa-server text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">Panduan Deploy Node Baru</h3>
+                                    <p class="text-xs text-slate-500 mt-1">Langkah-langkah menambahkan NVR worker ke dalam cluster.</p>
+                                </div>
+                            </div>
+                            <button @click="deployModalOpen = false; document.body.classList.remove('overflow-hidden');" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition">
+                                <i class="fas fa-times text-lg"></i>
+                            </button>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-800">Panduan Deploy Node Baru</h3>
-                            <p class="text-xs text-slate-500 mt-1">Langkah-langkah menambahkan NVR worker ke dalam cluster.</p>
-                        </div>
-                    </div>
-                    <button onclick="document.getElementById('deployModal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition">
-                        <i class="fas fa-times text-lg"></i>
-                    </button>
-                </div>
 
                 <!-- Modal Body -->
                 <div class="p-0 overflow-y-auto flex-1 custom-scrollbar bg-slate-50/50">
