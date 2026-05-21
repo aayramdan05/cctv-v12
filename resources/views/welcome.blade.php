@@ -26,9 +26,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
-                        <i class="fas fa-university text-lg"></i>
-                    </div>
+                    <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg">
                     <div>
                         <span class="block text-lg font-bold tracking-tight text-slate-800">CCTV UNPAD</span>
                         <span class="block text-[10px] font-medium text-slate-500 uppercase tracking-wider">Network Infrastructure</span>
@@ -146,9 +144,7 @@
     <footer class="bg-slate-900 text-slate-300 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
             <div class="flex items-center space-x-3 mb-4 md:mb-0">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white">
-                    <i class="fas fa-university text-xs"></i>
-                </div>
+                <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-8 h-8 rounded-lg">
                 <span class="font-bold text-white">CCTV UNPAD</span>
             </div>
             

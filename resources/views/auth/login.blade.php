@@ -28,8 +28,8 @@
             <div class="absolute inset-0 bg-gradient-to-br from-cyan-900/80 to-blue-900/80 mix-blend-multiply"></div>
             
             <div class="relative z-10 p-12 text-white max-w-xl">
-                <div class="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 shadow-lg shadow-cyan-500/30">
-                    <i class="fas fa-university text-3xl"></i>
+                <div class="mb-6">
+                    <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-16 h-16 rounded-2xl shadow-lg">
                 </div>
                 <h1 class="text-5xl font-bold mb-6 leading-tight">Smart Campus Monitoring System</h1>
                 <p class="text-lg text-cyan-100 font-light leading-relaxed">
@@ -52,8 +52,8 @@
 
             <div class="w-full max-w-md">
                 <div class="lg:hidden mb-8 text-center">
-                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 mb-4">
-                        <i class="fas fa-university text-white text-lg"></i>
+                    <div class="inline-flex items-center justify-center mb-4">
+                        <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-12 h-12 rounded-xl shadow-lg">
                     </div>
                     <h2 class="text-2xl font-bold text-slate-800">CCTV UNPAD</h2>
                 </div>
@@ -136,9 +136,7 @@
                     </div>
 
                     <a href="{{ route('auth.paus') }}" class="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group">
-                        <div class="w-6 h-6 rounded bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-[10px] group-hover:scale-110 transition-transform">
-                            <i class="fas fa-university"></i>
-                        </div>
+                        <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-6 h-6 rounded shadow-sm group-hover:scale-110 transition-transform">
                         PAUS ID (SSO Unpad)
                     </a>
                 </div>
