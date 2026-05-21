@@ -87,8 +87,56 @@ sudo ./install_node.sh</code></pre>
                             </div>
                         </div>
 
-                        <!-- Tahap 2 & 3 (Disederhanakan untuk singkatnya) -->
-                        <p class="text-xs text-center text-slate-400 italic">Ikuti instruksi selanjutnya di layar terminal saat instalasi.</p>
+                        <!-- Tahap 2 -->
+                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-slate-100/50 px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow">2</span>
+                                <h4 class="font-bold text-slate-800 text-sm">Daftarkan Node di Aplikasi</h4>
+                            </div>
+                            <div class="p-5 text-sm text-slate-600">
+                                <div class="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                                    <ol class="list-decimal pl-5 space-y-2">
+                                        <li>Tutup panduan ini dan klik tombol <strong>Tambah Node</strong>.</li>
+                                        <li>Isi IP Node (<code>10.69.69.42</code>) dan Nama.</li>
+                                        <li>Setelah disimpan, catat <strong>ID Server</strong> yang muncul di tabel (misal <strong class="text-cyan-600 font-bold px-1 rounded">ID: 2</strong>).</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tahap 3 -->
+                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-slate-100/50 px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow">3</span>
+                                <h4 class="font-bold text-slate-800 text-sm">Routing Nginx di Master Server (10.69.69.21)</h4>
+                            </div>
+                            <div class="p-5 text-sm text-slate-600 space-y-4">
+                                <p>Tambahkan blok berikut di <code>/etc/nginx/sites-available/cctv-unpad.conf</code> pada Master Server:</p>
+<pre class="bg-slate-900 border border-slate-700 text-green-400 p-4 rounded-lg text-[11px] overflow-x-auto font-mono shadow-inner leading-relaxed"><code># WebSocket Node 2
+location = /node2/api/ws {
+    rewrite ^/node2/(.*) /$1 break;
+    proxy_pass http://10.69.69.42:80;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+}
+
+# Main Proxy Node 2
+location /node2/ {
+    auth_request /auth-video;
+    rewrite ^/node2/(.*) /$1 break;
+    proxy_pass http://10.69.69.42:80;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host \$host;
+    proxy_set_header Origin "";
+}</code></pre>
+                                <p class="text-xs text-amber-600 italic">*Ganti "node2" dengan ID dari Tahap 2, dan "10.69.69.42" dengan IP Node Baru.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
