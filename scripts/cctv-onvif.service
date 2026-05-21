@@ -8,5 +8,3 @@ WorkingDirectory=/home/aay/cctv-scripts
 User=aay
 Restart=always
 
-[Install]
-WantedBy=multi-user.target

@@ -202,7 +202,8 @@ location /node2/ {
             <table class="w-full text-left border-collapse">
                 <thead class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100 select-none">
                     <tr>
-                        <th class="pb-4 pl-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('name')">
+                        <th class="pb-4 pl-4 font-semibold">ID</th>
+                        <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('name')">
                             Nama Server
                             <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'name' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
                         </th>
@@ -225,7 +226,8 @@ location /node2/ {
                 <tbody id="server-table-body" class="text-sm text-slate-600">
                     @forelse ($servers as $server)
                     <tr class="hover:bg-slate-50/50 transition border-b border-slate-50 last:border-none">
-                        <td class="py-4 pl-4 font-bold text-slate-700">{{ $server->name }}</td>
+                        <td class="py-4 pl-4 font-mono text-xs text-slate-400">#{{ $server->id }}</td>
+                        <td class="py-4 font-bold text-slate-700">{{ $server->name }}</td>
                         <td class="py-4 font-mono text-cyan-600">{{ $server->ip_address }}</td>
                         <td class="py-4">{{ $server->location ?? '-' }}</td>
                         <td class="py-4 text-center">
@@ -248,7 +250,7 @@ location /node2/ {
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="py-10 text-center text-slate-400">Belum ada server node.</td></tr>
+                    <tr><td colspan="7" class="py-10 text-center text-slate-400">Belum ada server node.</td></tr>
                     @endforelse
                 </tbody>
             </table>
