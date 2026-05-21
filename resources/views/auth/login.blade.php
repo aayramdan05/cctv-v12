@@ -136,7 +136,7 @@
                     </div>
 
                     <a href="{{ route('auth.paus') }}" class="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group">
-                        <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-6 h-6 rounded shadow-sm group-hover:scale-110 transition-transform">
+                        <img src="{{ asset('logo-unpad.png') }}" alt="Unpad Logo" class="w-6 h-6 rounded shadow-sm group-hover:scale-110 transition-transform">
                         PAUS ID (SSO Unpad)
                     </a>
                 </div>

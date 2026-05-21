@@ -7,9 +7,7 @@
                 <i class="fas fa-bars text-xl"></i>
             </button>
 
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                <i class="fas fa-university text-white text-lg"></i>
-            </div>
+            <img src="{{ asset('unpad-cctv.png') }}" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg">
             <div class="hidden md:block">
                 <h1 class="text-lg font-bold text-slate-800 tracking-tight">CCTV UNPAD</h1>
                 <p class="text-xs text-slate-500">Monitoring System</p>
