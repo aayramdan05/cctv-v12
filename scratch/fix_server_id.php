@@ -4,8 +4,6 @@ use App\Models\Server;
 use App\Models\Cctv;
 use Illuminate\Support\Facades\DB;
 
-// Jika dijalankan via Artisan Tinker, Laravel sudah ter-bootstrap.
-// Jika tidak, kita bootstrap manual.
 if (!isset($app)) {
     require __DIR__ . "/../vendor/autoload.php";
     $app = require __DIR__ . "/../bootstrap/app.php";
@@ -16,7 +14,7 @@ if (!isset($app)) {
 DB::beginTransaction();
 
 try {
-    echo "--- Memulai Perbaikan ID Server ---\n";
+    echo "--- Memulai Perbaikan ID Server (PostgreSQL Mode) ---\n";
     $node = Server::where("ip_address", "10.69.69.41")->first();
     
     if (!$node) {
@@ -32,7 +30,9 @@ try {
         // Hapus master lama jika ada
         DB::table("servers")->where("id", $newId)->delete();
         
-        DB::statement("SET FOREIGN_KEY_CHECKS=0;");
+        // PostgreSQL: Disable triggers instead of foreign_key_checks
+        DB::statement("SET session_replication_role = \"replica\";");
+        
         DB::table("servers")->where("id", $oldId)->update(["id" => $newId]);
         echo "Update tabel servers berhasil.\n";
     } else {
@@ -43,11 +43,11 @@ try {
     $updatedCctvs = DB::table("cctvs")->where("server_id", $oldId)->update(["server_id" => $newId]);
     echo "{$updatedCctvs} kamera telah diperbarui.\n";
 
-    DB::statement("SET FOREIGN_KEY_CHECKS=1;");
+    DB::statement("SET session_replication_role = \"origin\";");
     DB::commit();
     echo "--- BERHASIL ---\n";
 } catch (\Exception $e) {
     if (DB::transactionLevel() > 0) DB::rollBack();
-    DB::statement("SET FOREIGN_KEY_CHECKS=1;");
+    DB::statement("SET session_replication_role = \"origin\";");
     echo "ERROR: " . $e->getMessage() . "\n";
 }
