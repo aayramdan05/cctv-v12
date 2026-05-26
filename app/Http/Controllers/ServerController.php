@@ -6,6 +6,7 @@ use App\Models\Server;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class ServerController extends Controller
 {
@@ -36,6 +37,7 @@ class ServerController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'id' => 'nullable|integer|min:1|unique:servers,id',
             'name' => 'required|string|max:255',
             'ip_address' => 'required|ipv4|unique:servers,ip_address',
             'location' => 'nullable|string|max:255',
@@ -47,7 +49,20 @@ class ServerController extends Controller
         // Default is_active true jika tidak dikirim
         $validated['is_active'] = $request->has('is_active');
 
+        // Unset ID if empty to let database auto-increment work correctly
+        if (empty($validated['id'])) {
+            unset($validated['id']);
+        }
+
         Server::create($validated);
+
+        // Sync PostgreSQL sequence if using pgsql
+        if ($request->filled('id') && DB::getDriverName() === 'pgsql') {
+            $maxId = DB::table('servers')->max('id');
+            if ($maxId) {
+                DB::statement("SELECT setval('servers_id_seq', ?)", [$maxId]);
+            }
+        }
 
         return redirect()->route('servers.index')->with('success', 'Server node berhasil ditambahkan.');
     }
@@ -60,6 +75,7 @@ class ServerController extends Controller
     public function update(Request $request, Server $server): RedirectResponse
     {
         $validated = $request->validate([
+            'id' => 'required|integer|min:1|unique:servers,id,' . $server->id,
             'name' => 'required|string|max:255',
             'ip_address' => 'required|ipv4|unique:servers,ip_address,' . $server->id,
             'location' => 'nullable|string|max:255',
@@ -70,7 +86,40 @@ class ServerController extends Controller
         // Handle checkbox toggle
         $validated['is_active'] = $request->has('is_active');
 
-        $server->update($validated);
+        $oldId = $server->id;
+        $newId = (int)$validated['id'];
+
+        DB::transaction(function () use ($server, $validated, $oldId, $newId) {
+            if ($newId !== $oldId) {
+                // 1. Create a new server row with the new ID
+                $newServerData = $validated;
+                $newServerData['id'] = $newId;
+                Server::create($newServerData);
+
+                // 2. Update dependent cctvs
+                DB::table('cctvs')->where('server_id', $oldId)->update(['server_id' => $newId]);
+                
+                // 3. Delete the old server
+                DB::table('servers')->where('id', $oldId)->delete();
+                
+                // Sync PostgreSQL sequence if pgsql
+                if (DB::getDriverName() === 'pgsql') {
+                    $maxId = DB::table('servers')->max('id');
+                    if ($maxId) {
+                        DB::statement("SELECT setval('servers_id_seq', ?)", [$maxId]);
+                    }
+                }
+
+                // Trigger sync notification
+                try {
+                    DB::statement("NOTIFY cctv_update, 'ALL'");
+                } catch (\Exception $e) {
+                    // Ignore if notify fails or not supported
+                }
+            } else {
+                $server->update($validated);
+            }
+        });
 
         return redirect()->route('servers.index')->with('success', 'Data server berhasil diperbarui.');
     }

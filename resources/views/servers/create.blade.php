@@ -17,9 +17,16 @@
                 <form action="{{ route('servers.store') }}" method="POST" class="space-y-6">
                     @csrf
                     
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Nama Server (Node)</label>
-                        <input type="text" name="name" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Contoh: Node 1 (Rektorat)" required>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Nama Server (Node)</label>
+                            <input type="text" name="name" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Contoh: Node 1 (Rektorat)" required value="{{ old('name') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">ID Node / Server ID (Opsional)</label>
+                            <input type="number" name="id" min="1" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Otomatis (Auto Increment)" value="{{ old('id') }}">
+                            <p class="text-[10px] text-slate-400 mt-1">Kosongkan untuk auto-increment, atau tentukan ID kustom (misal: 3).</p>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-6">
