@@ -179,7 +179,7 @@
         <div id="map"></div>
 
         <!-- Video Modal -->
-        <div id="cctv-modal" class="hidden opacity-0 scale-95 transition-all duration-200 pointer-events-auto origin-center w-[400px]">
+        <div id="cctv-modal" class="hidden opacity-0 scale-95 transition-all duration-200 pointer-events-auto origin-center w-[calc(100vw-24px)] sm:w-[400px]">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col shadow-orange-500/10">
                 <div class="h-11 px-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                     <div class="flex items-center gap-2.5 overflow-hidden">
@@ -471,34 +471,48 @@
                 };
             }
 
-            // Perhitungan Posisi Agar Tetap di Tengah/Dalam Layar
+            // Tampilkan modal terlebih dahulu secara tersembunyi untuk membaca dimensi aktual
+            modal.classList.remove('hidden');
+            const modalWidth = modal.offsetWidth || 400;
+            const modalHeight = modal.offsetHeight || 350;
+
+            const mapContainer = document.getElementById('map');
+            const containerWidth = mapContainer.clientWidth;
+            const containerHeight = mapContainer.clientHeight;
+
             const point = event.containerPoint; 
-            const modalWidth = 400;
-            const modalHeight = 350;
-            
-            let top = point.y - (modalHeight / 2); 
-            let left = point.x + 40;
+            let top, left;
 
-            // Proteksi agar tidak keluar kanan
-            if (left + modalWidth > window.innerWidth) {
-                left = point.x - modalWidth - 40;
-            }
-            
-            // Proteksi agar tidak keluar kiri
-            if (left < 10) left = 10;
+            if (containerWidth < 640) {
+                // Di layar kecil (mobile), posisikan di tengah layar secara vertikal & horizontal
+                left = (containerWidth - modalWidth) / 2;
+                top = (containerHeight - modalHeight) / 2;
+            } else {
+                // Di layar besar, posisikan relatif terhadap marker yang diklik
+                top = point.y - (modalHeight / 2); 
+                left = point.x + 40;
 
-            // Proteksi agar tidak keluar bawah
-            if (top + modalHeight > window.innerHeight) {
-                top = window.innerHeight - modalHeight - 20;
+                // Proteksi agar tidak keluar kanan (dikurangi margin 10px)
+                if (left + modalWidth > containerWidth - 10) {
+                    left = point.x - modalWidth - 40;
+                }
+                
+                // Proteksi agar tidak keluar kiri
+                if (left < 10) left = 10;
+
+                // Proteksi agar tidak keluar bawah (memperhitungkan footer marquee setinggi 36px)
+                const maxBottom = containerHeight - 50;
+                if (top + modalHeight > maxBottom) {
+                    top = maxBottom - modalHeight;
+                }
+                
+                // Proteksi agar tidak keluar atas
+                if (top < 20) top = 20;
             }
-            
-            // Proteksi agar tidak keluar atas
-            if (top < 20) top = 20;
 
             modal.style.top = `${top}px`;
             modal.style.left = `${left}px`;
             
-            modal.classList.remove('hidden');
             setTimeout(() => { modal.classList.add('opacity-100', 'scale-100'); }, 10);
 
             stopVideo();
