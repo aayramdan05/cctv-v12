@@ -9,6 +9,9 @@
 
 set -e
 
+# Dapatkan direktori script saat ini
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # Warna untuk output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -52,7 +55,7 @@ fi
 
 # 3. INSTALASI DEPENDENSI
 echo -e "${GREEN}>>> Menginstal dependensi sistem (Nginx, FFmpeg, Python)...${NC}"
-apt update
+apt update || true
 apt install -y nginx ffmpeg python3-pip python3-venv wget curl git libpq-dev
 
 # 4. DOWNLOAD GO2RTC
@@ -73,25 +76,32 @@ chmod +x /usr/local/bin/go2rtc
 
 # 5. SETUP STRUKTUR FOLDER
 echo -e "${GREEN}>>> Membuat struktur folder dan izin akses...${NC}"
-mkdir -p "$HOME_DIR/storage/recordings"
+mkdir -p "/var/www/html/storage/recordings"
 mkdir -p "$HOME_DIR/cctv-scripts"
-mkdir -p "$HOME_DIR/temp_clone"
 
-# 6. CLONE REPOSITORY (SPARSE-CHECKOUT)
-echo -e "${GREEN}>>> Mengambil script dari GitHub...${NC}"
-cd "$HOME_DIR/temp_clone"
-git init
-git remote add origin https://github.com/aayramdan05/cctv-v12.git
-git config core.sparseCheckout true
-echo "scripts/" >> .git/info/sparse-checkout
-echo "nginx/" >> .git/info/sparse-checkout
-git pull origin main
+# 6. COPY SCRIPTS (LOCAL ATAU CLONE VIA GITHUB)
+if [ -f "$SCRIPT_DIR/cctv-sync.service" ] && [ -f "$SCRIPT_DIR/sync_node.py" ]; then
+    echo -e "${GREEN}>>> Mendeteksi file installer lokal di $SCRIPT_DIR. Menggunakan file lokal...${NC}"
+    cp -r "$SCRIPT_DIR"/* "$HOME_DIR/cctv-scripts/"
+else
+    echo -e "${GREEN}>>> Mengambil script dari GitHub (Sparse-Checkout)...${NC}"
+    mkdir -p "$HOME_DIR/temp_clone"
+    cd "$HOME_DIR/temp_clone"
+    git init
+    git remote add origin https://github.com/aayramdan05/cctv-v12.git
+    git config core.sparseCheckout true
+    echo "scripts/" >> .git/info/sparse-checkout
+    echo "nginx/" >> .git/info/sparse-checkout
+    git pull origin main
 
-# Pindahkan file ke lokasi akhir
-cp -r scripts/* "$HOME_DIR/cctv-scripts/"
-chown -R $TARGET_USER:$TARGET_USER "$HOME_DIR/storage"
+    # Pindahkan file ke lokasi akhir
+    cp -r scripts/* "$HOME_DIR/cctv-scripts/"
+    rm -rf "$HOME_DIR/temp_clone"
+fi
+
+chown -R $TARGET_USER:www-data "/var/www/html/storage"
+chmod -R 775 "/var/www/html/storage"
 chown -R $TARGET_USER:$TARGET_USER "$HOME_DIR/cctv-scripts"
-rm -rf "$HOME_DIR/temp_clone"
 
 # Izin agar Nginx bisa masuk ke folder Home
 chmod o+x "$HOME_DIR"
@@ -125,7 +135,7 @@ server {
 
     # Jalur File Rekaman MP4
     location /storage/ {
-        alias $HOME_DIR/storage/;
+        alias /var/www/html/storage/;
         add_header Access-Control-Allow-Origin *;
         add_header Cache-Control no-cache;
         add_header Accept-Ranges bytes;
