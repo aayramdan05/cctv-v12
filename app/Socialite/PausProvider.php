@@ -26,7 +26,7 @@ class PausProvider extends AbstractProvider implements ProviderInterface
      */
     protected function getAuthUrl($state)
     {
-        return $this->buildAuthUrlFromBase(config('services.paus.base_url') . '/oauth/authorize', $state);
+        return $this->buildAuthUrlFromBase(config('services.paus.base_url') . '/oauth', $state);
     }
 
     /**
