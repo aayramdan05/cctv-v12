@@ -30,17 +30,20 @@ class PausAuthController extends Controller
     public function handlePausCallback()
     {
         Log::info('Received callback from PAUS SSO');
-        
-        dd([
-            'message' => 'Callback hit successfully!',
-            'query_params' => request()->all(),
-            'session' => session()->all()
-        ]);
 
         try {
             $pausUser = Socialite::driver('paus')
                 ->redirectUrl(config('services.paus.redirect'))
+                ->stateless()
                 ->user();
+            
+            dd([
+                'id' => $pausUser->getId(),
+                'nickname' => $pausUser->getNickname(),
+                'name' => $pausUser->getName(),
+                'email' => $pausUser->getEmail(),
+                'raw' => $pausUser->getRaw(),
+            ]);
             
             Log::info('PAUS User authenticated: ' . $pausUser->getEmail());
             

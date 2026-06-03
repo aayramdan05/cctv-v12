@@ -32,6 +32,7 @@ use App\Http\Controllers\Auth\PausAuthController;
 // SSO Unpad (PAUS) Authentication
 Route::get('/auth/paus', [PausAuthController::class, 'redirectToPaus'])->name('auth.paus');
 Route::get('/auth/paus/callback', [PausAuthController::class, 'handlePausCallback']);
+Route::get('/callback', [PausAuthController::class, 'handlePausCallback'])->name('auth.paus.callback.short');
 
 Route::get('/', function () {
     return view('welcome');
