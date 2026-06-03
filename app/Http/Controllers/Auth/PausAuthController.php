@@ -20,7 +20,7 @@ class PausAuthController extends Controller
         
         return Socialite::driver('paus')
             ->redirectUrl(config('services.paus.redirect'))
-            ->scopes(['openid', 'profile', 'email'])
+            ->scopes(['user.basic', 'user.email'])
             ->redirect();
     }
 
