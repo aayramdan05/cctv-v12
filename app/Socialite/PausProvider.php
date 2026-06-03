@@ -40,45 +40,6 @@ class PausProvider extends AbstractProvider implements ProviderInterface
     }
 
     /**
-     * Get the access token response for the given code.
-     *
-     * @param  string  $code
-     * @return array
-     */
-    public function getAccessTokenResponse($code)
-    {
-        $response = $this->getHttpClient()->post($this->getTokenUrl(), [
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'X-Requested-With' => 'XMLHttpRequest',
-                'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
-            ],
-            'json' => $this->getTokenFields($code),
-        ]);
-
-        return json_decode($response->getBody()->getContents(), true);
-    }
-
-    /**
-     * Get the POST fields for the token request.
-     *
-     * @param  string  $code
-     * @return array
-     */
-    protected function getTokenFields($code)
-    {
-        return [
-            'grant_type' => 'authorization_code',
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'code' => $code,
-            'redirect_uri' => $this->redirectUrl,
-            'state' => request()->query('state'),
-        ];
-    }
-
-    /**
      * Get the raw user for the given access token.
      *
      * @param  string  $token
