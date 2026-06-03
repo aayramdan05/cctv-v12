@@ -41,9 +41,14 @@ Route::get('/auth/paus/callback', function () {
         $user = Socialite::driver('paus')->stateless()->user();
         dd($user);
     } catch (\Exception $e) {
+        $responseBody = null;
+        if ($e instanceof \GuzzleHttp\Exception\BadResponseException) {
+            $responseBody = $e->getResponse()->getBody()->getContents();
+        }
         dd([
             'message' => 'Error during Socialite user retrieval',
             'error' => $e->getMessage(),
+            'response_body' => $responseBody,
             'trace' => $e->getTraceAsString(),
         ]);
     }
