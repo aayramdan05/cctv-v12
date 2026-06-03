@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request; // <--- WAJIB ADA
 use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
+use App\Models\User;
 
 // Controller Imports
 use App\Http\Controllers\ProfileController;
@@ -21,7 +24,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\StreamAuthController;
 use App\Http\Controllers\MapController;
-use App\Http\Controllers\Auth\PausAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,9 +32,56 @@ use App\Http\Controllers\Auth\PausAuthController;
 */
 
 // SSO Unpad (PAUS) Authentication
-Route::get('/auth/paus', [PausAuthController::class, 'redirectToPaus'])->name('auth.paus');
-Route::get('/auth/paus/callback', [PausAuthController::class, 'handlePausCallback']);
-Route::get('/callback', [PausAuthController::class, 'handlePausCallback'])->name('auth.paus.callback.short');
+Route::get('/auth/paus', function () {
+    return Socialite::driver('paus')->redirect();
+})->name('auth.paus');
+
+Route::get('/auth/paus/callback', function () {
+    try {
+        $pausUser = Socialite::driver('paus')->user();
+        
+        $pausId = $pausUser->getId();
+        $email = $pausUser->getEmail();
+
+        // 1. Cari user berdasarkan paus_id terlebih dahulu
+        $user = null;
+        if ($pausId) {
+            $user = User::where('paus_id', $pausId)->first();
+        }
+
+        // Jika tidak ditemukan berdasarkan paus_id, cari berdasarkan email (jika ada)
+        if (!$user && $email) {
+            $user = User::where('email', $email)->first();
+        }
+
+        if ($user) {
+            // Update data PAUS jika sudah ada
+            $user->update([
+                'paus_id' => $pausId,
+                'paus_username' => $pausUser->getNickname(),
+                'name' => $pausUser->getName(),
+            ]);
+        } else {
+            // 2. Buat user baru jika belum terdaftar
+            $user = User::create([
+                'name' => $pausUser->getName(),
+                'email' => $email,
+                'paus_id' => $pausId,
+                'paus_username' => $pausUser->getNickname(),
+                'password' => bcrypt(Str::random(24)),
+                'role' => 'user', // Default: View Only (User Biasa)
+            ]);
+        }
+
+        // 3. Login-kan user
+        Auth::login($user);
+
+        return redirect()->intended('/dashboard');
+
+    } catch (\Exception $e) {
+        return redirect('/login')->with('error', 'Gagal login menggunakan SSO Unpad: ' . $e->getMessage());
+    }
+})->name('auth.paus.callback');
 
 Route::get('/', function () {
     return view('welcome');

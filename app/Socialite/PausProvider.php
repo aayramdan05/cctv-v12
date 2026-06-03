@@ -9,12 +9,14 @@ use Illuminate\Support\Arr;
 
 class PausProvider extends AbstractProvider implements ProviderInterface
 {
+    protected $scopeSeparator = ' ';
+
     /**
-     * The separator used for the scopes.
+     * The scopes being requested.
      *
-     * @var string
+     * @var array
      */
-    protected $scopeSeparator = ',';
+    protected $scopes = ['openid', 'profile', 'email'];
 
     /**
      * Get the authentication URL for the provider.
@@ -24,7 +26,7 @@ class PausProvider extends AbstractProvider implements ProviderInterface
      */
     protected function getAuthUrl($state)
     {
-        return $this->buildAuthUrlFromBase(config('services.paus.base_url') . '/oauth', $state);
+        return $this->buildAuthUrlFromBase(config('services.paus.base_url') . '/oauth/authorize', $state);
     }
 
     /**
