@@ -38,7 +38,7 @@ Route::get('/auth/paus', function () {
 
 Route::get('/auth/paus/callback', function () {
     try {
-        $user = Socialite::driver('paus')->user();
+        $user = Socialite::driver('paus')->stateless()->user();
         dd($user);
     } catch (\Exception $e) {
         dd([
