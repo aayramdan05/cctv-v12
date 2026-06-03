@@ -50,10 +50,11 @@ class PausProvider extends AbstractProvider implements ProviderInterface
         $response = $this->getHttpClient()->post($this->getTokenUrl(), [
             'headers' => [
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
                 'X-Requested-With' => 'XMLHttpRequest',
                 'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
             ],
-            'form_params' => $this->getTokenFields($code),
+            'json' => $this->getTokenFields($code),
         ]);
 
         return json_decode($response->getBody()->getContents(), true);
