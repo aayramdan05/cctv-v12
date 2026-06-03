@@ -19,8 +19,8 @@ class PausAuthController extends Controller
         Log::info('Redirecting to PAUS SSO with redirect_uri: ' . config('services.paus.redirect'));
         
         return Socialite::driver('paus')
+            ->redirectUrl(config('services.paus.redirect'))
             ->scopes(['openid', 'profile', 'email'])
-            ->with(['redirect_uri' => config('services.paus.redirect')])
             ->redirect();
     }
 
@@ -32,19 +32,30 @@ class PausAuthController extends Controller
         Log::info('Received callback from PAUS SSO');
 
         try {
-            $pausUser = Socialite::driver('paus')->user();
+            $pausUser = Socialite::driver('paus')
+                ->redirectUrl(config('services.paus.redirect'))
+                ->user();
             
             Log::info('PAUS User authenticated: ' . $pausUser->getEmail());
             
-            // 1. Cari user berdasarkan paus_id atau email
-            $user = User::where('paus_id', $pausUser->getId())
-                        ->orWhere('email', $pausUser->getEmail())
-                        ->first();
+            $pausId = $pausUser->getId();
+            $email = $pausUser->getEmail();
+
+            // 1. Cari user berdasarkan paus_id terlebih dahulu (jika ada)
+            $user = null;
+            if ($pausId) {
+                $user = User::where('paus_id', $pausId)->first();
+            }
+
+            // Jika tidak ditemukan berdasarkan paus_id, cari berdasarkan email (jika ada)
+            if (!$user && $email) {
+                $user = User::where('email', $email)->first();
+            }
 
             if ($user) {
                 // Update data PAUS jika sudah ada
                 $user->update([
-                    'paus_id' => $pausUser->getId(),
+                    'paus_id' => $pausId,
                     'paus_username' => $pausUser->getNickname(),
                     'name' => $pausUser->getName(), // Update nama sesuai PAUS
                 ]);
@@ -52,8 +63,8 @@ class PausAuthController extends Controller
                 // 2. Buat user baru jika belum terdaftar
                 $user = User::create([
                     'name' => $pausUser->getName(),
-                    'email' => $pausUser->getEmail(),
-                    'paus_id' => $pausUser->getId(),
+                    'email' => $email,
+                    'paus_id' => $pausId,
                     'paus_username' => $pausUser->getNickname(),
                     'password' => bcrypt(Str::random(24)), // Password random karena login via SSO
                     'role' => 'user', // Default: View Only (User Biasa)
