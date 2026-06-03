@@ -9,14 +9,14 @@ use Illuminate\Support\Arr;
 
 class PausProvider extends AbstractProvider implements ProviderInterface
 {
-    protected $scopeSeparator = ' ';
+    protected $scopeSeparator = ',';
 
     /**
      * The scopes being requested.
      *
      * @var array
      */
-    protected $scopes = ['openid', 'profile', 'email'];
+    protected $scopes = ['user.basic'];
 
     /**
      * Get the authentication URL for the provider.
