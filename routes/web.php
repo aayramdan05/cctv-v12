@@ -38,48 +38,14 @@ Route::get('/auth/paus', function () {
 
 Route::get('/auth/paus/callback', function () {
     try {
-        $pausUser = Socialite::driver('paus')->user();
-        
-        $pausId = $pausUser->getId();
-        $email = $pausUser->getEmail();
-
-        // 1. Cari user berdasarkan paus_id terlebih dahulu
-        $user = null;
-        if ($pausId) {
-            $user = User::where('paus_id', $pausId)->first();
-        }
-
-        // Jika tidak ditemukan berdasarkan paus_id, cari berdasarkan email (jika ada)
-        if (!$user && $email) {
-            $user = User::where('email', $email)->first();
-        }
-
-        if ($user) {
-            // Update data PAUS jika sudah ada
-            $user->update([
-                'paus_id' => $pausId,
-                'paus_username' => $pausUser->getNickname(),
-                'name' => $pausUser->getName(),
-            ]);
-        } else {
-            // 2. Buat user baru jika belum terdaftar
-            $user = User::create([
-                'name' => $pausUser->getName(),
-                'email' => $email,
-                'paus_id' => $pausId,
-                'paus_username' => $pausUser->getNickname(),
-                'password' => bcrypt(Str::random(24)),
-                'role' => 'user', // Default: View Only (User Biasa)
-            ]);
-        }
-
-        // 3. Login-kan user
-        Auth::login($user);
-
-        return redirect()->intended('/dashboard');
-
+        $user = Socialite::driver('paus')->user();
+        dd($user);
     } catch (\Exception $e) {
-        return redirect('/login')->with('error', 'Gagal login menggunakan SSO Unpad: ' . $e->getMessage());
+        dd([
+            'message' => 'Error during Socialite user retrieval',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
     }
 })->name('auth.paus.callback');
 
