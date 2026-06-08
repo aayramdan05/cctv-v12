@@ -1,0 +1,206 @@
+server {
+    listen 80;
+
+    # Hanya IP Master dan Domain
+    server_name cctv.unpad.net 10.69.69.21;
+
+    # Root Folder Project Laravel 12
+    root /home/aay/cctv-v12/public;
+
+    # --- LOGGING ---
+    error_log /var/log/nginx/cctv_error.log warn;
+    access_log /var/log/nginx/cctv_access.log;
+
+    # --- TRUST PROXY ---
+    set_real_ip_from 0.0.0.0/0;
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive on;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+    charset utf-8;
+
+    # =========================================================
+    #  BAGIAN A: NODE 1 (10.69.69.21 - LOCAL MASTER)
+    # =========================================================
+
+    # 1. JALUR REKAMAN (STORAGE)
+    location /node1/storage/ {
+        auth_request /auth-video;
+        rewrite ^/node1/(.*) /$1 break;
+        proxy_pass http://10.69.69.21:80;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 2. JALUR API PLAYBACK
+    location /node1/playback/ {
+        auth_request /auth-video;
+        rewrite ^/node1/(.*) /$1 break;
+        proxy_pass http://10.69.69.21:80;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 3. JALUR STREAMING (Go2RTC Local)
+    location /node1/ {
+        auth_request /auth-video;
+        rewrite ^/node1/(.*) /$1 break;
+        proxy_pass http://10.69.69.21:1984;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Origin "";
+    }
+
+    # =========================================================
+    #  BAGIAN B: NODE 2 (10.69.69.39 - REMOTE NODE)
+    # =========================================================
+
+    # 0. JALUR KHUSUS ASET (VITE/BUILD) - SOLUSI MIXED CONTENT
+    # Ditaruh paling atas di blok Node 2 agar prioritas lebih tinggi
+    location /node2/build/ {
+        # Ambil file CSS/JS langsung dari Node 2 /build/
+        # Ini akan mengatasi request http://.../app.css yang diblokir
+        proxy_pass http://10.69.69.39:80/build/;
+        
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        access_log off;
+        expires max;
+    }
+
+    # 1. JALUR REKAMAN (STORAGE)
+    location /node2/storage/ {
+        auth_request /auth-video;
+        # Rewrite eksplisit untuk membuang /node2/
+        rewrite ^/node2/(.*) /$1 break;
+        proxy_pass http://10.69.69.39:80;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # 2. JALUR API PLAYBACK
+    location /node2/playback/ {
+        auth_request /auth-video;
+        rewrite ^/node2/(.*) /$1 break;
+        proxy_pass http://10.69.69.39:80;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # 3. JALUR STREAMING UTAMA (Stream.html & WebSocket)
+    location /node2/ {
+        auth_request /auth-video;
+
+        # PERBAIKAN 404:
+        # Gunakan rewrite manual + break. 
+        # Ini memastikan request "/node2/stream.html" berubah jadi "/stream.html"
+        # sebelum dikirim ke Node 2.
+        rewrite ^/node2/(.*) /$1 break;
+        
+        # Proxy pass tanpa trailing slash (karena sudah pakai rewrite)
+        proxy_pass http://10.69.69.39:80;
+
+        # Config WebSocket Wajib
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        
+        # Paksa HTTPS info ke Node 2
+        proxy_set_header X-Forwarded-Proto https; 
+        
+        proxy_set_header Origin "";
+    }
+
+    # =========================================================
+    #  BAGIAN C: JALUR KHUSUS MASTER (AKSES LANGSUNG)
+    # =========================================================
+
+    # Player HTML & JS (Tangkap file statis Go2RTC Master)
+    location ~ ^/(video-rtc|stream|webrtc|mse|video-stream|webrtc-adapter|adapter|static)\.(html|js|css|json)$ {
+        proxy_pass http://127.0.0.1:1984;
+        proxy_set_header Host $host;
+    }
+
+    # WebSocket Master
+    location = /api/ws {
+        proxy_pass http://127.0.0.1:1984;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header Origin "";
+    }
+
+    # API Media Master
+    location ~ ^/api/(stream|frame|streams|images|hls) {
+        proxy_pass http://127.0.0.1:1984;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # =========================================================
+    #  BAGIAN D: AUTH INTERNAL & FALLBACK
+    # =========================================================
+
+    location = /auth-video {
+        internal;
+        proxy_pass http://10.69.69.21:80/cek-status-user;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header Cookie $http_cookie;
+        proxy_ignore_headers Set-Cookie;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location /build/ {
+        alias /home/aay/cctv-v12/public/build/;
+        access_log off;
+        expires max;
+        include /etc/nginx/mime.types;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_param HTTPS on;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}

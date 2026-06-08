@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
+use Laravel\Socialite\Facades\Socialite;
+
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -24,11 +27,10 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // Register PAUS Socialite Driver
-        $socialite = $this->app->make('Laravel\Socialite\Contracts\Factory');
-        $socialite->extend('paus', function ($app) use ($socialite) {
-            $config = $app['config']['services.paus'];
-            return $socialite->buildProvider(\App\Socialite\PausProvider::class, $config);
+        Socialite::extend('paus', function ($app) {
+            $config = config('services.paus');
+
+            return Socialite::buildProvider(PAuSIDProvider::class, $config);
         });
     }
 }
