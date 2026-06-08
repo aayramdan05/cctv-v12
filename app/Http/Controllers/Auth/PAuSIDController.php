@@ -65,16 +65,24 @@ class PAuSIDController extends Controller
                 'profil_picture' => Arr::get($pausUser->user, 'image_url'),
             ]);
 
-            $user = User::updateOrCreate(
-                ['email' => $data['email']],
-                [
+            $user = User::where('email', $data['email'])->first();
+
+            if ($user) {
+                $user->update([
+                    'name' => $data['name'],
+                    'paus_id' => $data['id'],
+                    'paus_username' => $data['username'],
+                ]);
+            } else {
+                $user = User::create([
+                    'email' => $data['email'],
                     'name' => $data['name'],
                     'paus_id' => $data['id'],
                     'paus_username' => $data['username'],
                     'password' => bcrypt(Str::random(24)),
                     'role' => 'user', // Default: View Only (User Biasa)
-                ]
-            );
+                ]);
+            }
 
             // $user->update([
             //     'last_login_at' => now(),
