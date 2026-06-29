@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use App\Models\Cctv;
 use App\Models\Building;
+use App\Models\LayoutPreset;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\File;
@@ -114,5 +115,40 @@ class MonitoringController extends Controller
             'segments' => $segments,
             'events' => $events
         ]);
+    }
+
+    public function getPresets()
+    {
+        $presets = LayoutPreset::where('user_id', auth()->id())->orderBy('name')->get();
+        return response()->json($presets);
+    }
+
+    public function savePreset(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'grid_size' => 'required|integer|in:1,4,9',
+            'slots' => 'required|array',
+        ]);
+
+        $preset = LayoutPreset::create([
+            'user_id' => auth()->id(),
+            'name' => $request->name,
+            'grid_size' => $request->grid_size,
+            'slots' => $request->slots,
+        ]);
+
+        return response()->json($preset);
+    }
+
+    public function deletePreset(LayoutPreset $preset)
+    {
+        if ($preset->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $preset->delete();
+
+        return response()->json(['success' => true]);
     }
 }

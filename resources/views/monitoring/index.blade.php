@@ -24,6 +24,46 @@
                     <button @click="setGrid(4)" :class="{'bg-cyan-100 text-cyan-700': gridSize===4}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th-large pointer-events-none"></i></button>
                     <button @click="setGrid(9)" :class="{'bg-cyan-100 text-cyan-700': gridSize===9}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th pointer-events-none"></i></button>
                 </div>
+
+                <!-- Preset Dropdown -->
+                <div class="relative shrink-0" x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            class="px-3 py-1.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm">
+                        <i class="fas fa-bookmark text-cyan-500"></i>
+                        <span>Preset</span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                    </button>
+                    
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-2 text-xs">
+                        <div class="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <span class="font-bold text-slate-500 uppercase text-[9px] tracking-wider">Layout Preset</span>
+                            <button @click="saveNewPreset()" class="text-cyan-600 hover:text-cyan-700 font-bold flex items-center gap-1">
+                                <i class="fas fa-plus-circle"></i> Baru
+                            </button>
+                        </div>
+                        
+                        <div class="max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-50">
+                            <template x-for="(preset, index) in presets" :key="index">
+                                <div class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition">
+                                    <button @click="loadPreset(preset); open = false" 
+                                            class="flex-1 text-left font-semibold text-slate-700 truncate mr-2" 
+                                            :title="preset.name"
+                                            x-text="preset.name">
+                                    </button>
+                                    <button @click="deletePreset(index)" class="text-slate-400 hover:text-red-500 p-1 transition" title="Hapus Preset">
+                                        <i class="fas fa-trash-alt text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </template>
+                            <template x-if="presets.length === 0">
+                                <div class="px-3 py-4 text-center text-slate-400 italic">
+                                    Belum ada preset.
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
                 
                 <button @click="showTimeline = !showTimeline" 
                         class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm shrink-0"
@@ -381,6 +421,9 @@
                 // Panning State
                 panning: false, panSlot: null, startX: 0, startY: 0,
 
+                // Preset & Auto-save state
+                presets: [],
+
                 get isToday() {
                     const d = new Date();
                     const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -418,6 +461,35 @@
                             this.timelineTimeDisplay = "LIVE CLOCK " + now.toLocaleTimeString('en-GB');
                         }
                     }, 1000);
+
+                    // Fetch presets from database
+                    fetch('{{ route("monitoring.presets") }}')
+                        .then(res => res.json())
+                        .then(data => {
+                            this.presets = data;
+                        })
+                        .catch(e => console.error("Error fetching presets", e));
+
+                    // Load last layout from localStorage
+                    const savedGrid = localStorage.getItem('cctv_live_layout_grid_size');
+                    if (savedGrid) {
+                        this.gridSize = parseInt(savedGrid);
+                    }
+                    const savedSlots = localStorage.getItem('cctv_live_layout_active_slots');
+                    if (savedSlots) {
+                        try {
+                            this.activeSlots = JSON.parse(savedSlots);
+                            this.$nextTick(() => {
+                                for (let i = 1; i <= this.gridSize; i++) {
+                                    if (this.activeSlots[i]) {
+                                        this.playLive(i);
+                                    }
+                                }
+                            });
+                        } catch (e) {
+                            console.error("Error restoring slots:", e);
+                        }
+                    }
                 },
 
                 // --- SMART MONITOR (TOLERAN TERHADAP BUFFERING) ---
@@ -509,6 +581,7 @@
                         zoom: 1, x: 0, y: 0     
                     }; 
                     this.selectSlot(index);
+                    this.saveCurrentLayoutToLocalStorage();
                     this.$nextTick(() => { this.playLive(index); });
                 },
 
@@ -733,8 +806,113 @@
                 handleTimelineHover(e) { const rect = document.getElementById('global-timeline').getBoundingClientRect(); this.hoverPercent = ((e.clientX - rect.left) / rect.width) * 100; const seconds = (this.hoverPercent / 100) * 86400; this.hoverTimeDisplay = this.formatTime(seconds); },
                 
                 formatTime(seconds) { const h = Math.floor(seconds / 3600).toString().padStart(2,'0'); const m = Math.floor((seconds % 3600) / 60).toString().padStart(2,'0'); const s = Math.floor(seconds % 60).toString().padStart(2,'0'); return `${h}:${m}:${s}`; },
-                goLive(index) { this.playLive(index); }, setGrid(n) { this.gridSize = n; if(this.selectedSlot > n) this.selectedSlot = null; }, removeCamera(i) { delete this.activeSlots[i]; if(this.selectedSlot === i) { this.selectedSlot = null; this.currentTimelineData = []; } },
+                goLive(index) { this.playLive(index); }, 
+                setGrid(n) { 
+                    this.gridSize = n; 
+                    if(this.selectedSlot > n) this.selectedSlot = null; 
+                    this.saveCurrentLayoutToLocalStorage();
+                }, 
+                removeCamera(i) { 
+                    delete this.activeSlots[i]; 
+                    if(this.selectedSlot === i) { 
+                        this.selectedSlot = null; 
+                        this.currentTimelineData = []; 
+                    } 
+                    this.saveCurrentLayoutToLocalStorage();
+                },
                 
+                // LocalStorage Helper for current layout
+                saveCurrentLayoutToLocalStorage() {
+                    localStorage.setItem('cctv_live_layout_grid_size', this.gridSize);
+                    localStorage.setItem('cctv_live_layout_active_slots', JSON.stringify(this.activeSlots));
+                },
+
+                // Preset Management Methods
+                saveNewPreset() {
+                    const name = prompt("Masukkan nama preset layout:");
+                    if (!name || name.trim() === "") return;
+
+                    const payload = {
+                        name: name.trim(),
+                        grid_size: this.gridSize,
+                        slots: this.activeSlots
+                    };
+
+                    fetch('{{ route("monitoring.presets.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Gagal menyimpan preset");
+                        return res.json();
+                    })
+                    .then(preset => {
+                        this.presets.push(preset);
+                        this.presets.sort((a, b) => a.name.localeCompare(b.name));
+                        alert("Preset '" + name + "' berhasil disimpan!");
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        alert("Gagal menyimpan preset.");
+                    });
+                },
+
+                loadPreset(preset) {
+                    this.gridSize = preset.grid_size || preset.gridSize;
+                    
+                    // Clear older streams
+                    for (let i = 1; i <= 9; i++) {
+                        const vid = document.getElementById('video-playback-' + i);
+                        if (vid) {
+                            vid.pause();
+                            vid.removeAttribute('src');
+                            vid.load();
+                        }
+                        const iframe = document.getElementById('iframe-live-' + i);
+                        if (iframe) iframe.src = 'about:blank';
+                    }
+
+                    this.activeSlots = JSON.parse(JSON.stringify(preset.slots));
+                    this.saveCurrentLayoutToLocalStorage();
+
+                    this.$nextTick(() => {
+                        for (let i = 1; i <= this.gridSize; i++) {
+                            if (this.activeSlots[i]) {
+                                this.playLive(i);
+                            }
+                        }
+                        if (this.selectedSlot > this.gridSize) {
+                            this.selectedSlot = null;
+                        }
+                    });
+                },
+
+                deletePreset(index) {
+                    const preset = this.presets[index];
+                    if (!preset) return;
+
+                    if (confirm("Yakin ingin menghapus preset '" + preset.name + "'?")) {
+                        fetch(`/monitoring/presets/${preset.id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        })
+                        .then(res => {
+                            if (!res.ok) throw new Error("Gagal menghapus preset");
+                            this.presets.splice(index, 1);
+                        })
+                        .catch(e => {
+                            console.error(e);
+                            alert("Gagal menghapus preset.");
+                        });
+                    }
+                },
+
                 handleDragStart(e, id, name, building, faculty, liveUrl) { 
                     this.isDragging = true;
                     const camData = JSON.stringify({ id, name, building, faculty, liveUrl }); 

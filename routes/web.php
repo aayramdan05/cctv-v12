@@ -96,6 +96,9 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     // Dashboard & Monitoring
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+    Route::get('/monitoring/presets', [MonitoringController::class, 'getPresets'])->name('monitoring.presets');
+    Route::post('/monitoring/presets', [MonitoringController::class, 'savePreset'])->name('monitoring.presets.store');
+    Route::delete('/monitoring/presets/{preset}', [MonitoringController::class, 'deletePreset'])->name('monitoring.presets.destroy');
     
     // Data Timeline & Playback
     Route::get('/playback', [PlaybackController::class, 'index'])->name('playback.index');
