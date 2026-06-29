@@ -12,20 +12,23 @@
                 <p class="text-xs text-slate-500 hidden md:block">WebRTC Realtime & Instant Playback.</p>
             </div>
 
-            <div class="flex gap-2 overflow-x-auto no-scrollbar py-1 shrink-0 max-w-full">
-                <div class="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm gap-2 shrink-0">
-                    <i class="fas fa-calendar-alt text-slate-400 text-xs pointer-events-none"></i>
-                    <input type="date" x-model="selectedDate" @change="refreshTimeline()" 
-                           class="border-none p-0 text-xs font-bold text-slate-700 focus:ring-0 bg-transparent h-full cursor-pointer w-24">
+            <div class="flex gap-2 items-center shrink-0 max-w-full">
+                <!-- Date Picker & Grid Selectors (only these are scrollable on very small screens) -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar py-1 shrink-0">
+                    <div class="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm gap-2 shrink-0">
+                        <i class="fas fa-calendar-alt text-slate-400 text-xs pointer-events-none"></i>
+                        <input type="date" x-model="selectedDate" @change="refreshTimeline()" 
+                               class="border-none p-0 text-xs font-bold text-slate-700 focus:ring-0 bg-transparent h-full cursor-pointer w-24">
+                    </div>
+
+                    <div class="bg-white p-1 rounded-lg border border-slate-200 flex shadow-sm shrink-0">
+                        <button @click="setGrid(1)" :class="{'bg-cyan-100 text-cyan-700': gridSize===1}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-square pointer-events-none"></i></button>
+                        <button @click="setGrid(4)" :class="{'bg-cyan-100 text-cyan-700': gridSize===4}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th-large pointer-events-none"></i></button>
+                        <button @click="setGrid(9)" :class="{'bg-cyan-100 text-cyan-700': gridSize===9}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th pointer-events-none"></i></button>
+                    </div>
                 </div>
 
-                <div class="bg-white p-1 rounded-lg border border-slate-200 flex shadow-sm shrink-0">
-                    <button @click="setGrid(1)" :class="{'bg-cyan-100 text-cyan-700': gridSize===1}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-square pointer-events-none"></i></button>
-                    <button @click="setGrid(4)" :class="{'bg-cyan-100 text-cyan-700': gridSize===4}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th-large pointer-events-none"></i></button>
-                    <button @click="setGrid(9)" :class="{'bg-cyan-100 text-cyan-700': gridSize===9}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th pointer-events-none"></i></button>
-                </div>
-
-                <!-- Preset Dropdown -->
+                <!-- Preset Dropdown (Placed outside of overflow-x-auto container so it is NOT clipped) -->
                 <div class="relative shrink-0">
                     <button @click="presetsOpen = !presetsOpen" 
                             class="px-3 py-1.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm">
@@ -64,19 +67,22 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Timeline Toggle -->
                 <button @click="showTimeline = !showTimeline" 
-                        class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm shrink-0"
+                        class="px-3 py-1.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm shrink-0"
                         :class="{'bg-cyan-50 border-cyan-200 text-cyan-600': showTimeline}"
                         title="Toggle Timeline">
                     <i class="fas pointer-events-none" :class="showTimeline ? 'fa-chart-area' : 'fa-chart-bar'"></i>
                 </button>
 
-                <button @click="toggleFullscreen()" class="px-4 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-bold hover:bg-slate-700 transition flex items-center gap-2 shadow select-none shrink-0">
+                <!-- Fullscreen / Kiosk -->
+                <button @click="toggleFullscreen()" class="px-4 py-1.5 h-10 rounded-lg bg-slate-800 text-white text-xs font-bold hover:bg-slate-700 transition flex items-center gap-2 shadow select-none shrink-0">
                     <i class="fas pointer-events-none" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
                     <span x-text="isFullscreen ? 'Exit' : 'Kiosk'" class="hidden sm:inline"></span>
                 </button>
 
+                <!-- Sidebar Toggle -->
                 <button @click="showSidebar = !showSidebar" class="w-10 h-10 bg-white border rounded-lg shadow-sm hover:bg-slate-50 text-slate-600 flex items-center justify-center transition select-none shrink-0">
                     <i class="fas pointer-events-none" :class="showSidebar ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
                 </button>
