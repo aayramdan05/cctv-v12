@@ -463,6 +463,58 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modern Delete Preset Modal -->
+        <div x-show="showDeletePresetModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+             x-cloak>
+            
+            <div @click.away="showDeletePresetModal = false"
+                 x-show="showDeletePresetModal"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="bg-white rounded-2xl border border-red-100 shadow-2xl max-w-md w-full overflow-hidden">
+                
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-red-500/5 to-rose-500/5">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
+                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Hapus Preset Layout</h3>
+                    </div>
+                    <button @click="showDeletePresetModal = false" class="text-slate-400 hover:text-slate-600 transition p-1">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+                
+                <!-- Body -->
+                <div class="p-6 space-y-3">
+                    <p class="text-slate-700 text-xs font-semibold">Apakah Anda yakin ingin menghapus preset layout <span class="text-red-600 font-bold" x-text="'&ldquo;' + presetToDeleteName + '&rdquo;'"></span>?</p>
+                    <p class="text-slate-400 text-[11px]">Tindakan ini permanen dan preset yang terhapus tidak dapat dipulihkan kembali.</p>
+                </div>
+                
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <button @click="showDeletePresetModal = false" 
+                            class="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-semibold transition">
+                        Batal
+                    </button>
+                    <button @click="confirmDeletePreset()" 
+                            class="px-5 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition active:scale-95">
+                        Ya, Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -471,6 +523,7 @@
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
                 search: '', filterFaculty: '', filterBuilding: '', filterServer: '', filterPlacement: '', currentHost: window.location.hostname, isFullscreen: false,
                 isDragging: false, presetsOpen: false, showPresetModal: false, newPresetName: '',
+                showDeletePresetModal: false, presetToDeleteIndex: null, presetToDeleteName: '',
                 
                 selectedDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 currentTimelineData: [], currentEventsData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
@@ -970,23 +1023,34 @@
                 deletePreset(index) {
                     const preset = this.presets[index];
                     if (!preset) return;
+                    this.presetToDeleteIndex = index;
+                    this.presetToDeleteName = preset.name;
+                    this.presetsOpen = false;
+                    this.showDeletePresetModal = true;
+                },
 
-                    if (confirm("Yakin ingin menghapus preset '" + preset.name + "'?")) {
-                        fetch(`/monitoring/presets/${preset.id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
-                        })
-                        .then(res => {
-                            if (!res.ok) throw new Error("Gagal menghapus preset");
-                            this.presets.splice(index, 1);
-                        })
-                        .catch(e => {
-                            console.error(e);
-                            alert("Gagal menghapus preset.");
-                        });
-                    }
+                confirmDeletePreset() {
+                    const index = this.presetToDeleteIndex;
+                    const preset = this.presets[index];
+                    if (!preset) return;
+
+                    fetch(`/monitoring/presets/${preset.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Gagal menghapus preset");
+                        this.presets.splice(index, 1);
+                        this.showDeletePresetModal = false;
+                        this.presetToDeleteIndex = null;
+                        this.presetToDeleteName = '';
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        alert("Gagal menghapus preset.");
+                    });
                 },
 
                 handleDragStart(e, id, name, building, faculty, liveUrl) { 
