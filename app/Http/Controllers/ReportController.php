@@ -18,7 +18,7 @@ class ReportController extends Controller
     {
         abort_if(auth()->user()->role !== 'admin', 403);
 
-        $query = Cctv::with(['building', 'server']);
+        $query = Cctv::with(['building', 'server'])->withAvg('recordings', 'size_mb');
 
         // Apply filters
         if ($request->filled('search')) {
@@ -67,7 +67,7 @@ class ReportController extends Controller
     {
         abort_if(auth()->user()->role !== 'admin', 403);
 
-        $query = Cctv::with(['building', 'server']);
+        $query = Cctv::with(['building', 'server'])->withAvg('recordings', 'size_mb');
 
         // Apply same filters
         if ($request->filled('search')) {
@@ -105,7 +105,9 @@ class ReportController extends Controller
                 'No.' => $no++,
                 'Kode CCTV' => $cctv->kode_cctv,
                 'Nama CCTV' => $cctv->nama_cctv,
+                'Merk CCTV' => $cctv->merk,
                 'IP Address' => $cctv->ip ?? '-',
+                'Ukuran File / 15 Menit' => $cctv->recordings_avg_size_mb ? round($cctv->recordings_avg_size_mb, 2) . ' MB' : '0 MB',
                 'Penempatan' => $cctv->penempatan,
                 'Gedung' => $cctv->building ? $cctv->building->nama_gedung : '-',
                 'Kode Gedung' => $cctv->building ? $cctv->building->kode_gedung : '-',
@@ -128,7 +130,7 @@ class ReportController extends Controller
     {
         abort_if(auth()->user()->role !== 'admin', 403);
 
-        $query = Cctv::with(['building', 'server']);
+        $query = Cctv::with(['building', 'server'])->withAvg('recordings', 'size_mb');
 
         // Apply same filters
         if ($request->filled('search')) {

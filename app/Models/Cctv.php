@@ -114,6 +114,36 @@ class Cctv extends Model
 
     // --- ACCESSORS ---
 
+    public function getMerkAttribute()
+    {
+        $url = strtolower($this->rtsp_url ?? '');
+        if (str_contains($url, 'streaming/channels')) {
+            return 'Hikvision';
+        }
+        if (str_contains($url, 'cam/realmonitor')) {
+            return 'Dahua / IMOU';
+        }
+        if (str_contains($url, 'stream1') || str_contains($url, 'stream2')) {
+            return 'TP-Link VIGI';
+        }
+        if (str_contains($url, 'unicast/c1/s0/live')) {
+            return 'Uniview (UNV)';
+        }
+        if (str_contains($url, 'h264/ch1/main/av_stream')) {
+            return 'Ezviz';
+        }
+        if (str_contains($url, 'live/ch00_0')) {
+            return 'SPC';
+        }
+        if (str_contains($url, 'live/ch0')) {
+            return 'Bardi / Tuya';
+        }
+        if (str_contains($url, 'snw/live/cam/realmonitor')) {
+            return 'Hanwha / Samsung';
+        }
+        return 'Generic / ONVIF';
+    }
+
     public function getStreamUrlAttribute()
     {
         $url = $this->rtsp_url;

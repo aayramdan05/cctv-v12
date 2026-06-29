@@ -173,15 +173,17 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-cyan-100 select-none">
-                                <th class="pb-4 pl-4 font-semibold w-12">No.</th>
-                                <th class="pb-4 font-semibold w-32">Kode CCTV</th>
-                                <th class="pb-4 font-semibold w-64">Nama CCTV</th>
-                                <th class="pb-4 font-semibold w-36">IP Address</th>
-                                <th class="pb-4 font-semibold w-40">Penempatan</th>
-                                <th class="pb-4 font-semibold w-56">Gedung & Fakultas</th>
-                                <th class="pb-4 font-semibold w-40">Server Node</th>
-                                <th class="pb-4 font-semibold w-44">Koordinat</th>
-                                <th class="pb-4 pr-4 font-semibold w-24 text-center">Status</th>
+                                <th class="pb-4 pl-4 font-semibold w-10">No.</th>
+                                <th class="pb-4 font-semibold w-24">Kode CCTV</th>
+                                <th class="pb-4 font-semibold w-48">Nama CCTV</th>
+                                <th class="pb-4 font-semibold w-28">Merk</th>
+                                <th class="pb-4 font-semibold w-32">IP Address</th>
+                                <th class="pb-4 font-semibold w-28">Est. Size (15m)</th>
+                                <th class="pb-4 font-semibold w-28">Penempatan</th>
+                                <th class="pb-4 font-semibold w-44">Gedung & Fakultas</th>
+                                <th class="pb-4 font-semibold w-32">Server Node</th>
+                                <th class="pb-4 font-semibold w-32">Koordinat</th>
+                                <th class="pb-4 pr-4 font-semibold w-20 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody id="cctv-table-body" class="text-sm text-slate-600">
@@ -195,7 +197,11 @@
                                         <div class="font-semibold text-slate-800">{{ $cctv->nama_cctv }}</div>
                                         <div class="text-[10px] text-slate-400 mt-0.5">ID: #{{ $cctv->id }}</div>
                                     </td>
+                                    <td class="py-4 font-medium text-slate-700">{{ $cctv->merk }}</td>
                                     <td class="py-4 font-mono text-xs">{{ $cctv->ip ?? '-' }}</td>
+                                    <td class="py-4 font-semibold text-slate-700">
+                                        {{ $cctv->recordings_avg_size_mb ? round($cctv->recordings_avg_size_mb, 2) . ' MB' : '0 MB' }}
+                                    </td>
                                     <td class="py-4">
                                         @if($cctv->penempatan === 'Indoor')
                                             <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold inline-flex items-center">
@@ -245,7 +251,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="py-12 text-center text-slate-400">
+                                    <td colspan="11" class="py-12 text-center text-slate-400">
                                         <i class="fas fa-camera-retro text-4xl text-slate-200 mb-3 block"></i>
                                         Belum ada data kamera atau pencarian tidak cocok.
                                     </td>

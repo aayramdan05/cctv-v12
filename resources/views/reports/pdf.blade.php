@@ -139,13 +139,15 @@
             <tr>
                 <th style="width: 3%;" class="text-center">No.</th>
                 <th style="width: 10%;">Kode CCTV</th>
-                <th style="width: 20%;">Nama CCTV</th>
+                <th style="width: 16%;">Nama CCTV</th>
+                <th style="width: 8%;">Merk</th>
                 <th style="width: 10%;">IP Address</th>
-                <th style="width: 8%;">Penempatan</th>
-                <th style="width: 16%;">Gedung & Kode</th>
-                <th style="width: 13%;">Fakultas</th>
-                <th style="width: 10%;">Server Node</th>
-                <th style="width: 7%;" class="text-center">Status</th>
+                <th style="width: 8%;">Size/15m</th>
+                <th style="width: 7%;">Penempatan</th>
+                <th style="width: 13%;">Gedung & Kode</th>
+                <th style="width: 11%;">Fakultas</th>
+                <th style="width: 9%;">Server Node</th>
+                <th style="width: 5%;" class="text-center">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -157,7 +159,9 @@
                         <div style="font-weight: bold; color: #1e293b;">{{ $cctv->nama_cctv }}</div>
                         <div style="font-size: 8px; color: #94a3b8; margin-top: 2px;">ID: #{{ $cctv->id }}</div>
                     </td>
+                    <td>{{ $cctv->merk }}</td>
                     <td class="font-mono">{{ $cctv->ip ?? '-' }}</td>
+                    <td style="font-weight: bold;">{{ $cctv->recordings_avg_size_mb ? round($cctv->recordings_avg_size_mb, 2) . ' MB' : '0 MB' }}</td>
                     <td>
                         @if($cctv->penempatan === 'Indoor')
                             <span class="badge badge-indoor">INDOOR</span>
@@ -188,7 +192,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center" style="padding: 20px; color: #94a3b8;">
+                    <td colspan="11" class="text-center" style="padding: 20px; color: #94a3b8;">
                         Tidak ada data CCTV.
                     </td>
                 </tr>
