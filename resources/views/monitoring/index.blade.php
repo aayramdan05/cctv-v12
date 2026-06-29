@@ -403,6 +403,66 @@
                 </div>
             </div>
         </div>
+        <!-- Modern Save Preset Modal -->
+        <div x-show="showPresetModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+             x-cloak>
+            
+            <div @click.away="showPresetModal = false"
+                 x-show="showPresetModal"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="bg-white rounded-2xl border border-cyan-100 shadow-2xl max-w-md w-full overflow-hidden">
+                
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-cyan-500/5 to-blue-500/5">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-bookmark text-cyan-500 text-lg"></i>
+                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Simpan Preset Layout</h3>
+                    </div>
+                    <button @click="showPresetModal = false" class="text-slate-400 hover:text-slate-600 transition p-1">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+                
+                <!-- Body -->
+                <div class="p-6 space-y-4">
+                    <p class="text-slate-500 text-xs font-medium">Layout aktif saat ini dengan ukuran grid <span class="font-bold text-cyan-600" x-text="gridSize + 'x' + gridSize"></span> akan disimpan ke dalam preset baru.</p>
+                    
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Preset</label>
+                        <input type="text" 
+                               x-model="newPresetName" 
+                               @keydown.enter="submitNewPreset()"
+                               placeholder="Contoh: Gedung Rektorat, Lobby Utama..."
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition text-xs shadow-sm bg-slate-50 focus:bg-white"
+                               focus>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <button @click="showPresetModal = false" 
+                            class="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-semibold transition">
+                        Batal
+                    </button>
+                    <button @click="submitNewPreset()" 
+                            class="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition active:scale-95">
+                        Simpan Preset
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -410,7 +470,7 @@
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
                 search: '', filterFaculty: '', filterBuilding: '', filterServer: '', filterPlacement: '', currentHost: window.location.hostname, isFullscreen: false,
-                isDragging: false, presetsOpen: false,
+                isDragging: false, presetsOpen: false, showPresetModal: false, newPresetName: '',
                 
                 selectedDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 currentTimelineData: [], currentEventsData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
@@ -835,11 +895,20 @@
 
                 // Preset Management Methods
                 saveNewPreset() {
-                    const name = prompt("Masukkan nama preset layout:");
-                    if (!name || name.trim() === "") return;
+                    this.newPresetName = '';
+                    this.presetsOpen = false;
+                    this.showPresetModal = true;
+                },
+
+                submitNewPreset() {
+                    const name = this.newPresetName.trim();
+                    if (!name) {
+                        alert("Nama preset tidak boleh kosong.");
+                        return;
+                    }
 
                     const payload = {
-                        name: name.trim(),
+                        name: name,
                         grid_size: this.gridSize,
                         slots: this.activeSlots
                     };
@@ -859,7 +928,8 @@
                     .then(preset => {
                         this.presets.push(preset);
                         this.presets.sort((a, b) => a.name.localeCompare(b.name));
-                        alert("Preset '" + name + "' berhasil disimpan!");
+                        this.showPresetModal = false;
+                        this.newPresetName = '';
                     })
                     .catch(e => {
                         console.error(e);
