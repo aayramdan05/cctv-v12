@@ -16,10 +16,12 @@
 >
     <nav class="p-4 space-y-2 h-[calc(100vh-64px)] overflow-y-auto">
         
+        @if(auth()->user()->role !== 'user')
         <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="fas fa-chart-line w-5 {{ request()->routeIs('dashboard') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
             <span class="font-medium text-sm">Dashboard</span>
         </a>
+        @endif
         <a href="{{ route('monitoring.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('monitoring.index') ? 'active' : '' }}">
             <i class="fas fa-video w-5 {{ request()->routeIs('monitoring.index') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
             <span class="font-medium text-sm">Live Monitoring</span>

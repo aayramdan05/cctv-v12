@@ -10,10 +10,16 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index()
     {
+        $user = auth()->user();
+
+        // Redirect ordinary users to Live Monitoring since dashboard is hidden for them
+        if ($user->role === 'user') {
+            return redirect()->route('monitoring.index');
+        }
+
         try {
-            $user = auth()->user();
 
             // 1. STATISTIK UTAMA
             $totalCctv = Cctv::accessibleByAuth()->count();
