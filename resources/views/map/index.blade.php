@@ -43,6 +43,13 @@
             transition: transform 0.2s; cursor: pointer;
         }
         .custom-camera-marker:hover { transform: scale(1.1); background: #ea580c; }
+        .custom-camera-marker.offline {
+            background: #0f172a !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.4) !important;
+        }
+        .custom-camera-marker.offline:hover {
+            background: #000000 !important;
+        }
         [x-cloak] { display: none !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
@@ -410,10 +417,13 @@
             list.innerHTML = '';
 
             cameras.forEach(camera => {
+                const isOnline = camera.status === 'online';
+                const markerClass = isOnline ? 'custom-camera-marker shadow-lg shadow-orange-500/20' : 'custom-camera-marker offline shadow-lg shadow-slate-900/30';
+
                 const marker = L.marker([camera.lat, camera.lng], {
                     icon: L.divIcon({
                         className: 'bg-transparent',
-                        html: `<div class="custom-camera-marker shadow-lg shadow-orange-500/20"><i class="fa-solid fa-video text-[10px]"></i></div>`,
+                        html: `<div class="${markerClass}"><i class="fa-solid fa-video text-[10px]"></i></div>`,
                         iconSize: [32, 32], iconAnchor: [16, 16]
                     })
                 }).addTo(map);

@@ -23,8 +23,9 @@ class MapController extends Controller
     public function getCctvData()
     {
         try {
-            // Hanya ambil kamera Outdoor yang punya koordinat
-            $cctvs = Cctv::where('penempatan', 'Outdoor')
+            // Hanya ambil kamera Outdoor yang punya koordinat dan sesuai hak akses user
+            $cctvs = Cctv::accessibleByAuth()
+                        ->where('penempatan', 'Outdoor')
                         ->whereNotNull('lat')
                         ->whereNotNull('lng')
                         ->get()
