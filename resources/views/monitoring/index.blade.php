@@ -26,15 +26,15 @@
                 </div>
 
                 <!-- Preset Dropdown -->
-                <div class="relative shrink-0" x-data="{ open: false }">
-                    <button @click="open = !open" 
+                <div class="relative shrink-0">
+                    <button @click="presetsOpen = !presetsOpen" 
                             class="px-3 py-1.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm">
                         <i class="fas fa-bookmark text-cyan-500"></i>
                         <span>Preset</span>
                         <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
                     </button>
                     
-                    <div x-show="open" @click.away="open = false" x-cloak
+                    <div x-show="presetsOpen" @click.away="presetsOpen = false" x-cloak
                          class="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-2 text-xs">
                         <div class="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <span class="font-bold text-slate-500 uppercase text-[9px] tracking-wider">Layout Preset</span>
@@ -46,7 +46,7 @@
                         <div class="max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-50">
                             <template x-for="(preset, index) in presets" :key="index">
                                 <div class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition">
-                                    <button @click="loadPreset(preset); open = false" 
+                                    <button @click="loadPreset(preset); presetsOpen = false" 
                                             class="flex-1 text-left font-semibold text-slate-700 truncate mr-2" 
                                             :title="preset.name"
                                             x-text="preset.name">
@@ -404,7 +404,7 @@
             return {
                 gridSize: 1, activeSlots: {}, selectedSlot: null, showSidebar: true, showTimeline: true,
                 search: '', filterFaculty: '', filterBuilding: '', filterServer: '', filterPlacement: '', currentHost: window.location.hostname, isFullscreen: false,
-                isDragging: false,
+                isDragging: false, presetsOpen: false,
                 
                 selectedDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 currentTimelineData: [], currentEventsData: [], currentPlayheadPercent: 100, hoverPercent: -100, hoverTimeDisplay: '00:00:00', timelineTimeDisplay: 'LIVE',
