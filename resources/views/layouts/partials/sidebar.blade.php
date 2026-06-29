@@ -68,9 +68,14 @@
                         <span class="font-medium text-sm">System Health</span>
                     </a>
 
-                    <a href="{{ route('api.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('ffmpeg.monitor') ? 'active' : '' }}">
+                    <a href="{{ route('api.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('api.index') ? 'active' : '' }}">
                         <i class="fas fa-key w-5 {{ request()->routeIs('api.index') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                         <span class="font-medium text-sm">API</span>
+                    </a>
+
+                    <a href="{{ route('reports.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-invoice w-5 {{ request()->routeIs('reports.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                        <span class="font-medium text-sm">Report CCTV</span>
                     </a>
                 @endif
 

@@ -131,6 +131,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/api-keys', [ApiKeyController::class, 'index'])->name('api.index');
     Route::post('/api-keys', [ApiKeyController::class, 'store'])->name('api.store');
     Route::delete('/api-keys/{id}', [ApiKeyController::class, 'destroy'])->name('api.destroy');
+
+    // CCTV Reports (Only Admin)
+    Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export/csv', [App\Http\Controllers\ReportController::class, 'exportCsv'])->name('reports.export.csv');
+    Route::get('/reports/export/pdf', [App\Http\Controllers\ReportController::class, 'exportPdf'])->name('reports.export.pdf');
 });
 
 // --- GROUP 3: ADMIN ONLY (Master Data) ---
