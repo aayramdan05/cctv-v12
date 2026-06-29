@@ -159,8 +159,8 @@ class ReportController extends Controller
         $cctvs = $query->get();
 
         // Prevent memory timeouts on large downloads
-        ini_set('max_execution_time', 120);
-        ini_set('memory_limit', '256M');
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
 
         $pdf = Pdf::loadView('reports.pdf', compact('cctvs'))
                   ->setPaper('a4', 'landscape');
