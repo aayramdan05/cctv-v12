@@ -35,27 +35,6 @@
         iframe {
             background-color: #000;
         }
-        /* Custom styled Range slider for light theme speed controls */
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #0891b2; /* cyan-600 */
-            cursor: pointer;
-            border: 2px solid #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
-        input[type="range"]::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #0891b2;
-            cursor: pointer;
-            border: 2px solid #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
     </style>
 </head>
 <body class="h-full flex flex-col overflow-hidden bg-slate-50" x-data="mobileMonitoring()">
@@ -72,7 +51,7 @@
             </div>
         </div>
         
-        <!-- Live Node Status Pill -->
+        <!-- Live Status Pill -->
         <div class="flex items-center gap-1.5 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-xl text-[9px] text-slate-600 font-bold font-mono shadow-inner">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span x-text="getActiveSlotsCount() + ' / ' + gridSize + ' Active'"></span>
@@ -143,126 +122,52 @@
         <!-- Controls Action Strip (Native Light CCTV Toolbar) -->
         <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 select-none z-20 shadow-sm">
             
-            <!-- Grouped circular buttons layout (Hik-Connect / DMSS inspired light toolbar) -->
             <div class="flex items-center justify-between w-full gap-2">
                 <!-- Play/Pause -->
                 <button @click="togglePlayback()" 
                         :disabled="!activeSlots[selectedSlot] || activeSlots[selectedSlot].mode !== 'playback'"
-                        class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                        class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-sm"
                         :class="isPlaying ? 'text-cyan-600 border-cyan-300 bg-cyan-50' : ''">
                     <i class="fas text-xs pointer-events-none" :class="isPlaying ? 'fa-pause' : 'fa-play'"></i>
                 </button>
 
-                <!-- Audio Toggle -->
+                <!-- Audio Toggle (Corrected FA6 classes) -->
                 <button @click="toggleMute()" 
                         :disabled="!activeSlots[selectedSlot]"
-                        class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40"
-                        :class="isMuted ? 'text-amber-600 border-amber-300 bg-amber-50' : 'text-cyan-600 border-cyan-350 bg-cyan-50/50'">
-                    <i class="fas text-xs pointer-events-none" :class="isMuted ? 'fa-volume-mute' : 'fa-volume-up'"></i>
+                        class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40 shadow-sm"
+                        :class="isMuted ? 'text-amber-650 border-amber-300 bg-amber-50' : 'text-cyan-600 border-cyan-300 bg-cyan-50/50'">
+                    <i class="fas text-xs pointer-events-none" :class="isMuted ? 'fa-volume-xmark' : 'fa-volume-high'"></i>
                 </button>
 
                 <!-- Snapshot -->
                 <button @click="takeSnapshot()" 
                         :disabled="!activeSlots[selectedSlot]"
-                        class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40">
+                        class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40 shadow-sm">
                     <i class="fas fa-camera text-xs pointer-events-none"></i>
                 </button>
 
-                <!-- PTZ Toggle -->
-                <button @click="showPtz = !showPtz; if(showPtz) showTimeline=false" 
+                <!-- Timeline / Playback Toggle (Corrected FA6 class to fa-history) -->
+                <button @click="showTimeline = !showTimeline" 
                         :disabled="!activeSlots[selectedSlot]"
-                        class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40"
-                        :class="showPtz ? 'text-cyan-600 border-cyan-300 bg-cyan-50 shadow-sm' : ''">
-                    <i class="fas fa-gamepad text-xs pointer-events-none"></i>
-                </button>
-
-                <!-- Timeline / Playback Toggle -->
-                <button @click="showTimeline = !showTimeline; if(showTimeline) showPtz=false" 
-                        :disabled="!activeSlots[selectedSlot]"
-                        class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40"
+                        class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40 shadow-sm"
                         :class="showTimeline ? 'text-cyan-600 border-cyan-300 bg-cyan-50 shadow-sm' : ''">
-                    <i class="fas fa-clock-history text-xs pointer-events-none"></i>
+                    <i class="fas fa-history text-xs pointer-events-none"></i>
                 </button>
 
                 <!-- Grid Split Layout 1x1 / 2x2 Toggle -->
-                <div class="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-full border border-slate-200/80">
+                <div class="flex items-center gap-0.5 bg-slate-105 p-0.5 rounded-full border border-slate-200">
                     <button @click="setGrid(1)" 
-                            class="w-8 h-8 rounded-full flex items-center justify-center font-bold transition-all text-xs"
+                            class="w-9 h-9 rounded-full flex items-center justify-center font-bold transition-all text-xs"
                             :class="gridSize === 1 ? 'bg-white text-cyan-600 border border-slate-200/60 shadow-sm' : 'text-slate-400'">
                         1
                     </button>
                     <button @click="setGrid(4)" 
-                            class="w-8 h-8 rounded-full flex items-center justify-center font-bold transition-all text-xs"
+                            class="w-9 h-9 rounded-full flex items-center justify-center font-bold transition-all text-xs"
                             :class="gridSize === 4 ? 'bg-white text-cyan-600 border border-slate-200/60 shadow-sm' : 'text-slate-400'">
                         4
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- Interactive Light PTZ Panel -->
-        <div class="bg-white border-b border-slate-200 flex items-center justify-center gap-8 py-4 shrink-0 select-none transition-all duration-200" 
-             x-show="showPtz && activeSlots[selectedSlot]"
-             x-transition>
-             
-             <!-- D-Pad Direction Circle -->
-             <div class="relative w-32 h-32 bg-slate-50 rounded-full border border-slate-200 flex items-center justify-center shadow-inner">
-                 <!-- Up -->
-                 <button @mousedown="ptzStart('up')" @mouseup="ptzEnd()" @mouseleave="ptzEnd()"
-                         @touchstart.prevent="ptzStart('up')" @touchend.prevent="ptzEnd()"
-                         :class="activePtzDir === 'up' ? 'text-cyan-600 bg-white border-cyan-300 shadow-sm' : 'text-slate-400 border-transparent'"
-                         class="absolute top-1 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90">
-                     <i class="fas fa-chevron-up text-sm"></i>
-                 </button>
-                 <!-- Down -->
-                 <button @mousedown="ptzStart('down')" @mouseup="ptzEnd()" @mouseleave="ptzEnd()"
-                         @touchstart.prevent="ptzStart('down')" @touchend.prevent="ptzEnd()"
-                         :class="activePtzDir === 'down' ? 'text-cyan-600 bg-white border-cyan-300 shadow-sm' : 'text-slate-400 border-transparent'"
-                         class="absolute bottom-1 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90">
-                     <i class="fas fa-chevron-down text-sm"></i>
-                 </button>
-                 <!-- Left -->
-                 <button @mousedown="ptzStart('left')" @mouseup="ptzEnd()" @mouseleave="ptzEnd()"
-                         @touchstart.prevent="ptzStart('left')" @touchend.prevent="ptzEnd()"
-                         :class="activePtzDir === 'left' ? 'text-cyan-600 bg-white border-cyan-300 shadow-sm' : 'text-slate-400 border-transparent'"
-                         class="absolute left-1 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90">
-                     <i class="fas fa-chevron-left text-sm"></i>
-                 </button>
-                 <!-- Right -->
-                 <button @mousedown="ptzStart('right')" @mouseup="ptzEnd()" @mouseleave="ptzEnd()"
-                         @touchstart.prevent="ptzStart('right')" @touchend.prevent="ptzEnd()"
-                         :class="activePtzDir === 'right' ? 'text-cyan-600 bg-white border-cyan-300 shadow-sm' : 'text-slate-400 border-transparent'"
-                         class="absolute right-1 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90">
-                     <i class="fas fa-chevron-right text-sm"></i>
-                 </button>
-                 
-                 <!-- Center Knob -->
-                 <div class="w-12 h-12 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md">
-                     <div class="w-3.5 h-3.5 rounded-full bg-slate-300 border border-slate-200"></div>
-                 </div>
-             </div>
-             
-             <!-- Zoom & Speed Panel -->
-             <div class="flex flex-col gap-3 min-w-[90px]">
-                 <div class="flex gap-2">
-                     <button @click="ptzZoom('in')" class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 active:text-cyan-600 active:scale-95 transition-all shadow-sm">
-                         <i class="fas fa-plus text-xs"></i>
-                     </button>
-                     <button @click="ptzZoom('out')" class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 active:text-cyan-600 active:scale-95 transition-all shadow-sm">
-                         <i class="fas fa-minus text-xs"></i>
-                     </button>
-                 </div>
-                 
-                 <!-- Speed Slider -->
-                 <div class="flex flex-col gap-1 px-1">
-                     <div class="flex justify-between items-center text-[7px] font-bold text-slate-400 uppercase tracking-widest">
-                         <span>Speed</span>
-                         <span class="text-cyan-600 font-bold" x-text="ptzSpeed"></span>
-                     </div>
-                     <input type="range" min="1" max="10" x-model="ptzSpeed" 
-                            class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-600 focus:outline-none">
-                 </div>
-             </div>
         </div>
 
         <!-- Playback Timeline Controller Panel (Light) -->
@@ -321,7 +226,7 @@
         </div>
 
         <!-- Camera Directory Listing (Sliding Light sheet) -->
-        <div class="flex-1 overflow-hidden flex flex-col bg-slate-100/50 relative">
+        <div class="flex-1 overflow-hidden flex flex-col bg-slate-100/50 relative bg-slate-50">
             <!-- Directory Filter Bar -->
             <div class="p-3.5 border-b border-slate-200 flex flex-col gap-2.5 bg-white select-none z-10 shadow-sm">
                 <!-- Search input -->
@@ -331,10 +236,10 @@
                            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-slate-400 text-slate-700">
                 </div>
                 
-                <!-- Filters row -->
+                <!-- Filters row (Searchable custom dropdown list for Building) -->
                 <div class="grid grid-cols-2 gap-2">
                     <div class="relative">
-                        <select x-model="filterFaculty" class="w-full pl-3 pr-8 py-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-0 appearance-none cursor-pointer truncate">
+                        <select x-model="filterFaculty" class="w-full pl-3 pr-8 py-1.5 text-[10px] font-bold text-slate-505 bg-slate-55 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-0 appearance-none cursor-pointer truncate shadow-sm">
                             <option value="">Semua Fakultas</option>
                             @foreach($faculties as $fakultas)
                                 <option value="{{ $fakultas }}">{{ $fakultas }}</option>
@@ -343,14 +248,40 @@
                         <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-[8px] pointer-events-none"></i>
                     </div>
                     
-                    <div class="relative">
-                        <select x-model="filterBuilding" class="w-full pl-3 pr-8 py-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-0 appearance-none cursor-pointer truncate">
-                            <option value="">Semua Gedung</option>
-                            @foreach($buildings as $b)
-                                <option value="{{ $b->nama_gedung }}">{{ $b->nama_gedung }}</option>
-                            @endforeach
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-[8px] pointer-events-none"></i>
+                    <!-- CUSTOM SEARCHABLE BUILDING FILTER DROPDOWN -->
+                    <div class="relative" @click.away="showBuildingList = false">
+                        <button type="button" @click="showBuildingList = !showBuildingList" 
+                                class="w-full pl-3 pr-8 py-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none flex items-center justify-between truncate shadow-sm">
+                            <span class="truncate text-left" x-text="selectedBuildingName"></span>
+                            <i class="fas fa-chevron-down text-[8px] text-slate-400"></i>
+                        </button>
+                        
+                        <!-- Dropdown Panel (Opens upward to ensure accessibility inside bottom-sheet) -->
+                        <div x-show="showBuildingList" x-transition 
+                             class="absolute bottom-full left-0 mb-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-[120] p-2.5 flex flex-col gap-2">
+                            
+                            <!-- Search box within dropdown -->
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-[9px]"></i>
+                                <input type="text" x-model="searchBuildingQuery" placeholder="Cari gedung..." 
+                                       class="w-full pl-7 pr-2 py-1 text-[10px] border border-slate-200 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 bg-slate-50">
+                            </div>
+                            
+                            <!-- Scrollable options -->
+                            <div class="max-h-40 overflow-y-auto custom-scrollbar flex flex-col bg-slate-50/20 rounded-lg border border-slate-100">
+                                <button type="button" @click="selectBuilding('')" 
+                                        class="w-full text-left px-2.5 py-1.5 text-[10px] hover:bg-slate-100 rounded-lg font-bold text-slate-400">
+                                    -- Semua Gedung --
+                                </button>
+                                <template x-for="b in buildingsList.filter(i => i.name.toLowerCase().includes(searchBuildingQuery.toLowerCase()))" :key="b.id">
+                                    <button type="button" 
+                                            @click="selectBuilding(b.name)"
+                                            class="w-full text-left px-2.5 py-1.5 text-[10px] hover:bg-cyan-50 hover:text-cyan-700 rounded-lg transition-colors font-medium text-slate-700 truncate"
+                                            x-text="b.name">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -404,15 +335,16 @@
                 activeSlots: {}, 
                 selectedSlot: 1, 
                 showTimeline: false,
-                showPtz: false,
                 search: '', 
                 filterFaculty: '', 
                 filterBuilding: '', 
                 isMuted: false,
-                isRecording: false,
                 quality: 'HD',
-                ptzSpeed: 5,
-                activePtzDir: null,
+                
+                showBuildingList: false,
+                searchBuildingQuery: '',
+                selectedBuildingName: 'Semua Gedung',
+                buildingsList: {{ $buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung])->toJson() }},
                 
                 selectedDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 currentTimelineData: [], 
@@ -585,7 +517,7 @@
                     this.timelineTimeDisplay = 'LIVE';
                 },
 
-                // Audio Mute/Unmute toggle
+                // Audio Mute/Unmute toggle (fa-volume-xmark / fa-volume-high)
                 toggleMute() {
                     this.isMuted = !this.isMuted;
                     for (let i = 1; i <= this.gridSize; i++) {
@@ -605,7 +537,7 @@
                     });
                 },
 
-                // Shutter sound mock snapshot
+                // Snapshot Action
                 takeSnapshot() {
                     const slot = this.activeSlots[this.selectedSlot];
                     if (!slot) {
@@ -644,37 +576,12 @@
                         confirmButtonColor: '#0891b2'
                     });
                 },
-
-                // PTZ Movements simulation
-                ptzStart(dir) {
-                    this.activePtzDir = dir;
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'info',
-                        title: `PTZ: Gerak ${dir.toUpperCase()} (Kecepatan: ${this.ptzSpeed})`,
-                        showConfirmButton: false,
-                        timer: 1000,
-                        background: '#ffffff',
-                        color: '#1e293b'
-                    });
-                },
-
-                ptzEnd() {
-                    this.activePtzDir = null;
-                },
-
-                ptzZoom(type) {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: `PTZ: Zoom ${type === 'in' ? 'Dekat (+)' : 'Jauh (-)'}`,
-                        showConfirmButton: false,
-                        timer: 1200,
-                        background: '#ffffff',
-                        color: '#1e293b'
-                    });
+                
+                selectBuilding(name) {
+                    this.filterBuilding = name;
+                    this.selectedBuildingName = name ? name : 'Semua Gedung';
+                    this.showBuildingList = false;
+                    this.searchBuildingQuery = '';
                 }
             };
         }
