@@ -18,7 +18,9 @@
         <div class="flex items-center space-x-4">
             
             <!-- NOTIFIKASI DINAMIS (Menggantikan tombol statis lama) -->
-            <x-notification-dropdown />
+            @if(auth()->user()->role === 'admin')
+                <x-notification-dropdown />
+            @endif
             
             <!-- Profile Dropdown -->
             <div class="relative ml-3" x-data="{ open: false }">

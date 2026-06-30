@@ -87,6 +87,7 @@
                     <i class="fas fa-history w-5 {{ request()->routeIs('playback.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Recording</span>
                 </a>
+                @if(auth()->user()->role === 'admin')
                 <a href="{{ route('events.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('events.*') ? 'active' : '' }} relative">
                     <i class="fas fa-robot w-5 {{ request()->routeIs('events.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Intelligence Events</span>
@@ -110,7 +111,8 @@
                             {{ auth()->user()->unreadNotifications->count() }}
                         </span>
                     @endif
-                </a>                
+                </a>
+                @endif
             </div>
 
         @endif

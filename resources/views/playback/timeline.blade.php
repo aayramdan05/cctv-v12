@@ -12,8 +12,8 @@
                     {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d M Y') }}
                 </span>
 
-                <!-- TOMBOL EXPORT (ADMIN & OPERATOR) -->
-                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'operator')
+                <!-- TOMBOL EXPORT (ADMIN ONLY) -->
+                @if(auth()->user()->role === 'admin')
                     <button onclick="openExportModal()" 
                             class="ml-2 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm active:scale-95">
                         <i class="fas fa-file-export"></i> Export ZIP
@@ -217,6 +217,7 @@
 
     </main>
 
+    @if(auth()->user()->role === 'admin')
     <!-- ================= MODAL EXPORT REDESIGNED ================= -->
     <div id="export-modal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <!-- Backdrop with Blur -->
@@ -302,14 +303,17 @@
         </div>
     </div>
     <!-- ================= END MODAL ================= -->
+    @endif
 
     <script>
+        @if(auth()->user()->role === 'admin')
         // --- MODAL LOGIC & ANIMATION ---
         const modal = document.getElementById('export-modal');
         const backdrop = document.getElementById('modal-backdrop');
         const panel = document.getElementById('modal-panel');
 
         function openExportModal() {
+            if (!modal) return;
             modal.classList.remove('hidden');
             // Slight delay for animation
             setTimeout(() => {
@@ -320,6 +324,7 @@
         }
 
         function closeExportModal() {
+            if (!modal) return;
             backdrop.classList.add('opacity-0');
             panel.classList.remove('scale-100', 'opacity-100');
             panel.classList.add('scale-95', 'opacity-0');
@@ -327,6 +332,7 @@
                 modal.classList.add('hidden');
             }, 300); // Match transition duration
         }
+        @endif
 
         // --- POPUP NOTIFICATION LOGIC ---
         // Cek Session dari Controller

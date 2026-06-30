@@ -105,9 +105,6 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     Route::get('/playback/data', [PlaybackController::class, 'getRecordings'])->name('playback.data');
     Route::post('/playback/export', [PlaybackController::class, 'exportRecordings'])->name('playback.export');
     Route::get('/playback/download/{filename}', [PlaybackController::class, 'downloadExport'])->name('playback.download');
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
     // Tools Streaming
     Route::get('/stream/{cctv}', [StreamController::class, 'play'])->name('stream.play');
@@ -139,6 +136,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export/csv', [App\Http\Controllers\ReportController::class, 'exportCsv'])->name('reports.export.csv');
     Route::get('/reports/export/pdf', [App\Http\Controllers\ReportController::class, 'exportPdf'])->name('reports.export.pdf');
+
+    // Notifications (Only Admin)
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 });
 
 // --- GROUP 3: ADMIN ONLY (Master Data) ---
@@ -287,8 +289,8 @@ Route::get('/api/report-event', function (Request $request) {
 
 require __DIR__.'/auth.php';
 
-// Halaman Riwayat Kejadian (Events)
-Route::middleware(['auth'])->group(function () {
+// Halaman Riwayat Kejadian (Events) - Only Admin
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');
     Route::post('/events/mark-all-read', [App\Http\Controllers\EventController::class, 'markAllRead'])->name('events.markAllRead');
     Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
