@@ -419,6 +419,13 @@
                     localStorage.setItem('cctv_live_layout_active_slots_mobile', JSON.stringify(this.activeSlots));
                     this.playLive(this.selectedSlot);
                     this.fetchTimelineData();
+                    
+                    fetch(`/log/cctv-view/${cam.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    }).catch(e => console.error("Error logging camera view", e));
                 },
 
                 playLive(index) {

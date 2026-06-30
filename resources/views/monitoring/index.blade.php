@@ -701,6 +701,13 @@
                     this.selectSlot(index);
                     this.saveCurrentLayoutToLocalStorage();
                     this.$nextTick(() => { this.playLive(index); });
+                    
+                    fetch(`/log/cctv-view/${cam.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    }).catch(e => console.error("Error logging camera view", e));
                 },
 
                 addCameraOnClick(cam) {

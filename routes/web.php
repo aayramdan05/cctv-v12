@@ -106,6 +106,7 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     Route::post('/playback/export', [PlaybackController::class, 'exportRecordings'])->name('playback.export');
     Route::get('/playback/download/{filename}', [PlaybackController::class, 'downloadExport'])->name('playback.download');
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
+    Route::post('/log/cctv-view/{cctv}', [MonitoringController::class, 'logCctvView'])->name('monitoring.logView');
     // Tools Streaming
     Route::get('/stream/{cctv}', [StreamController::class, 'play'])->name('stream.play');
     Route::post('/cctv/test-connection', [TestCameraController::class, 'test'])->name('cctv.test');
@@ -294,4 +295,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');
     Route::post('/events/mark-all-read', [App\Http\Controllers\EventController::class, 'markAllRead'])->name('events.markAllRead');
     Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
+});
+
+// Halaman Aktivitas Log User - Only Super Admin
+Route::middleware(['auth', 'role:superadmin'])->group(function () {
+    Route::get('/superadmin/logs', [App\Http\Controllers\SuperAdminController::class, 'userLogs'])->name('superadmin.logs');
 });

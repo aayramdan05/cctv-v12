@@ -160,4 +160,18 @@ class MonitoringController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function logCctvView($cctvId)
+    {
+        \DB::table('activity_logs')->insert([
+            'user_id'       => auth()->id(),
+            'activity_type' => 'cctv_view',
+            'cctv_id'       => $cctvId,
+            'details'       => null,
+            'ip_address'    => request()->ip(),
+            'created_at'    => now(),
+        ]);
+
+        return response()->json(['status' => 'logged']);
+    }
 }

@@ -11,8 +11,9 @@ class CheckRole
     {
         if (!Auth::check()) return redirect('login');
         $user = Auth::user();
+        if ($user->role === 'superadmin') return $next($request);
+        if ($user->role === 'admin' && !in_array('superadmin', $roles)) return $next($request);
         if (in_array($user->role, $roles)) return $next($request);
-        if ($user->role === 'admin') return $next($request);
         abort(403, 'Akses Ditolak');
     }
 }

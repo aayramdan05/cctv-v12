@@ -35,7 +35,7 @@
             <div class="pt-4 mt-4 border-t border-cyan-100">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase mb-2">Manajemen</p>
                 
-                @if(auth()->user()->role === 'admin')
+                @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                     <a href="{{ route('faculties.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('faculties.*') ? 'active' : '' }}">
                         <i class="fas fa-university w-5 {{ request()->routeIs('faculties.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                         <span class="font-medium text-sm">Master Fakultas</span>
@@ -47,7 +47,7 @@
                     </a>
                 @endif
                     
-                @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                @if(in_array(auth()->user()->role, ['admin', 'superadmin', 'operator']))
                     <a href="{{ route('users.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('users.*') ? 'active' : '' }}">
                         <i class="fas fa-users w-5 {{ request()->routeIs('users.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                         <span class="font-medium text-sm">Manage Users</span>
@@ -59,7 +59,7 @@
                     <span class="font-medium text-sm">Master Kamera</span>
                 </a>
 
-                @if(auth()->user()->role === 'admin')
+                @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                     <a href="{{ route('servers.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('servers.*') ? 'active' : '' }}">
                         <i class="fas fa-server w-5 {{ request()->routeIs('servers.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                         <span class="font-medium text-sm">Master Server</span>
@@ -87,7 +87,7 @@
                     <i class="fas fa-history w-5 {{ request()->routeIs('playback.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Recording</span>
                 </a>
-                @if(auth()->user()->role === 'admin')
+                @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                 <a href="{{ route('events.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('events.*') ? 'active' : '' }} relative">
                     <i class="fas fa-robot w-5 {{ request()->routeIs('events.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Intelligence Events</span>
@@ -115,6 +115,16 @@
                 @endif
             </div>
 
+        @endif
+        
+        @if(auth()->user()->role === 'superadmin')
+            <div class="pt-4 mt-4 border-t border-cyan-100">
+                <p class="px-4 text-xs font-bold text-slate-400 uppercase mb-2">Super Admin</p>
+                <a href="{{ route('superadmin.logs') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('superadmin.logs') ? 'active' : '' }}">
+                    <i class="fas fa-history w-5 {{ request()->routeIs('superadmin.logs') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                    <span class="font-medium text-sm">Log Aktivitas</span>
+                </a>
+            </div>
         @endif
         
     </nav>

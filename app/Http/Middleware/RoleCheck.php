@@ -18,9 +18,15 @@ class RoleCheck
 
         $user = Auth::user();
 
-        // 2. Admin -> Boleh lewat kemana saja (Super User)
-        if ($user->role === 'admin') {
+        // 2. Superadmin & Admin bypass checks
+        if ($user->role === 'superadmin') {
             return $next($request);
+        }
+
+        if ($user->role === 'admin') {
+            if (!in_array('superadmin', $roles)) {
+                return $next($request);
+            }
         }
 
         // 3. Cek Role sesuai parameter route
