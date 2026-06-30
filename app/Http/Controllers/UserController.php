@@ -74,7 +74,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:admin,operator,faculty_operator,user,api_viewer'],
+            'role' => ['required', 'string', 'in:superadmin,admin,operator,faculty_operator,user,api_viewer'],
             'faculty' => ['nullable', 'string'],
             'cctv_access' => ['nullable', 'array'], // Validasi array checkbox
             'cctv_access.*' => ['exists:cctvs,id'],
@@ -99,6 +99,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        abort_if($user->role === 'superadmin' && auth()->user()->role !== 'superadmin', 403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengedit akun Super Admin.');
+
         $cctvs = Cctv::orderBy('nama_cctv')->get();
         $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
         
@@ -112,6 +114,8 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $currentUser = auth()->user();
+
+        abort_if($user->role === 'superadmin' && $currentUser->role !== 'superadmin', 403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengubah akun Super Admin.');
 
         // --- HIERARKI RBAC SECURITY ---
         if ($currentUser->role === 'faculty_operator') {
@@ -140,7 +144,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'string', 'in:admin,operator,faculty_operator,user,api_viewer'],
+            'role' => ['required', 'string', 'in:superadmin,admin,operator,faculty_operator,user,api_viewer'],
             'faculty' => ['nullable', 'string'],
             'cctv_access' => ['nullable', 'array'],
             'cctv_access.*' => ['exists:cctvs,id'],
@@ -177,6 +181,8 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $currentUser = auth()->user();
+
+        abort_if($user->role === 'superadmin' && $currentUser->role !== 'superadmin', 403, 'Akses Ditolak: Anda tidak memiliki izin untuk menghapus akun Super Admin.');
 
         // --- HIERARKI RBAC SECURITY ---
         if ($currentUser->role === 'faculty_operator') {

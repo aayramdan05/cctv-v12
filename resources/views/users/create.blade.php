@@ -56,13 +56,17 @@
                             <!-- OPSI BARU: API VIEWER -->
                             <option value="api_viewer" {{ old('role') == 'api_viewer' ? 'selected' : '' }} class="font-bold text-indigo-600">API Client / 3rd Party App</option>
                             
-                            @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                            @if(in_array(auth()->user()->role, ['admin', 'superadmin', 'operator']))
                                 <option value="faculty_operator" {{ old('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
                                 <option value="operator" {{ old('role') == 'operator' ? 'selected' : '' }}>Operator Pusat</option>
                             @endif
                             
-                            @if(auth()->user()->role === 'admin')
+                            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                                 <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
+                            @endif
+
+                            @if(auth()->user()->role === 'superadmin')
+                                <option value="superadmin" {{ old('role') == 'superadmin' ? 'selected' : '' }}>Super Administrator</option>
                             @endif
                         </select>
                         @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

@@ -14,7 +14,7 @@ class FacultyController extends Controller
      */
     public function index(Request $request): View
     {
-        abort_if(auth()->user()->role !== 'admin', 403);
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
 
         $query = Faculty::query();
 
@@ -36,7 +36,7 @@ class FacultyController extends Controller
      */
     public function create(): View
     {
-        abort_if(auth()->user()->role !== 'admin', 403);
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
         
         return view('faculties.create');
     }
@@ -46,7 +46,7 @@ class FacultyController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_if(auth()->user()->role !== 'admin', 403);
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:faculties,name',
@@ -63,7 +63,7 @@ class FacultyController extends Controller
      */
     public function edit(Faculty $faculty): View
     {
-        abort_if(auth()->user()->role !== 'admin', 403);
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
 
         return view('faculties.edit', compact('faculty'));
     }
@@ -73,7 +73,7 @@ class FacultyController extends Controller
      */
     public function update(Request $request, Faculty $faculty): RedirectResponse
     {
-        abort_if(auth()->user()->role !== 'admin', 403);
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:faculties,name,' . $faculty->id,
@@ -90,7 +90,7 @@ class FacultyController extends Controller
      */
     public function destroy(Faculty $faculty): RedirectResponse
     {
-        abort_if(auth()->user()->role !== 'admin', 403);
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
 
         $faculty->delete();
 

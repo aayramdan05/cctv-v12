@@ -116,7 +116,7 @@ class StreamAuthController extends Controller
 
         // 5. PROTEKSI TAB BARU / DIRECT DOWNLOAD (Khusus Non-Admin)
         // Jika file yang diakses adalah rekaman (.mp4)
-        if (str_contains($originalUri, '.mp4') && $user->role !== 'admin') {
+        if (str_contains($originalUri, '.mp4') && !in_array($user->role, ['admin', 'superadmin'])) {
             $referer = $request->header('Referer') ?? $request->header('X-Original-Referer');
             
             // Jika tidak ada referer (buka di tab baru) atau referer bukan dari domain kita

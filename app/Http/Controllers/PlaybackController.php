@@ -110,7 +110,7 @@ class PlaybackController extends Controller
     public function exportRecordings(Request $request)
     {
         // 1. Validasi
-        if (auth()->user()->role !== 'admin') {
+        if (!in_array(auth()->user()->role, ['admin', 'superadmin'])) {
             abort(403);
         }
 
@@ -137,7 +137,7 @@ class PlaybackController extends Controller
 
     public function downloadExport($filename)
     {
-        if (auth()->user()->role !== 'admin') { abort(403); }
+        if (!in_array(auth()->user()->role, ['admin', 'superadmin'])) { abort(403); }
 
         // Download file yang sudah jadi di folder storage/app/public/exports
         $path = storage_path("app/public/exports/{$filename}");

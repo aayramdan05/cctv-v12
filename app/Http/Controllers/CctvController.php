@@ -55,7 +55,7 @@ class CctvController extends Controller
 
     public function create()
     {
-        abort_if(auth()->user()->role !== 'admin', 403, 'Hanya Admin yang diizinkan menambah kamera.');
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan menambah kamera.');
         
         $user = auth()->user();
         
@@ -72,7 +72,7 @@ class CctvController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_if(auth()->user()->role !== 'admin', 403, 'Hanya Admin yang diizinkan menambah kamera.');
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan menambah kamera.');
 
         try {
             $validated = $request->validate([
@@ -110,7 +110,7 @@ class CctvController extends Controller
     public function edit(Cctv $cctv): View
     {
         // Pengecekan Hak Akses (Wajib)
-        abort_if(auth()->user()->role !== 'admin', 403, 'Hanya Admin yang diizinkan mengedit kamera.');
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan mengedit kamera.');
 
         $buildings = Building::all();
         // Ambil Daftar Server Node (Wajib ditambahkan)
@@ -121,7 +121,7 @@ class CctvController extends Controller
 
     public function update(Request $request, Cctv $cctv): RedirectResponse
     {
-        abort_if(auth()->user()->role !== 'admin', 403, 'Hanya Admin yang diizinkan mengedit kamera.');
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan mengedit kamera.');
 
         try {
             $validated = $request->validate([
@@ -169,7 +169,7 @@ class CctvController extends Controller
 
     public function destroy(Cctv $cctv): RedirectResponse
     {
-        abort_if(auth()->user()->role !== 'admin', 403, 'Hanya Admin yang diizinkan menghapus kamera.');
+        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan menghapus kamera.');
 
         try {
             

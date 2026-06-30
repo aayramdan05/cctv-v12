@@ -70,13 +70,17 @@
                             <!-- PERBAIKAN 1: Tambahkan Opsi API Viewer -->
                             <option value="api_viewer" {{ $user->role == 'api_viewer' ? 'selected' : '' }} class="font-bold text-indigo-600">API Client / 3rd Party App</option>
                             
-                            @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                            @if(in_array(auth()->user()->role, ['admin', 'superadmin', 'operator']))
                                 <option value="faculty_operator" {{ $user->role == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas (Manage Fakultasnya)</option>
                                 <option value="operator" {{ $user->role == 'operator' ? 'selected' : '' }}>Operator Pusat (Manage Semua CCTV)</option>
                             @endif
                             
-                            @if(auth()->user()->role === 'admin')
+                            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                                 <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Administrator</option>
+                            @endif
+
+                            @if(auth()->user()->role === 'superadmin')
+                                <option value="superadmin" {{ $user->role == 'superadmin' ? 'selected' : '' }}>Super Administrator</option>
                             @endif
                         </select>
                         @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

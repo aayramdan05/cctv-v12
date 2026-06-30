@@ -90,8 +90,8 @@ class Cctv extends Model
             return $query->whereRaw('1 = 0'); // Return kosong jika tidak login
         }
 
-        // 1. Admin & Operator Pusat: LIHAT SEMUA
-        if ($user->role === 'admin' || $user->role === 'operator') {
+        // 1. Superadmin, Admin & Operator Pusat: LIHAT SEMUA
+        if (in_array($user->role, ['superadmin', 'admin', 'operator'])) {
             return $query; 
         }
 

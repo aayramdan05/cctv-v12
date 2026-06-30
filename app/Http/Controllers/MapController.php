@@ -104,7 +104,7 @@ class MapController extends Controller
      */
     public function updateCoordinates(Request $request)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (!in_array(auth()->user()->role, ['admin', 'superadmin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
