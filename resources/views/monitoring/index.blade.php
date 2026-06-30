@@ -6,29 +6,28 @@
           class="flex flex-col h-screen pt-20 p-4 gap-4 bg-slate-100 transition-all duration-300"
           :class="isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-0 pt-0' : ''">
         
-        <div class="flex justify-between items-center shrink-0 h-12 gap-2" x-show="!isFullscreen" x-transition>
-            <div class="flex items-center gap-4 min-w-0 shrink">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 gap-3 md:h-12 min-h-[3rem]" x-show="!isFullscreen" x-transition>
+            <div class="flex items-center gap-4 min-w-0 shrink w-full md:w-auto">
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 truncate">Live Monitoring</h2>
                 <p class="text-xs text-slate-500 hidden md:block">WebRTC Realtime & Instant Playback.</p>
             </div>
 
-            <div class="flex gap-2 items-center shrink-0 max-w-full">
-                <!-- Date Picker & Grid Selectors (only these are scrollable on very small screens) -->
-                <div class="flex gap-2 overflow-x-auto no-scrollbar py-1 shrink-0">
-                    <div class="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm gap-2 shrink-0">
-                        <i class="fas fa-calendar-alt text-slate-400 text-xs pointer-events-none"></i>
-                        <input type="date" x-model="selectedDate" @change="refreshTimeline()" 
-                               class="border-none p-0 text-xs font-bold text-slate-700 focus:ring-0 bg-transparent h-full cursor-pointer w-24">
-                    </div>
-
-                    <div class="bg-white p-1 rounded-lg border border-slate-200 flex shadow-sm shrink-0">
-                        <button @click="setGrid(1)" :class="{'bg-cyan-100 text-cyan-700': gridSize===1}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-square pointer-events-none"></i></button>
-                        <button @click="setGrid(4)" :class="{'bg-cyan-100 text-cyan-700': gridSize===4}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th-large pointer-events-none"></i></button>
-                        <button @click="setGrid(9)" :class="{'bg-cyan-100 text-cyan-700': gridSize===9}" class="p-1.5 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th pointer-events-none"></i></button>
-                    </div>
+            <div class="flex flex-wrap gap-2 items-center shrink-0 max-w-full w-full md:w-auto justify-start md:justify-end">
+                <!-- Date Picker -->
+                <div class="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm gap-2 h-10 shrink-0">
+                    <i class="fas fa-calendar-alt text-slate-400 text-xs pointer-events-none"></i>
+                    <input type="date" x-model="selectedDate" @change="refreshTimeline()" 
+                           class="border-none p-0 text-xs font-bold text-slate-700 focus:ring-0 bg-transparent h-full cursor-pointer w-24">
                 </div>
 
-                <!-- Preset Dropdown (Placed outside of overflow-x-auto container so it is NOT clipped) -->
+                <!-- Grid Selectors -->
+                <div class="bg-white p-1 rounded-lg border border-slate-200 flex shadow-sm h-10 shrink-0 items-center">
+                    <button @click="setGrid(1)" :class="{'bg-cyan-100 text-cyan-700': gridSize===1}" class="p-1 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-square pointer-events-none"></i></button>
+                    <button @click="setGrid(4)" :class="{'bg-cyan-100 text-cyan-700': gridSize===4}" class="p-1 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th-large pointer-events-none"></i></button>
+                    <button @click="setGrid(9)" :class="{'bg-cyan-100 text-cyan-700': gridSize===9}" class="p-1 rounded transition w-8 h-8 flex items-center justify-center hover:bg-slate-50"><i class="fas fa-th pointer-events-none"></i></button>
+                </div>
+
+                <!-- Preset Dropdown -->
                 <div class="relative shrink-0">
                     <button @click="presetsOpen = !presetsOpen" 
                             class="px-3 py-1.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2 shadow-sm">
