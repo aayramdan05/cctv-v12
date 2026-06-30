@@ -21,14 +21,30 @@
                     @csrf
                     @method('PUT')
 
+                    @if ($errors->any())
+                        <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm shadow-sm">
+                            <div class="flex items-center space-x-2 font-bold mb-2">
+                                <i class="fas fa-exclamation-circle text-red-500"></i>
+                                <span>Terjadi kesalahan pengisian data:</span>
+                            </div>
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Nama Lengkap</label>
-                            <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }}" {{ auth()->user()->role === 'operator' ? 'readonly' : 'required' }}>
+                            <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }} @error('name') border-red-500 @enderror" {{ auth()->user()->role === 'operator' ? 'readonly' : 'required' }}>
+                            @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Email</label>
-                            <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }}" {{ auth()->user()->role === 'operator' ? 'readonly' : 'required' }}>
+                            <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }} @error('email') border-red-500 @enderror" {{ auth()->user()->role === 'operator' ? 'readonly' : 'required' }}>
+                            @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
@@ -36,18 +52,19 @@
                     <div class="grid grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Password Baru (Opsional)</label>
-                            <input type="password" name="password" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Biarkan kosong jika tidak diubah">
+                            <input type="password" name="password" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 @error('password') border-red-500 @enderror" placeholder="Biarkan kosong jika tidak diubah" autocomplete="new-password">
+                            @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Konfirmasi Password</label>
-                            <input type="password" name="password_confirmation" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Ulangi password baru">
+                            <input type="password" name="password_confirmation" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" placeholder="Ulangi password baru" autocomplete="new-password">
                         </div>
                     </div>
                     @endif
 
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-2">Role (Hak Akses)</label>
-                        <select name="role" id="role_select" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }}" onchange="toggleSections()" {{ auth()->user()->role === 'operator' ? 'disabled' : '' }}>
+                        <select name="role" id="role_select" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }} @error('role') border-red-500 @enderror" onchange="toggleSections()" {{ auth()->user()->role === 'operator' ? 'disabled' : '' }}>
                             <option value="user" {{ $user->role == 'user' ? 'selected' : '' }}>User Biasa (View Only)</option>
                             
                             <!-- PERBAIKAN 1: Tambahkan Opsi API Viewer -->
@@ -62,6 +79,7 @@
                                 <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Administrator</option>
                             @endif
                         </select>
+                        @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     @if(auth()->user()->role === 'faculty_operator')
@@ -73,7 +91,7 @@
                     @else
                         <div id="faculty_section" style="display: none;">
                             <label class="block text-sm font-bold text-slate-700 mb-2">Pilih Fakultas</label>
-                            <select name="faculty" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }}" {{ auth()->user()->role === 'operator' ? 'disabled' : '' }}>
+                            <select name="faculty" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200 {{ auth()->user()->role === 'operator' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' }} @error('faculty') border-red-500 @enderror" {{ auth()->user()->role === 'operator' ? 'disabled' : '' }}>
                                 <option value="" disabled>Pilih Fakultas...</option>
                                 {{-- Pastikan Controller mengirim $faculties --}}
                                 @foreach($faculties ?? \App\Models\Building::distinct()->pluck('fakultas') as $fakultas)
@@ -84,6 +102,7 @@
                                     @endif
                                 @endforeach
                             </select>
+                            @error('faculty') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             <p class="text-xs text-slate-400 mt-1">Wajib diisi untuk Operator Fakultas dan User Biasa.</p>
                         </div>
                     @endif
