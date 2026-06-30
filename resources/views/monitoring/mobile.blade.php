@@ -289,7 +289,7 @@
                 @foreach($cctvs as $cctv)
                 <div class="bg-white p-3 rounded-2xl border border-slate-200/60 hover:border-cyan-400/50 active:bg-slate-50 cursor-pointer flex items-center justify-between shadow-sm transition-all select-none group"
                      x-show="
-                         (search === '' || '{{ strtolower(addslashes($cctv->nama_cctv)) }}'.includes(search.toLowerCase())) &&
+                         (search === '' || '{{ strtolower(addslashes($cctv->nama_cctv)) }}'.includes(search.toLowerCase()) || '{{ strtolower(addslashes($cctv->building->nama_gedung ?? "")) }}'.includes(search.toLowerCase())) &&
                          (filterFaculty === '' || '{{ addslashes($cctv->building->fakultas ?? "") }}' === filterFaculty) &&
                          (filterBuilding === '' || '{{ addslashes($cctv->building->nama_gedung ?? "") }}' === filterBuilding)
                      "

@@ -370,7 +370,7 @@
                     @foreach($cctvs as $cctv)
                     <div class="bg-white p-2 rounded border hover:border-cyan-400 cursor-pointer flex items-center gap-3 shadow-sm hover:shadow-md transition select-none group"
                         x-show="
-                            (search === '' || '{{ strtolower($cctv->nama_cctv) }}'.includes(search.toLowerCase())) &&
+                            (search === '' || '{{ strtolower($cctv->nama_cctv) }}'.includes(search.toLowerCase()) || '{{ strtolower($cctv->building->nama_gedung ?? "") }}'.includes(search.toLowerCase())) &&
                             (filterFaculty === '' || '{{ $cctv->building->fakultas ?? '' }}' === filterFaculty) &&
                             (filterBuilding === '' || '{{ $cctv->building->nama_gedung ?? '' }}' === filterBuilding) &&
                             (filterPlacement === '' || '{{ $cctv->penempatan ?? '' }}' === filterPlacement) &&
