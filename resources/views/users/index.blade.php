@@ -95,8 +95,6 @@
                 @endif
             </form>
         </div>
-
-        </div>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -204,8 +202,6 @@
                 </table>
             </div>
             <div id="pagination-container" class="mt-6">{{ $users->links() }}</div>
-        </div>
-
         </div>
     </main>
 </x-app-layout>
