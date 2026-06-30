@@ -17,6 +17,10 @@ class UserController extends Controller
         $query = User::query();
 
         // RBAC Filter
+        if ($currentUser->role !== 'superadmin') {
+            $query->where('role', '!=', 'superadmin');
+        }
+
         if ($currentUser->role === 'faculty_operator') {
             $query->where('faculty', $currentUser->faculty);
         } elseif ($currentUser->role === 'operator') {
