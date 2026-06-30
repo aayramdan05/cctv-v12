@@ -16,8 +16,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"></script>
     
     <style>
         body {
@@ -37,7 +35,7 @@
         }
     </style>
 </head>
-<body class="h-full flex flex-col overflow-hidden bg-slate-50" x-data="mobileMonitoring()">
+<body class="h-full flex flex-col overflow-hidden bg-slate-50" x-data="mobileMonitoring">
 
     <!-- App Header -->
     <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sticky top-0 z-50 shrink-0 select-none shadow-sm">
@@ -135,7 +133,7 @@
                 <button @click="toggleMute()" 
                         :disabled="!activeSlots[selectedSlot]"
                         class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-95 disabled:opacity-40 shadow-sm"
-                        :class="isMuted ? 'text-amber-650 border-amber-300 bg-amber-50' : 'text-cyan-600 border-cyan-300 bg-cyan-50/50'">
+                        :class="isMuted ? 'text-amber-600 border-amber-300 bg-amber-50' : 'text-cyan-600 border-cyan-300 bg-cyan-50/50'">
                     <i class="fas text-xs pointer-events-none" :class="isMuted ? 'fa-volume-xmark' : 'fa-volume-high'"></i>
                 </button>
 
@@ -155,7 +153,7 @@
                 </button>
 
                 <!-- Grid Split Layout 1x1 / 2x2 Toggle -->
-                <div class="flex items-center gap-0.5 bg-slate-105 p-0.5 rounded-full border border-slate-200">
+                <div class="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-full border border-slate-200">
                     <button @click="setGrid(1)" 
                             class="w-9 h-9 rounded-full flex items-center justify-center font-bold transition-all text-xs"
                             :class="gridSize === 1 ? 'bg-white text-cyan-600 border border-slate-200/60 shadow-sm' : 'text-slate-400'">
@@ -226,20 +224,20 @@
         </div>
 
         <!-- Camera Directory Listing (Sliding Light sheet) -->
-        <div class="flex-1 overflow-hidden flex flex-col bg-slate-100/50 relative bg-slate-50">
+        <div class="flex-1 overflow-hidden flex flex-col bg-slate-100/50 relative">
             <!-- Directory Filter Bar -->
             <div class="p-3.5 border-b border-slate-200 flex flex-col gap-2.5 bg-white select-none z-10 shadow-sm">
                 <!-- Search input -->
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" x-model="search" placeholder="Cari nama kamera..." 
-                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-slate-400 text-slate-700">
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-55 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-slate-400 text-slate-700">
                 </div>
                 
                 <!-- Filters row (Searchable custom dropdown list for Building) -->
                 <div class="grid grid-cols-2 gap-2">
                     <div class="relative">
-                        <select x-model="filterFaculty" class="w-full pl-3 pr-8 py-1.5 text-[10px] font-bold text-slate-505 bg-slate-55 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-0 appearance-none cursor-pointer truncate shadow-sm">
+                        <select x-model="filterFaculty" class="w-full pl-3 pr-8 py-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-0 appearance-none cursor-pointer truncate shadow-sm">
                             <option value="">Semua Fakultas</option>
                             @foreach($faculties as $fakultas)
                                 <option value="{{ $fakultas }}">{{ $fakultas }}</option>
@@ -270,7 +268,7 @@
                             <!-- Scrollable options -->
                             <div class="max-h-40 overflow-y-auto custom-scrollbar flex flex-col bg-slate-50/20 rounded-lg border border-slate-100">
                                 <button type="button" @click="selectBuilding('')" 
-                                        class="w-full text-left px-2.5 py-1.5 text-[10px] hover:bg-slate-100 rounded-lg font-bold text-slate-400">
+                                        class="w-full text-left px-2.5 py-1.5 text-[10px] hover:bg-slate-105 rounded-lg font-bold text-slate-400">
                                     -- Semua Gedung --
                                 </button>
                                 <template x-for="b in buildingsList.filter(i => i.name.toLowerCase().includes(searchBuildingQuery.toLowerCase()))" :key="b.id">
@@ -287,7 +285,7 @@
             </div>
             
             <!-- Camera Cards List -->
-            <div class="flex-1 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar bg-slate-50">
+            <div class="flex-1 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar bg-slate-55">
                 @foreach($cctvs as $cctv)
                 <div class="bg-white p-3 rounded-2xl border border-slate-200/60 hover:border-cyan-400/50 active:bg-slate-50 cursor-pointer flex items-center justify-between shadow-sm transition-all select-none group"
                      x-show="
@@ -329,8 +327,8 @@
 
     <!-- Script Logic Mobile Monitoring -->
     <script>
-        function mobileMonitoring() {
-            return {
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('mobileMonitoring', () => ({
                 gridSize: 1, 
                 activeSlots: {}, 
                 selectedSlot: 1, 
@@ -344,7 +342,7 @@
                 showBuildingList: false,
                 searchBuildingQuery: '',
                 selectedBuildingName: 'Semua Gedung',
-                buildingsList: {{ $buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung])->toJson() }},
+                buildingsList: {!! $buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung])->toJson() !!},
                 
                 selectedDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 currentTimelineData: [], 
@@ -583,8 +581,8 @@
                     this.showBuildingList = false;
                     this.searchBuildingQuery = '';
                 }
-            };
-        }
+            }));
+        });
     </script>
 
 </body>
