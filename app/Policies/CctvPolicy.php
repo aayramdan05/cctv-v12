@@ -12,8 +12,8 @@ class CctvPolicy
      */
     public function view(User $user, Cctv $cctv): bool
     {
-        // 1. ADMIN & OPERATOR PUSAT: Bebas akses semua
-        if (in_array($user->role, ['admin', 'operator'])) {
+        // 1. SUPERADMIN, ADMIN & OPERATOR PUSAT: Bebas akses semua
+        if (in_array($user->role, ['superadmin', 'admin', 'operator'])) {
             return true;
         }
 
