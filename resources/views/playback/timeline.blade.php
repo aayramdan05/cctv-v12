@@ -13,7 +13,7 @@
                 </span>
 
                 <!-- TOMBOL EXPORT (ADMIN ONLY) -->
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
                     <button onclick="openExportModal()" 
                             class="ml-2 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm active:scale-95">
                         <i class="fas fa-file-export"></i> Export ZIP
@@ -163,7 +163,7 @@
                         <span class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-500" id="total-files">0</span>
                     </div>
 
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
                     <div class="flex items-center justify-between pt-1">
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="select-all-recordings" onchange="toggleSelectAll()" class="w-3.5 h-3.5 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer">
@@ -217,7 +217,7 @@
 
     </main>
 
-    @if(auth()->user()->role === 'admin')
+    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
     <!-- ================= MODAL EXPORT REDESIGNED ================= -->
     <div id="export-modal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <!-- Backdrop with Blur -->
@@ -306,7 +306,7 @@
     @endif
 
     <script>
-        @if(auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
         // --- MODAL LOGIC & ANIMATION ---
         const modal = document.getElementById('export-modal');
         const backdrop = document.getElementById('modal-backdrop');
@@ -475,7 +475,7 @@
                     let buildingName = rec.building_name || 'Unknown';
                     
                     // Logic Checkbox (Hanya Admin)
-                    const isAdmin = "{{ auth()->user()->role === 'admin' }}";
+                    const isAdmin = "{{ auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin' }}";
                     let checkboxHtml = isAdmin ? `
                         <input type="checkbox" class="rec-checkbox w-3.5 h-3.5 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500 cursor-pointer" 
                                data-url="${rec.url}" onchange="updateDownloadCount()" onclick="event.stopPropagation()">

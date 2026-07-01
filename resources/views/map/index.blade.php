@@ -154,7 +154,7 @@
                 </div>
 
                 <!-- Admin Edit Mode Toggle -->
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
                 <button @click="$store.mapState.editMode = !$store.mapState.editMode" 
                         :class="$store.mapState.editMode ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'"
                         class="px-4 py-2 rounded-2xl shadow-lg border font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2">
@@ -224,7 +224,7 @@
                         <p id="modal-location-text" class="text-[10px] font-black text-slate-800 truncate mt-1.5">Universitas Padjadjaran</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        @if(auth()->user()->role === 'admin')
+                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
                         <button id="modal-edit-btn" onclick="" class="bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-tight hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1.5">
                             <i class="fa-solid fa-pen-to-square"></i> Edit
                         </button>
@@ -238,7 +238,7 @@
         </div>
 
         <!-- Edit Coordinate Modal -->
-        @if(auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
         <div id="edit-coord-modal" class="hidden opacity-0 scale-95 transition-all duration-200 pointer-events-auto origin-center">
             <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col">
                 <div class="h-10 px-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -437,7 +437,7 @@
                     openModal(camera, e);
                 });
 
-                const isAdmin = @json(auth()->user()->role === 'admin');
+                const isAdmin = @json(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin');
 
                 const item = document.createElement('div');
                 item.className = 'group p-3 hover:bg-orange-50 rounded-2xl cursor-pointer border border-transparent hover:border-orange-100 mb-1 transition-all mx-1 flex items-center gap-3';
