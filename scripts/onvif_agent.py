@@ -153,24 +153,20 @@ def main():
     # 1. Sync pertama kali
     sync_cameras()
 
-    # 2. Setup Listener Real-time
-    try:
-        conn = psycopg2.connect(
-            host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
-        )
-        conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        curs = conn.cursor()
-        curs.execute("LISTEN cctv_update;")
-        print("✅ ONVIF Listener aktif (Real-time). Menunggu sinyal...")
-    except Exception as e:
-        print(f"⚠️ Gagal memulai Real-time listener: {e}. Menggunakan mode polling 5 menit.")
-        while True:
-            sync_cameras()
-            time.sleep(300)
-        return
-
+    # 2. Setup Listener Real-time dengan auto-reconnect
+    conn = None
     while True:
         try:
+            if conn is None or conn.closed:
+                print("🔌 Menghubungkan ke database...")
+                conn = psycopg2.connect(
+                    host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
+                )
+                conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                curs = conn.cursor()
+                curs.execute("LISTEN cctv_update;")
+                print("✅ ONVIF Listener aktif (Real-time). Menunggu sinyal...")
+            
             conn.poll()
             while conn.notifies:
                 notify = conn.notifies.pop(0)
@@ -180,6 +176,13 @@ def main():
             time.sleep(1)
         except Exception as e:
             print(f"❌ Main Loop Error: {e}")
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                conn = None
+            print("🔄 Mencoba menghubungkan kembali ke database dalam 5 detik...")
             time.sleep(5)
 
 if __name__ == "__main__":
