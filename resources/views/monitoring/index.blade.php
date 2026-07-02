@@ -598,10 +598,17 @@
                         try {
                             this.activeSlots = JSON.parse(savedSlots);
                             this.$nextTick(() => {
+                                let firstActiveSlot = null;
                                 for (let i = 1; i <= this.gridSize; i++) {
                                     if (this.activeSlots[i]) {
                                         this.playLive(i);
+                                        if (firstActiveSlot === null) {
+                                            firstActiveSlot = i;
+                                        }
                                     }
+                                }
+                                if (firstActiveSlot !== null) {
+                                    this.selectSlot(firstActiveSlot);
                                 }
                             });
                         } catch (e) {

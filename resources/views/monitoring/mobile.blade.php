@@ -364,6 +364,10 @@
                                         this.playLive(i);
                                     }
                                 }
+                                // Auto-fetch timeline for the default selected slot if it is active
+                                if (this.activeSlots[this.selectedSlot]) {
+                                    this.fetchTimelineData();
+                                }
                             });
                         } catch (e) {
                             console.error("Error restoring slots:", e);
