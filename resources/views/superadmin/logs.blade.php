@@ -73,7 +73,13 @@
                     <select name="activity_type" class="w-full px-3 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 cursor-pointer text-slate-700">
                         <option value="">Semua Tipe</option>
                         <option value="login" {{ request('activity_type') === 'login' ? 'selected' : '' }}>Login</option>
+                        <option value="logout" {{ request('activity_type') === 'logout' ? 'selected' : '' }}>Logout</option>
                         <option value="cctv_view" {{ request('activity_type') === 'cctv_view' ? 'selected' : '' }}>CCTV View</option>
+                        <option value="cctv_add" {{ request('activity_type') === 'cctv_add' ? 'selected' : '' }}>Tambah CCTV</option>
+                        <option value="cctv_edit" {{ request('activity_type') === 'cctv_edit' ? 'selected' : '' }}>Edit CCTV</option>
+                        <option value="cctv_delete" {{ request('activity_type') === 'cctv_delete' ? 'selected' : '' }}>Hapus CCTV</option>
+                        <option value="camera_down" {{ request('activity_type') === 'camera_down' ? 'selected' : '' }}>Kamera Down</option>
+                        <option value="camera_up" {{ request('activity_type') === 'camera_up' ? 'selected' : '' }}>Kamera Up</option>
                     </select>
                 </div>
 
@@ -136,51 +142,174 @@
 
                                 <!-- Activity Type -->
                                 <td class="py-4 px-6">
-                                    @if($log->activity_type === 'login')
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase border border-emerald-100 shadow-sm">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            Login
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-600 font-bold text-[9px] uppercase border border-cyan-100 shadow-sm">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-                                            CCTV View
-                                        </span>
-                                    @endif
+                                    @switch($log->activity_type)
+                                        @case('login')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase border border-emerald-100 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Login
+                                            </span>
+                                            @break
+                                        @case('logout')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-[9px] uppercase border border-slate-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                                Logout
+                                            </span>
+                                            @break
+                                        @case('cctv_view')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-bold text-[9px] uppercase border border-blue-100 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                CCTV View
+                                            </span>
+                                            @break
+                                        @case('cctv_add')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 font-bold text-[9px] uppercase border border-green-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                CCTV Add
+                                            </span>
+                                            @break
+                                        @case('cctv_edit')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold text-[9px] uppercase border border-amber-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                CCTV Edit
+                                            </span>
+                                            @break
+                                        @case('cctv_delete')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-600 font-bold text-[9px] uppercase border border-red-100 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                CCTV Delete
+                                            </span>
+                                            @break
+                                        @case('camera_down')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 font-bold text-[9px] uppercase border border-rose-100 shadow-sm animate-pulse">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                Camera Down
+                                            </span>
+                                            @break
+                                        @case('camera_up')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 text-teal-600 font-bold text-[9px] uppercase border border-teal-100 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                                                Camera Up
+                                            </span>
+                                            @break
+                                        @default
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 font-bold text-[9px] uppercase border border-slate-100 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                {{ $log->activity_type }}
+                                            </span>
+                                    @endswitch
                                 </td>
 
                                 <!-- Details -->
                                 <td class="py-4 px-6">
-                                    @if($log->activity_type === 'login')
-                                        @php
-                                            $details = json_decode($log->details, true);
-                                            $userAgent = $details['user_agent'] ?? '-';
-                                            // Extract a clean browser string
-                                            $browser = 'Browser';
-                                            if (str_contains($userAgent, 'Firefox')) $browser = 'Firefox';
-                                            elseif (str_contains($userAgent, 'Chrome')) $browser = 'Chrome';
-                                            elseif (str_contains($userAgent, 'Safari')) $browser = 'Safari';
-                                            elseif (str_contains($userAgent, 'Edge')) $browser = 'Edge';
-                                        @endphp
-                                        <div class="text-[10px] text-slate-500 flex items-center gap-1.5">
-                                            <i class="fas fa-desktop text-slate-400"></i>
-                                            <span class="truncate max-w-xs" title="{{ $userAgent }}">{{ $browser }} &bull; {{ $userAgent }}</span>
-                                        </div>
-                                    @else
-                                        @if($log->cctv)
+                                    @php
+                                        $details = json_decode($log->details, true) ?? [];
+                                    @endphp
+                                    @switch($log->activity_type)
+                                        @case('login')
+                                        @case('logout')
+                                            @php
+                                                $userAgent = $details['user_agent'] ?? '-';
+                                                $browser = 'Browser';
+                                                if (str_contains($userAgent, 'Firefox')) $browser = 'Firefox';
+                                                elseif (str_contains($userAgent, 'Chrome')) $browser = 'Chrome';
+                                                elseif (str_contains($userAgent, 'Safari')) $browser = 'Safari';
+                                                elseif (str_contains($userAgent, 'Edge')) $browser = 'Edge';
+                                            @endphp
+                                            <div class="text-[10px] text-slate-500 flex items-center gap-1.5">
+                                                <i class="fas fa-desktop text-slate-400"></i>
+                                                <span class="truncate max-w-xs" title="{{ $userAgent }}">{{ $browser }} &bull; {{ $userAgent }}</span>
+                                            </div>
+                                            @break
+
+                                        @case('cctv_view')
+                                            @if($log->cctv)
+                                                <div>
+                                                    <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                        <i class="fas fa-video text-slate-400 text-[10px]"></i>
+                                                        {{ $log->cctv->nama_cctv }}
+                                                    </p>
+                                                    <p class="text-[10px] text-slate-400 mt-0.5">
+                                                        {{ $log->cctv->building->nama_gedung ?? '-' }} &bull; {{ $log->cctv->building->fakultas ?? '-' }}
+                                                    </p>
+                                                </div>
+                                            @else
+                                                <span class="text-slate-400 italic">Kamera Telah Dihapus</span>
+                                            @endif
+                                            @break
+
+                                        @case('cctv_add')
                                             <div>
                                                 <p class="font-bold text-slate-800 flex items-center gap-1.5">
-                                                    <i class="fas fa-video text-slate-400 text-[10px]"></i>
-                                                    {{ $log->cctv->nama_cctv }}
+                                                    <i class="fas fa-plus-circle text-green-500 text-[10px]"></i>
+                                                    {{ $details['nama_cctv'] ?? 'Kamera Baru' }}
                                                 </p>
                                                 <p class="text-[10px] text-slate-400 mt-0.5">
-                                                    {{ $log->cctv->building->nama_gedung ?? '-' }} &bull; {{ $log->cctv->building->fakultas ?? '-' }}
+                                                    Kode: {{ $details['kode_cctv'] ?? '-' }} &bull; IP: {{ $details['ip'] ?? '-' }}
                                                 </p>
                                             </div>
-                                        @else
-                                            <span class="text-slate-400 italic">Kamera Telah Dihapus</span>
-                                        @endif
-                                    @endif
+                                            @break
+
+                                        @case('cctv_edit')
+                                            <div>
+                                                <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fas fa-edit text-amber-500 text-[10px]"></i>
+                                                    {{ $details['nama_cctv'] ?? 'Kamera' }}
+                                                </p>
+                                                @if(!empty($details['changes']))
+                                                    <div class="text-[9px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100 mt-1 font-mono">
+                                                        <span class="font-bold text-slate-400 font-sans">Perubahan:</span>
+                                                        <ul class="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                                            @foreach($details['changes'] as $key => $val)
+                                                                <li>
+                                                                    <span class="text-slate-600 font-semibold">{{ $key }}:</span> 
+                                                                    <span class="text-slate-800">"{{ is_array($val) ? json_encode($val) : $val }}"</span>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            @break
+
+                                        @case('cctv_delete')
+                                            <div>
+                                                <p class="font-bold text-red-600 flex items-center gap-1.5">
+                                                    <i class="fas fa-trash-alt text-red-500 text-[10px]"></i>
+                                                    {{ $details['nama_cctv'] ?? 'Kamera' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Kode: {{ $details['kode_cctv'] ?? '-' }}
+                                                </p>
+                                            </div>
+                                            @break
+
+                                        @case('camera_down')
+                                            <div>
+                                                <p class="font-bold text-rose-600 flex items-center gap-1.5">
+                                                    <i class="fas fa-chevron-circle-down text-rose-500 text-[10px]"></i>
+                                                    {{ $details['nama_cctv'] ?? 'Kamera' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    IP: {{ $details['ip'] ?? '-' }} &bull; <span class="text-red-500 font-bold">Koneksi Putus (Offline)</span>
+                                                </p>
+                                            </div>
+                                            @break
+
+                                        @case('camera_up')
+                                            <div>
+                                                <p class="font-bold text-teal-600 flex items-center gap-1.5">
+                                                    <i class="fas fa-chevron-circle-up text-teal-500 text-[10px]"></i>
+                                                    {{ $details['nama_cctv'] ?? 'Kamera' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    IP: {{ $details['ip'] ?? '-' }} &bull; <span class="text-green-600 font-bold">Terhubung Kembali (Online)</span>
+                                                </p>
+                                            </div>
+                                            @break
+
+                                        @default
+                                            <span class="text-slate-400 italic">No details available</span>
+                                    @endswitch
                                 </td>
 
                                 <!-- IP Address -->

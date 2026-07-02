@@ -27,8 +27,88 @@ class Cctv extends Model
             }
         });
 
+        static::created(function ($cctv) {
+            try {
+                DB::table('activity_logs')->insert([
+                    'user_id'       => auth()->id(),
+                    'activity_type' => 'cctv_add',
+                    'cctv_id'       => $cctv->id,
+                    'details'       => json_encode([
+                        'nama_cctv' => $cctv->nama_cctv,
+                        'kode_cctv' => $cctv->kode_cctv,
+                        'ip'        => $cctv->ip,
+                    ]),
+                    'ip_address'    => request()->ip(),
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            } catch (\Exception $e) {}
+        });
+
+        static::updated(function ($cctv) {
+            try {
+                // 1. Log Camera status change (Up/Down)
+                if ($cctv->isDirty('status')) {
+                    $newStatus = $cctv->status;
+                    $oldStatus = $cctv->getOriginal('status');
+                    $activityType = ($newStatus === 'offline') ? 'camera_down' : 'camera_up';
+                    
+                    DB::table('activity_logs')->insert([
+                        'user_id'       => auth()->id(), // Bisa null jika cron/cli
+                        'activity_type' => $activityType,
+                        'cctv_id'       => $cctv->id,
+                        'details'       => json_encode([
+                            'nama_cctv'  => $cctv->nama_cctv,
+                            'ip'         => $cctv->ip,
+                            'old_status' => $oldStatus,
+                            'new_status' => $newStatus,
+                        ]),
+                        'ip_address'    => request()->ip(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+
+                // 2. Log general CCTV edit (jika field selain status berubah)
+                $dirtyFields = $cctv->getDirty();
+                // Hapus status & updated_at agar tidak mentrigger log edit saat status saja yang berubah
+                unset($dirtyFields['status'], $dirtyFields['updated_at']);
+                
+                if (!empty($dirtyFields)) {
+                    // Filter password
+                    unset($dirtyFields['rtsp_password'], $dirtyFields['onvif_password']);
+                    
+                    DB::table('activity_logs')->insert([
+                        'user_id'       => auth()->id(),
+                        'activity_type' => 'cctv_edit',
+                        'cctv_id'       => $cctv->id,
+                        'details'       => json_encode([
+                            'nama_cctv' => $cctv->nama_cctv,
+                            'changes'   => $dirtyFields,
+                        ]),
+                        'ip_address'    => request()->ip(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+            } catch (\Exception $e) {}
+        });
+
         static::deleted(function ($cctv) {
             try {
+                DB::table('activity_logs')->insert([
+                    'user_id'       => auth()->id(),
+                    'activity_type' => 'cctv_delete',
+                    'cctv_id'       => null,
+                    'details'       => json_encode([
+                        'nama_cctv' => $cctv->nama_cctv,
+                        'kode_cctv' => $cctv->kode_cctv,
+                    ]),
+                    'ip_address'    => request()->ip(),
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+                
                 DB::statement("NOTIFY cctv_update, 'ALL'");
             } catch (\Exception $e) {
             }
