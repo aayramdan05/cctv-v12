@@ -66,10 +66,10 @@ def auto_cleanup():
                     current_retention = server_row[1] or 7
                     
                     print(f"🧹 Memulai Auto-Cleanup (Batas Dashboard: {current_retention} hari)...")
-                    
-                    cutoff_date = datetime.now() - timedelta(days=current_retention)
+                                    # Normalisasi cutoff ke date object (midnight) agar sinkron antara DB dan file fisik
+                    cutoff_date = (datetime.now() - timedelta(days=current_retention)).date()
                     cutoff_date_str = cutoff_date.strftime('%Y-%m-%d')
-
+ 
                     # 2. Hapus dari Database (Hanya CCTV milik Server ini)
                     cur.execute("""
                         DELETE FROM recordings 
@@ -87,14 +87,15 @@ def auto_cleanup():
 
         # 3. Hapus Folder Fisik di Harddisk Node (Gunakan current_retention terbaru)
         try:
-            cutoff_date = datetime.now() - timedelta(days=current_retention)
+            cutoff_date = (datetime.now() - timedelta(days=current_retention)).date()
             if os.path.exists(STORAGE_BASE_PATH):
                 folders = glob.glob(f"{STORAGE_BASE_PATH}/*")
                 for folder in folders:
                     if os.path.isdir(folder):
                         folder_name = os.path.basename(folder)
                         try:
-                            folder_date = datetime.strptime(folder_name, '%Y-%m-%d')
+                            # Bandingkan objek date untuk menghindari bias jam/menit/detik
+                            folder_date = datetime.strptime(folder_name, '%Y-%m-%d').date()
                             if folder_date < cutoff_date:
                                 subprocess.run(['rm', '-rf', folder])
                                 print(f"🗑️ Folder rekaman usang terhapus: {folder_name}")

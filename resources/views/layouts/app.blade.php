@@ -18,6 +18,7 @@
 
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"></script>
     <style>
+        [x-cloak] { display: none !important; }
         ::-webkit-scrollbar { display: none;}
         body { font-family: 'Inter', sans-serif; }
         .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
