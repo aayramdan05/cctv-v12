@@ -13,6 +13,27 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glass-effect { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        
+        .forbidden-container {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .forbidden-container:hover {
+            animation: shake 0.6s ease-in-out;
+            animation-iteration-count: infinite;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 h-screen w-full flex items-center justify-center p-6 relative">
@@ -25,10 +46,16 @@
     <div class="w-full max-w-lg glass-effect rounded-2xl border border-cyan-100 shadow-2xl p-8 md:p-10 text-center relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 to-orange-500"></div>
 
-        <!-- Animated Clock / Shield Icon -->
-        <div class="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-50 border border-amber-100 text-amber-500 relative">
-            <i class="fas fa-user-clock text-3xl animate-pulse"></i>
-            <span class="absolute top-0 right-0 w-4 h-4 bg-amber-500 rounded-full border-2 border-white animate-ping"></span>
+        <!-- Animated Forbidden CCTV Icon Container -->
+        <div class="mb-6 inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 relative transition-all duration-500 hover:border-red-300 hover:bg-red-50/20 hover:shadow-lg hover:shadow-red-500/10 cursor-pointer group forbidden-container mx-auto">
+            <!-- CCTV Icon -->
+            <i class="fas fa-video text-4xl text-slate-400 group-hover:text-slate-500 transition-all duration-500 transform group-hover:scale-75 z-10"></i>
+            
+            <!-- Rotating & Scaling Ban Icon (Crossed Circle) -->
+            <i class="fas fa-ban absolute text-[70px] text-red-500 opacity-0 group-hover:opacity-90 transition-all duration-500 transform scale-50 group-hover:scale-100 -rotate-90 group-hover:rotate-0 pointer-events-none z-20"></i>
+            
+            <!-- Outer Pulsing Border (Appears on Hover) -->
+            <span class="absolute inset-0 rounded-2xl border-2 border-red-500/30 opacity-0 group-hover:animate-ping z-0"></span>
         </div>
 
         <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-3">Akun Menunggu Persetujuan</h2>
