@@ -16,7 +16,7 @@ class ReportController extends Controller
      */
     public function index(Request $request)
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
+        \Illuminate\Support\Facades\Gate::authorize('report_view');
 
         $query = Cctv::with(['building', 'server'])->withAvg('recordings', 'size_mb');
 
@@ -65,7 +65,7 @@ class ReportController extends Controller
      */
     public function exportCsv(Request $request)
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
+        \Illuminate\Support\Facades\Gate::authorize('report_view');
 
         $query = Cctv::with(['building', 'server'])->withAvg('recordings', 'size_mb');
 
@@ -128,7 +128,7 @@ class ReportController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
+        \Illuminate\Support\Facades\Gate::authorize('report_view');
 
         $query = Cctv::with(['building', 'server'])->withAvg('recordings', 'size_mb');
 

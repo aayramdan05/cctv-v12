@@ -44,6 +44,50 @@ class SuperAdminController extends Controller
         $totalLogins = ActivityLog::where('activity_type', 'login')->count();
         $totalViews = ActivityLog::where('activity_type', 'cctv_view')->count();
 
-        return view('superadmin.logs', compact('logs', 'totalLogins', 'totalViews'));
+        // Fetch role permissions for RBAC form
+        $rolePermissions = [];
+        try {
+            $rolePermissions = DB::table('role_permissions')->get()->keyBy('role')->map(function($item) {
+                return json_decode($item->permissions, true) ?: [];
+            })->toArray();
+        } catch (\Exception $e) {}
+
+        return view('superadmin.logs', compact('logs', 'totalLogins', 'totalViews', 'rolePermissions'));
+    }
+
+    /**
+     * Update dynamic RBAC permissions.
+     */
+    public function updateRbac(Request $request)
+    {
+        $request->validate([
+            'permissions' => 'required|array',
+        ]);
+
+        $roles = ['admin', 'operator', 'faculty_operator', 'user', 'api_viewer'];
+
+        try {
+            DB::transaction(function() use ($request, $roles) {
+                foreach ($roles as $role) {
+                    $perms = $request->input("permissions.{$role}", []);
+                    
+                    DB::table('role_permissions')
+                        ->updateOrInsert(
+                            ['role' => $role],
+                            [
+                                'permissions' => json_encode(array_values($perms)),
+                                'updated_at' => now()
+                            ]
+                        );
+
+                    // Clear the cache for this role
+                    \Illuminate\Support\Facades\Cache::forget("role_permissions_{$role}");
+                }
+            });
+
+            return redirect()->route('superadmin.logs')->with('success', 'Konfigurasi hak akses role (RBAC) berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memperbarui hak akses: ' . $e->getMessage());
+        }
     }
 }

@@ -133,40 +133,52 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     Route::get('/api/map/proxy-stream', [MapController::class, 'streamProxy'])->name('api.map.proxy');
 });
 
-// --- GROUP 2: SUPER ADMIN (Infrastruktur) ---
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// --- GROUP 2: INFRASTRUCTURE & REPORTS (Dinamis Berbasis Permission) ---
+Route::middleware(['auth', 'permission:server_manage'])->group(function () {
     Route::resource('servers', ServerController::class);
     Route::get('/ffmpeg-monitor', [FfmpegStatusController::class, 'index'])->name('ffmpeg.monitor');
-    
-    // API Keys Management (Only Admin)
+});
+
+Route::middleware(['auth', 'permission:api_key_manage'])->group(function () {
     Route::get('/api-keys', [ApiKeyController::class, 'index'])->name('api.index');
     Route::post('/api-keys', [ApiKeyController::class, 'store'])->name('api.store');
     Route::delete('/api-keys/{id}', [ApiKeyController::class, 'destroy'])->name('api.destroy');
+});
 
-    // CCTV Reports (Only Admin)
+Route::middleware(['auth', 'permission:report_view'])->group(function () {
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export/csv', [App\Http\Controllers\ReportController::class, 'exportCsv'])->name('reports.export.csv');
     Route::get('/reports/export/pdf', [App\Http\Controllers\ReportController::class, 'exportPdf'])->name('reports.export.pdf');
+});
 
-    // Notifications (Only Admin)
+Route::middleware(['auth', 'permission:notification_manage'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 });
 
-// --- GROUP 3: ADMIN ONLY (Master Data) ---
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// --- GROUP 3: MASTER DATA (Dinamis Berbasis Permission) ---
+Route::middleware(['auth', 'permission:building_manage'])->group(function () {
     Route::resource('building', BuildingController::class);
     Route::resource('faculties', \App\Http\Controllers\FacultyController::class)->except(['show']);
 });
 
-// --- GROUP 4: ADMIN & ALL OPERATORS (Manajemen CCTV & User) ---
-Route::middleware(['auth', 'role:admin,operator,faculty_operator'])->group(function () {
+// --- GROUP 4: MANAJEMEN CCTV & USER (Dinamis Berbasis Permission) ---
+Route::middleware(['auth', 'permission:cctv_import'])->group(function () {
     Route::get('cctv/migration', [\App\Http\Controllers\CctvMigrationController::class, 'index'])->name('cctv.migration');
     Route::get('cctv/migration/template', [\App\Http\Controllers\CctvMigrationController::class, 'downloadTemplate'])->name('cctv.migration.template');
     Route::post('cctv/migration/import', [\App\Http\Controllers\CctvMigrationController::class, 'import'])->name('cctv.migration.import');
+});
+
+Route::middleware(['auth', 'permission:cctv_bulk_move'])->group(function () {
     Route::post('cctv/bulk-move', [CctvController::class, 'bulkMove'])->name('cctv.bulkMove');
+});
+
+Route::middleware(['auth', 'permission:cctv_view'])->group(function () {
     Route::resource('cctv', CctvController::class);
+});
+
+Route::middleware(['auth', 'permission:user_view'])->group(function () {
     Route::resource('users', UserController::class);
 });
 
@@ -300,14 +312,15 @@ Route::get('/api/report-event', function (Request $request) {
 
 require __DIR__.'/auth.php';
 
-// Halaman Riwayat Kejadian (Events) - Only Admin
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// Halaman Riwayat Kejadian (Events) - Dinamis Berbasis Permission
+Route::middleware(['auth', 'permission:event_view'])->group(function () {
     Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');
     Route::post('/events/mark-all-read', [App\Http\Controllers\EventController::class, 'markAllRead'])->name('events.markAllRead');
     Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
 });
 
-// Halaman Aktivitas Log User - Only Super Admin
+// Halaman Aktivitas Log & Konfigurasi RBAC - Only Super Admin
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::get('/superadmin/logs', [App\Http\Controllers\SuperAdminController::class, 'userLogs'])->name('superadmin.logs');
+    Route::post('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'updateRbac'])->name('superadmin.rbac.update');
 });

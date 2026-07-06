@@ -55,7 +55,7 @@ class UserController extends Controller
 
     public function create()
     {
-        abort_if(auth()->user()->role === 'operator', 403, 'Operator Pusat tidak diizinkan menambah User.');
+        \Illuminate\Support\Facades\Gate::authorize('user_create');
 
         // Pastikan variabel ini dikirim ke View
         $cctvs = Cctv::orderBy('nama_cctv')->get();
@@ -66,6 +66,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        \Illuminate\Support\Facades\Gate::authorize('user_create');
+
         $currentUser = auth()->user();
 
         // --- HIERARKI RBAC ---
@@ -109,6 +111,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        \Illuminate\Support\Facades\Gate::authorize('user_edit');
+
         abort_if($user->role === 'superadmin' && auth()->user()->role !== 'superadmin', 403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengedit akun Super Admin.');
 
         $cctvs = Cctv::orderBy('nama_cctv')->get();
@@ -123,6 +127,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        \Illuminate\Support\Facades\Gate::authorize('user_edit');
+
         $currentUser = auth()->user();
 
         abort_if($user->role === 'superadmin' && $currentUser->role !== 'superadmin', 403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengubah akun Super Admin.');
@@ -168,7 +174,7 @@ class UserController extends Controller
             'faculty' => $request->role === 'faculty_operator' || $request->role === 'user' ? $request->faculty : null,
         ];
 
-        if ($request->has('status') && in_array($currentUser->role, ['admin', 'superadmin'])) {
+        if ($request->has('status') && \Illuminate\Support\Facades\Gate::allows('user_approve')) {
             $data['status'] = $request->status;
         }
 
@@ -195,6 +201,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        \Illuminate\Support\Facades\Gate::authorize('user_delete');
+
         $currentUser = auth()->user();
 
         abort_if($user->role === 'superadmin' && $currentUser->role !== 'superadmin', 403, 'Akses Ditolak: Anda tidak memiliki izin untuk menghapus akun Super Admin.');

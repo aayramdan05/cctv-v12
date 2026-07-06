@@ -55,7 +55,7 @@ class CctvController extends Controller
 
     public function create()
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan menambah kamera.');
+        \Illuminate\Support\Facades\Gate::authorize('cctv_create');
         
         $user = auth()->user();
         
@@ -72,7 +72,7 @@ class CctvController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan menambah kamera.');
+        \Illuminate\Support\Facades\Gate::authorize('cctv_create');
 
         try {
             $validated = $request->validate([
@@ -109,8 +109,7 @@ class CctvController extends Controller
 
     public function edit(Cctv $cctv): View
     {
-        // Pengecekan Hak Akses (Wajib)
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan mengedit kamera.');
+        \Illuminate\Support\Facades\Gate::authorize('cctv_edit');
 
         $buildings = Building::all();
         // Ambil Daftar Server Node (Wajib ditambahkan)
@@ -121,7 +120,7 @@ class CctvController extends Controller
 
     public function update(Request $request, Cctv $cctv): RedirectResponse
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan mengedit kamera.');
+        \Illuminate\Support\Facades\Gate::authorize('cctv_edit');
 
         try {
             $validated = $request->validate([
@@ -169,7 +168,7 @@ class CctvController extends Controller
 
     public function destroy(Cctv $cctv): RedirectResponse
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403, 'Hanya Admin yang diizinkan menghapus kamera.');
+        \Illuminate\Support\Facades\Gate::authorize('cctv_delete');
 
         try {
             
@@ -184,7 +183,7 @@ class CctvController extends Controller
 
     public function bulkMove(Request $request): RedirectResponse
     {
-        abort_if(auth()->user()->role === 'faculty_operator', 403, 'Operator Fakultas tidak diizinkan mengubah kamera secara masal.');
+        \Illuminate\Support\Facades\Gate::authorize('cctv_bulk_move');
 
         $request->validate([
             'cctv_ids' => 'required|array',

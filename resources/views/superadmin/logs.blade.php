@@ -54,6 +54,115 @@
             </div>
         </div>
 
+        <!-- RBAC Panel -->
+        <div x-data="{ rbacOpen: false }" class="mb-8 relative z-30">
+            <!-- Toggle Button -->
+            <button @click="rbacOpen = !rbacOpen" class="w-full flex items-center justify-between px-6 py-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-md shadow-inner group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="text-left">
+                        <h4 class="font-bold text-slate-800 text-sm">Konfigurasi Hak Akses Role (RBAC)</h4>
+                        <p class="text-xs text-slate-400">Atur hak akses tindakan operasional secara dinamis untuk setiap tingkat peran pengguna.</p>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-down text-xs text-slate-400 transition-transform duration-300" :class="{ 'rotate-180': rbacOpen }"></i>
+            </button>
+
+            <!-- Panel Body -->
+            <div x-show="rbacOpen" x-transition class="mt-4 bg-white rounded-2xl border border-slate-200/80 shadow-md p-6 overflow-hidden" style="display: none;">
+                <form method="POST" action="{{ route('superadmin.rbac.update') }}">
+                    @csrf
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs mb-6">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase select-none">
+                                    <th class="pb-3 w-72 pl-2">Fitur / Tindakan</th>
+                                    <th class="pb-3 text-center w-28">Admin</th>
+                                    <th class="pb-3 text-center w-36">Operator Pusat</th>
+                                    <th class="pb-3 text-center w-36">Operator Fak.</th>
+                                    <th class="pb-3 text-center w-28">User biasa</th>
+                                    <th class="pb-3 text-center w-28">API Viewer</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-600 font-medium divide-y divide-slate-50">
+                                
+                                @php
+                                    $permissionsMap = [
+                                        'DASHBOARD & LIVE MONITORING' => [
+                                            'dashboard_view' => 'Mengakses Dashboard ringkasan status & visualisasi utama',
+                                            'live_monitoring' => 'Menonton siaran langsung (Live Stream) CCTV dan mengatur Preset'
+                                        ],
+                                        'REKAMAN / PLAYBACK' => [
+                                            'playback_view' => 'Mengakses menu Playback dan melihat linimasa rekaman',
+                                            'playback_export' => 'Mengunduh dan mengekspor berkas rekaman (.mp4)'
+                                        ],
+                                        'PETA / MAP' => [
+                                            'map_view' => 'Mengakses menu Map Monitoring untuk melihat sebaran kamera di peta',
+                                            'map_update_coords' => 'Menggeser marker atau mengubah titik koordinat kamera di peta'
+                                        ],
+                                        'PENGELOLAAN KAMERA (CCTV CRUD)' => [
+                                            'cctv_view' => 'Melihat tabel daftar kamera di menu Master Kamera',
+                                            'cctv_create' => 'Menambah data kamera CCTV baru',
+                                            'cctv_edit' => 'Mengubah konfigurasi, alamat IP, atau detail RTSP/ONVIF kamera',
+                                            'cctv_delete' => 'Menghapus data kamera dari sistem',
+                                            'cctv_bulk_move' => 'Memindahkan kamera antar Node perekam secara masal (Bulk Move)',
+                                            'cctv_import' => 'Mengimpor kamera secara masal dari berkas excel (Excel Migration)'
+                                        ],
+                                        'PENGELOLAAN PENGGUNA (USER CRUD)' => [
+                                            'user_view' => 'Melihat tabel daftar pengguna di menu Manage Users',
+                                            'user_create' => 'Membuat akun pengguna baru secara manual',
+                                            'user_edit' => 'Mengubah data pengguna (nama, email, fakultas) dan menentukan plotting role',
+                                            'user_delete' => 'Menghapus akun pengguna dari aplikasi',
+                                            'user_approve' => 'Menyetujui pendaftaran pengguna baru (mengubah status dari pending ke approved)'
+                                        ],
+                                        'INFRASTRUKTUR & REFERENSI' => [
+                                            'server_manage' => 'Mengelola CRUD Server Node perekam & memantau service FFmpeg',
+                                            'api_key_manage' => 'Mengelola CRUD API Key untuk integrasi pihak ketiga',
+                                            'report_view' => 'Mengakses menu Laporan (Report CCTV) serta mengunduh CSV/PDF',
+                                            'event_view' => 'Melihat log kejadian kecerdasan buatan (Intelligence Events / Motion Detection)',
+                                            'notification_manage' => 'Membaca atau menandai selesai notifikasi sistem',
+                                            'building_manage' => 'Mengelola CRUD Master Gedung dan Master Fakultas'
+                                        ]
+                                    ];
+                                @endphp
+
+                                @foreach($permissionsMap as $section => $perms)
+                                    <tr class="bg-slate-50/80 text-slate-400 font-bold text-[10px] tracking-wide border-y border-slate-100/50 select-none">
+                                        <td colspan="6" class="py-2 pl-2 text-cyan-600 font-mono">{{ $section }}</td>
+                                    </tr>
+                                    @foreach($perms as $permKey => $desc)
+                                        <tr class="hover:bg-cyan-50/20 transition-colors">
+                                            <td class="py-3 pl-2">
+                                                <div class="font-bold text-slate-800">{{ $permKey }}</div>
+                                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">{{ $desc }}</div>
+                                            </td>
+                                            @foreach(['admin', 'operator', 'faculty_operator', 'user', 'api_viewer'] as $role)
+                                                <td class="py-3 text-center">
+                                                    <input type="checkbox" name="permissions[{{ $role }}][]" value="{{ $permKey }}" 
+                                                           class="rounded text-cyan-500 focus:ring-cyan-400 border-slate-300 w-4 h-4 cursor-pointer"
+                                                           {{ in_array($permKey, $rolePermissions[$role] ?? []) ? 'checked' : '' }}>
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs tracking-wide shadow-md shadow-amber-500/20 transition-all flex items-center gap-2">
+                            <i class="fas fa-save"></i> Simpan Hak Akses
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Filter Panel -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm mb-6">
             <form method="GET" action="{{ route('superadmin.logs') }}" id="filter-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">

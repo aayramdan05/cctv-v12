@@ -15,13 +15,13 @@ class CctvMigrationController extends Controller
 {
     public function index()
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
+        \Illuminate\Support\Facades\Gate::authorize('cctv_import');
         return view('cctvs.migration');
     }
 
     public function downloadTemplate()
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
+        \Illuminate\Support\Facades\Gate::authorize('cctv_import');
         
         $templateData = [
             [
@@ -93,7 +93,7 @@ class CctvMigrationController extends Controller
 
     public function import(Request $request)
     {
-        abort_if(!in_array(auth()->user()->role, ['admin', 'superadmin']), 403);
+        \Illuminate\Support\Facades\Gate::authorize('cctv_import');
 
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,csv'

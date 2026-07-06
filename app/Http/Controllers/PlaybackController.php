@@ -110,9 +110,7 @@ class PlaybackController extends Controller
     public function exportRecordings(Request $request)
     {
         // 1. Validasi
-        if (!in_array(auth()->user()->role, ['admin', 'superadmin'])) {
-            abort(403);
-        }
+        \Illuminate\Support\Facades\Gate::authorize('playback_export');
 
         $request->validate([
             'cctv_id' => 'required',
@@ -137,7 +135,7 @@ class PlaybackController extends Controller
 
     public function downloadExport($filename)
     {
-        if (!in_array(auth()->user()->role, ['admin', 'superadmin'])) { abort(403); }
+        \Illuminate\Support\Facades\Gate::authorize('playback_export');
 
         // Download file yang sudah jadi di folder storage/app/public/exports
         $path = storage_path("app/public/exports/{$filename}");
