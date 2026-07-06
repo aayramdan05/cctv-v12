@@ -171,63 +171,66 @@
             </form>
         </div>
 
-        <div>
-            <!-- Bulk Action Bar (Floating) -->
-            <div x-show="selectedIds.length > 0" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-10"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 border border-slate-700">
-                <div class="flex items-center gap-2 border-r border-slate-700 pr-6">
-                    <span class="bg-cyan-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" x-text="selectedIds.length"></span>
-                    <span class="text-sm font-medium">Kamera Terpilih</span>
-                </div>
-                
-                <form action="{{ route('cctv.bulkMove') }}" method="POST" class="flex items-center gap-4">
-                    @csrf
-                    <template x-for="id in selectedIds" :key="id">
-                        <input type="hidden" name="cctv_ids[]" :value="id">
-                    </template>
+        @can('cctv_bulk_move')
+        <!-- Bulk Action Bar (Floating) -->
+        <div x-show="selectedIds.length > 0" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-10"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 border border-slate-700">
+            <div class="flex items-center gap-2 border-r border-slate-700 pr-6">
+                <span class="bg-cyan-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" x-text="selectedIds.length"></span>
+                <span class="text-sm font-medium">Kamera Terpilih</span>
+            </div>
+            
+            <form action="{{ route('cctv.bulkMove') }}" method="POST" class="flex items-center gap-4">
+                @csrf
+                <template x-for="id in selectedIds" :key="id">
+                    <input type="hidden" name="cctv_ids[]" :value="id">
+                </template>
 
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Node:</span>
-                            <select name="target_server_id" class="bg-slate-800 border-slate-700 text-white text-xs rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-1.5 w-32">
-                                <option value="">Tetap...</option>
-                                @foreach($servers as $s)
-                                    <option value="{{ $s->id }}">Node {{ $s->id }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Penempatan:</span>
-                            <select name="target_penempatan" class="bg-slate-800 border-slate-700 text-white text-xs rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-1.5 w-32">
-                                <option value="">Tetap...</option>
-                                <option value="Indoor">Indoor</option>
-                                <option value="Outdoor">Outdoor</option>
-                            </select>
-                        </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Node:</span>
+                        <select name="target_server_id" class="bg-slate-800 border-slate-700 text-white text-xs rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-1.5 w-32">
+                            <option value="">Tetap...</option>
+                            @foreach($servers as $s)
+                                <option value="{{ $s->id }}">Node {{ $s->id }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
-                        <i class="fas fa-save"></i> Update Terpilih
-                    </button>
-                    
-                    <button type="button" @click="selectedIds = []; selectAll = false" class="text-slate-400 hover:text-white transition-colors ml-2">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </form>
-            </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Penempatan:</span>
+                        <select name="target_penempatan" class="bg-slate-800 border-slate-700 text-white text-xs rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-1.5 w-32">
+                            <option value="">Tetap...</option>
+                            <option value="Indoor">Indoor</option>
+                            <option value="Outdoor">Outdoor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+                    <i class="fas fa-save"></i> Update Terpilih
+                </button>
+                
+                <button type="button" @click="selectedIds = []; selectAll = false" class="text-slate-400 hover:text-white transition-colors ml-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </form>
+        </div>
+        @endcan
 
             <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-cyan-100 select-none">
+                                @can('cctv_bulk_move')
                                 <th class="pb-4 pl-4 font-semibold w-10">
                                     <input type="checkbox" @click="toggleAll()" :checked="selectAll" class="rounded border-slate-300 text-cyan-500 focus:ring-cyan-200">
                                 </th>
+                                @endcan
                                 <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group w-16" @click="handleSort('id')">
                                     ID
                                     <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'id' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
@@ -257,9 +260,11 @@
                         <tbody id="cctv-table-body" class="text-sm text-slate-600">
                             @forelse ($cctvs as $cctv)
                                 <tr class="hover:bg-cyan-50/50 transition-colors border-b border-slate-50 last:border-none" :class="selectedIds.includes('{{ $cctv->id }}') ? 'bg-cyan-50/30' : ''">
+                                    @can('cctv_bulk_move')
                                     <td class="py-4 pl-4">
                                         <input type="checkbox" value="{{ $cctv->id }}" x-model="selectedIds" class="cctv-checkbox rounded border-slate-300 text-cyan-500 focus:ring-cyan-200">
                                     </td>
+                                    @endcan
                                     <td class="py-4 font-mono text-xs font-bold text-slate-400">#{{ $cctv->id }}</td>
                                     <td class="py-4 font-medium text-cyan-600">{{ $cctv->kode_cctv }}</td>
                                     <td class="py-4">
