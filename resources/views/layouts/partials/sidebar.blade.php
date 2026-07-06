@@ -140,6 +140,10 @@
         @if(auth()->user()->role === 'superadmin')
             <div class="pt-4 mt-4 border-t border-cyan-100">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase mb-2">Super Admin</p>
+                <a href="{{ route('superadmin.rbac.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('superadmin.rbac.*') ? 'active' : '' }}">
+                    <i class="fas fa-user-shield w-5 {{ request()->routeIs('superadmin.rbac.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                    <span class="font-medium text-sm">Hak Akses (RBAC)</span>
+                </a>
                 <a href="{{ route('superadmin.logs') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('superadmin.logs') ? 'active' : '' }}">
                     <i class="fas fa-history w-5 {{ request()->routeIs('superadmin.logs') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Log Aktivitas</span>

@@ -321,6 +321,7 @@ Route::middleware(['auth', 'permission:event_view'])->group(function () {
 
 // Halaman Aktivitas Log & Konfigurasi RBAC - Only Super Admin
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
-    Route::get('/superadmin/logs', [App\Http\Controllers\SuperAdminController::class, 'userLogs'])->name('superadmin.logs');
+    Route::get('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'rbacIndex'])->name('superadmin.rbac.index');
     Route::post('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'updateRbac'])->name('superadmin.rbac.update');
+    Route::get('/superadmin/logs', [App\Http\Controllers\SuperAdminController::class, 'userLogs'])->name('superadmin.logs');
 });

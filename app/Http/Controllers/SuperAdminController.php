@@ -44,7 +44,14 @@ class SuperAdminController extends Controller
         $totalLogins = ActivityLog::where('activity_type', 'login')->count();
         $totalViews = ActivityLog::where('activity_type', 'cctv_view')->count();
 
-        // Fetch role permissions for RBAC form
+        return view('superadmin.logs', compact('logs', 'totalLogins', 'totalViews'));
+    }
+
+    /**
+     * Display dynamic RBAC page.
+     */
+    public function rbacIndex()
+    {
         $rolePermissions = [];
         try {
             $rolePermissions = DB::table('role_permissions')->get()->keyBy('role')->map(function($item) {
@@ -52,7 +59,7 @@ class SuperAdminController extends Controller
             })->toArray();
         } catch (\Exception $e) {}
 
-        return view('superadmin.logs', compact('logs', 'totalLogins', 'totalViews', 'rolePermissions'));
+        return view('superadmin.rbac', compact('rolePermissions'));
     }
 
     /**
@@ -85,7 +92,7 @@ class SuperAdminController extends Controller
                 }
             });
 
-            return redirect()->route('superadmin.logs')->with('success', 'Konfigurasi hak akses role (RBAC) berhasil diperbarui!');
+            return redirect()->route('superadmin.rbac.index')->with('success', 'Konfigurasi hak akses role (RBAC) berhasil diperbarui!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui hak akses: ' . $e->getMessage());
         }
