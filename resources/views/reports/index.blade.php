@@ -64,7 +64,7 @@
             }
         }">
             <!-- Filter Form -->
-            <div class="glass-effect rounded-2xl p-6 border border-cyan-100 mb-6">
+            <div class="glass-effect rounded-2xl p-6 border border-cyan-100 mb-6 relative z-20">
                 <form id="filter-form" action="{{ route('reports.index') }}" method="GET" class="flex flex-wrap items-center gap-4 w-full" @submit.prevent="updateTable()">
                     <!-- Search Input -->
                     <div class="relative flex-1 min-w-[240px]">
@@ -82,11 +82,11 @@
                     </div>
 
                     <!-- Dropdown Searchable Gedung -->
-                    <div class="relative" x-data="{ 
+                    <div class="relative z-30" x-data="{ 
                         open: false, 
                         search: '', 
                         selectedId: '{{ request('building_id') }}',
-                        selectedName: '{{ request('building_id') ? $buildings->find(request('building_id'))->nama_gedung : 'Semua Gedung' }}',
+                        selectedName: '{{ request('building_id') && $buildings->find(request('building_id')) ? $buildings->find(request('building_id'))->nama_gedung : 'Semua Gedung' }}',
                         buildings: [
                             @foreach($buildings as $b)
                                 { id: '{{ $b->id }}', name: '{{ $b->nama_gedung }}' },
@@ -99,8 +99,8 @@
                     }">
                         <input type="hidden" name="building_id" :value="selectedId">
                         <button type="button" @click="open = !open" 
-                                class="w-48 pl-4 pr-10 py-2 rounded-xl border border-slate-200 text-left text-sm bg-white shadow-sm focus:ring-2 focus:ring-cyan-100 flex justify-between items-center">
-                            <span x-text="selectedName" class="truncate"></span>
+                                class="w-48 pl-4 pr-10 py-2 rounded-xl border border-slate-200 text-left text-sm bg-white/50 shadow-sm focus:ring-2 focus:ring-cyan-100 flex justify-between items-center">
+                            <span x-text="selectedName" class="truncate font-medium"></span>
                             <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
                         </button>
                         <div x-show="open" @click.away="open = false" x-cloak 
@@ -127,7 +127,7 @@
                     <!-- Server Node Dropdown -->
                     <div class="relative">
                         <select name="server_id" @change="updateTable()" 
-                                class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white cursor-pointer shadow-sm appearance-none">
+                                class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
                             <option value="">Semua Node</option>
                             @foreach($servers as $s)
                                 <option value="{{ $s->id }}" {{ request('server_id') == $s->id ? 'selected' : '' }}>Node {{ $s->id }} ({{ $s->name }})</option>
@@ -139,7 +139,7 @@
                     <!-- Penempatan Dropdown -->
                     <div class="relative">
                         <select name="penempatan" @change="updateTable()" 
-                                class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white cursor-pointer shadow-sm appearance-none">
+                                class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
                             <option value="">Semua Lokasi</option>
                             <option value="Indoor" {{ request('penempatan') == 'Indoor' ? 'selected' : '' }}>Indoor</option>
                             <option value="Outdoor" {{ request('penempatan') == 'Outdoor' ? 'selected' : '' }}>Outdoor</option>
@@ -150,7 +150,7 @@
                     <!-- Status Dropdown -->
                     <div class="relative">
                         <select name="status" @change="updateTable()" 
-                                class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white cursor-pointer shadow-sm appearance-none">
+                                class="w-40 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
                             <option value="">Semua Status</option>
                             <option value="online" {{ request('status') == 'online' ? 'selected' : '' }}>Online</option>
                             <option value="offline" {{ request('status') == 'offline' ? 'selected' : '' }}>Offline</option>
