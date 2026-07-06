@@ -88,6 +88,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/pending-approval', function () {
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+    if (auth()->user()->status !== 'pending') {
+        return redirect()->route('dashboard');
+    }
+    return view('auth.pending-approval');
+})->name('pending-approval')->middleware(['auth']);
+
 Route::get('/auth-stream-verify', [StreamAuthController::class, 'verify'])->name('stream.verify');
 
 // --- GROUP 1: USER, OPERATOR, ADMIN (Akses Umum) ---

@@ -27,6 +27,11 @@ class CheckDashboardAccess
             ]);
         }
 
+        // Redirect jika status user adalah 'pending'
+        if ($user && $user->status === 'pending') {
+            return redirect()->route('pending-approval');
+        }
+
         return $next($request);
     }
 }

@@ -88,7 +88,17 @@
                     <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
                 </div>
 
-                @if(request()->anyFilled(['search', 'role']))
+                <div class="relative">
+                    <select name="status" @change="updateTable()" 
+                            class="w-48 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
+                        <option value="">Semua Status</option>
+                        <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Aktif</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Butuh Approval</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
+                </div>
+
+                @if(request()->anyFilled(['search', 'role', 'status']))
                     <a href="{{ route('users.index') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors ml-2">
                         <i class="fas fa-times-circle mr-1"></i> Reset
                     </a>
@@ -105,7 +115,7 @@
                                 <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'name' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
                             </th>
                             <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('role')">
-                                Hak Akses
+                                Hak Akses (Role)
                                 <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'role' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
                             </th>
                             <th class="pb-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('faculty')">
@@ -113,6 +123,7 @@
                                 <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'faculty' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
                             </th>
                             <th class="pb-4 font-semibold">Akses CCTV</th>
+                            <th class="pb-4 font-semibold">Status</th>
                             <th class="pb-4 pr-4 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
@@ -124,22 +135,28 @@
                                         <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-200 to-slate-300 flex items-center justify-center text-slate-600 font-bold text-xs">
                                             {{ substr($user->name, 0, 1) }}
                                         </div>
-                                        <span class="font-medium text-slate-800">{{ $user->name }}</span>
+                                        <div>
+                                            <span class="font-medium text-slate-800 block">{{ $user->name }}</span>
+                                            <span class="text-xs text-slate-400 block">{{ $user->email }}</span>
+                                        </div>
                                     </div>
-                                </td>
-                                <td class="py-4 font-medium text-slate-500">
-                                    {{ $user->email }}
                                 </td>
                                 <td class="py-4">
                                     @php
                                         $badgeClass = match($user->role) {
+                                            'superadmin' => 'bg-red-100 text-red-700 border border-red-200',
                                             'admin' => 'bg-purple-100 text-purple-700 border border-purple-200',
                                             'operator' => 'bg-blue-100 text-blue-700 border border-blue-200',
+                                            'faculty_operator' => 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                                            'api_viewer' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
                                             default => 'bg-slate-100 text-slate-600 border border-slate-200',
                                         };
                                         $iconClass = match($user->role) {
+                                            'superadmin' => 'fa-crown',
                                             'admin' => 'fa-shield-alt',
                                             'operator' => 'fa-user-cog',
+                                            'faculty_operator' => 'fa-user-shield',
+                                            'api_viewer' => 'fa-key',
                                             default => 'fa-user',
                                         };
                                     @endphp
@@ -148,12 +165,7 @@
                                     </span>
                                 </td>
                                 <td class="py-4">
-                                    @if($user->role === 'admin' || $user->role === 'operator')
-                                        {{-- Tampilan untuk Admin/Pusat --}}
-                                        <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 uppercase tracking-wider">
-                                            Global
-                                        </span>
-                                    @elseif($user->faculty)
+                                    @if($user->faculty)
                                         {{-- Tampilan untuk Fakultas --}}
                                         <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">
                                             {{ $user->faculty }}
@@ -163,13 +175,29 @@
                                     @endif
                                 </td>
                                 <td class="py-4">
-                                    @if($user->role === 'user')
+                                    @if($user->role === 'superadmin' || $user->role === 'admin' || $user->role === 'operator')
+                                        <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 uppercase tracking-wider">
+                                            Global (Semua Kamera)
+                                        </span>
+                                    @elseif($user->role === 'user' || $user->role === 'api_viewer')
                                         <span class="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-200">
                                             {{ $user->cctvs->count() }} Kamera
                                         </span>
                                     @else
-                                        <span class="text-xs text-slate-400 italic">Full Access</span>
+                                        <span class="text-xs text-slate-400 italic">Tidak ada akses</span>
                                     @endif
+                                </td>
+                                <td class="py-4">
+                                    @php
+                                        $statusClass = $user->status === 'pending' 
+                                            ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                                            : 'bg-green-100 text-green-700 border border-green-200';
+                                        $statusLabel = $user->status === 'pending' ? 'Butuh Approval' : 'Aktif';
+                                        $statusIcon = $user->status === 'pending' ? 'fa-clock animate-pulse' : 'fa-check-circle';
+                                    @endphp
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center w-fit {{ $statusClass }}">
+                                        <i class="fas {{ $statusIcon }} mr-1.5"></i> {{ $statusLabel }}
+                                    </span>
                                 </td>
                                 <td class="py-4 pr-4 text-right space-x-2">
                                     <a href="{{ route('users.edit', $user->id) }}" 
@@ -190,7 +218,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-12 text-center">
+                                <td colspan="6" class="py-12 text-center">
                                     <div class="flex flex-col items-center justify-center text-slate-400">
                                         <i class="fas fa-users text-4xl mb-3 opacity-50"></i>
                                         <p>Belum ada data user.</p>

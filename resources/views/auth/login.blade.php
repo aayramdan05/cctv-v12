@@ -77,73 +77,92 @@
                         </div>
                     </div>
                 @endif
-
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
-                    @csrf
-
-                    <div>
-                        <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-3.5 text-slate-400">
-                                <i class="fas fa-envelope"></i>
-                            </span>
-                            <input id="email" class="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 outline-none transition-all text-slate-700" 
-                                   type="email" name="email" :value="old('email')" required autofocus autocomplete="username" 
-                                   placeholder="nama@unpad.ac.id" />
-                        </div>
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <label for="password" class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-3.5 text-slate-400">
-                                <i class="fas fa-lock"></i>
-                            </span>
-                            <input id="password" class="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 outline-none transition-all text-slate-700" 
-                                   type="password" name="password" required autocomplete="current-password" 
-                                   placeholder="••••••••" />
-                        </div>
-                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <label for="remember_me" class="inline-flex items-center cursor-pointer">
-                            <input id="remember_me" type="checkbox" class="rounded border-slate-300 text-cyan-500 shadow-sm focus:ring-cyan-200" name="remember">
-                            <span class="ml-2 text-sm text-slate-500 font-medium">Ingat saya</span>
-                        </label>
-
-                        @if (Route::has('password.request'))
-                            <a class="text-sm text-cyan-600 hover:text-cyan-700 font-medium hover:underline" href="{{ route('password.request') }}">
-                                Lupa password?
-                            </a>
-                        @endif
-                    </div>
-
-                    <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold text-sm uppercase tracking-wide shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-[1.02] transition-all duration-300">
-                        Sign In
-                    </button>
-                </form>
-
-                <div class="mt-6">
-                    <div class="relative mb-6">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-slate-200"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-slate-400">Atau login dengan</span>
-                        </div>
-                    </div>
-
-                    <a href="{{ route('auth.paus') }}" class="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group">
-                        <img src="{{ asset('logo-unpad.png') }}" alt="Unpad Logo" class="w-6 h-6 rounded shadow-sm group-hover:scale-110 transition-transform">
-                        PAUS ID (SSO Unpad)
+                
+                <!-- SSO (PAUS ID) Login Button - Primary Focus -->
+                <div class="mb-6">
+                    <a href="{{ route('auth.paus') }}" class="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-cyan-200 bg-cyan-50/50 hover:bg-cyan-100/50 text-cyan-700 font-bold text-base shadow-sm hover:border-cyan-300 transition-all duration-300 hover:scale-[1.01] hover:shadow-md group">
+                        <img src="{{ asset('logo-unpad.png') }}" alt="Unpad Logo" class="w-7 h-7 rounded shadow-sm group-hover:scale-110 transition-transform">
+                        Masuk dengan PAUS ID (SSO Unpad)
                     </a>
                 </div>
+
+                <!-- Toggle Local Login Button -->
+                <div class="text-center">
+                    <button type="button" id="toggle-local-btn" class="text-xs text-slate-400 hover:text-cyan-600 transition-colors font-medium">
+                        <i class="fas fa-key mr-1.5"></i> Login dengan Akun Lokal / Sistem
+                    </button>
+                </div>
+
+                <!-- Local Login Form (Hidden by default, shown if validation error exists or toggle clicked) -->
+                <div id="local-login-wrapper" class="{{ ($errors->any() || old('email')) ? '' : 'hidden' }} mt-6 border-t border-slate-100 pt-6">
+                    <div class="mb-4 text-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gunakan Kredensial Lokal / Admin</span>
+                    </div>
+
+                    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                        @csrf
+
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-slate-400">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input id="email" class="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 outline-none transition-all text-slate-700" 
+                                       type="email" name="email" :value="old('email')" required autocomplete="username" 
+                                       placeholder="nama@unpad.ac.id" />
+                            </div>
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-slate-400">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input id="password" class="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 outline-none transition-all text-slate-700" 
+                                       type="password" name="password" required autocomplete="current-password" 
+                                       placeholder="••••••••" />
+                            </div>
+                            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <label for="remember_me" class="inline-flex items-center cursor-pointer">
+                                <input id="remember_me" type="checkbox" class="rounded border-slate-300 text-cyan-500 shadow-sm focus:ring-cyan-200" name="remember">
+                                <span class="ml-2 text-sm text-slate-500 font-medium">Ingat saya</span>
+                            </label>
+
+                            @if (Route::has('password.request'))
+                                <a class="text-sm text-cyan-600 hover:text-cyan-700 font-medium hover:underline" href="{{ route('password.request') }}">
+                                    Lupa password?
+                                </a>
+                            @endif
+                        </div>
+
+                        <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold text-sm uppercase tracking-wide shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-[1.02] transition-all duration-300">
+                            Sign In
+                        </button>
+                    </form>
+                </div>
+
+                <script>
+                    document.getElementById('toggle-local-btn').addEventListener('click', function() {
+                        const wrapper = document.getElementById('local-login-wrapper');
+                        const emailInput = document.getElementById('email');
+                        
+                        wrapper.classList.toggle('hidden');
+                        if (!wrapper.classList.contains('hidden')) {
+                            if (emailInput) emailInput.focus();
+                            wrapper.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                </script>
                 
-                <div class="mt-8 text-center">
-                    <p class="text-sm text-slate-400">
-                        Belum punya akun? Hubungi Administrator Sistem.
+                <div class="mt-8 text-center border-t border-slate-100 pt-6">
+                    <p class="text-xs text-slate-400">
+                        Belum punya akun atau kendala login? Hubungi Administrator Sistem.
                     </p>
                 </div>
             </div>

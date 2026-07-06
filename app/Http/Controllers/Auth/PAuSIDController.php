@@ -81,6 +81,7 @@ class PAuSIDController extends Controller
                     'paus_username' => $data['username'],
                     'password' => bcrypt(Str::random(24)),
                     'role' => 'user', // Default: View Only (User Biasa)
+                    'status' => 'pending',
                 ]);
             }
 

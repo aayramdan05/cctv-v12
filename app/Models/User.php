@@ -25,6 +25,7 @@ class User extends Authenticatable
         'faculty',
         'paus_id',
         'paus_username',
+        'status',
     ];
 
     /**

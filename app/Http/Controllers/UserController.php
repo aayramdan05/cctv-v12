@@ -41,6 +41,11 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
+        // Status Filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $sortField = $request->get('sort_by', 'created_at');
         $sortDir = $request->get('sort_dir', 'desc');
 
@@ -90,6 +95,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'faculty' => $request->role === 'faculty_operator' || $request->role === 'user' ? $request->faculty : null,
+            'status' => 'approved',
         ]);
 
         // --- FIX: SIMPAN RELASI CCTV ---
@@ -150,6 +156,7 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role' => ['required', 'string', 'in:superadmin,admin,operator,faculty_operator,user,api_viewer'],
             'faculty' => ['nullable', 'string'],
+            'status' => ['nullable', 'string', 'in:approved,pending'],
             'cctv_access' => ['nullable', 'array'],
             'cctv_access.*' => ['exists:cctvs,id'],
         ]);
@@ -160,6 +167,10 @@ class UserController extends Controller
             'role' => $request->role,
             'faculty' => $request->role === 'faculty_operator' || $request->role === 'user' ? $request->faculty : null,
         ];
+
+        if ($request->has('status') && in_array($currentUser->role, ['admin', 'superadmin'])) {
+            $data['status'] = $request->status;
+        }
 
         if ($request->filled('password')) {
             $request->validate([
