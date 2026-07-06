@@ -42,7 +42,7 @@
                 Halo, <span class="font-bold text-slate-800">{{ auth()->user()->name }}</span> ({{ auth()->user()->email }}).
             </p>
             <p>
-                Akun Anda berhasil terdaftar melalui <strong>SSO Unpad (PAUS ID)</strong>. Namun, demi alasan keamanan, akun baru memerlukan persetujuan dari Super Admin sebelum dapat mengakses dashboard monitoring.
+                Akun Anda berhasil terdaftar melalui <strong>SSO Unpad (PAUS ID)</strong>. Namun, demi alasan keamanan, akun baru memerlukan persetujuan dari Administrator sebelum dapat mengakses dashboard monitoring.
             </p>
             <p class="text-xs text-slate-400 italic">
                 Silakan hubungi administrator sistem atau tunggu hingga admin menetapkan hak akses (role) untuk akun Anda.
