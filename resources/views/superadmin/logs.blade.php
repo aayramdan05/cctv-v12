@@ -78,6 +78,9 @@
                         <option value="cctv_add" {{ request('activity_type') === 'cctv_add' ? 'selected' : '' }}>Tambah CCTV</option>
                         <option value="cctv_edit" {{ request('activity_type') === 'cctv_edit' ? 'selected' : '' }}>Edit CCTV</option>
                         <option value="cctv_delete" {{ request('activity_type') === 'cctv_delete' ? 'selected' : '' }}>Hapus CCTV</option>
+                        <option value="user_add" {{ request('activity_type') === 'user_add' ? 'selected' : '' }}>Tambah User</option>
+                        <option value="user_edit" {{ request('activity_type') === 'user_edit' ? 'selected' : '' }}>Edit User</option>
+                        <option value="user_delete" {{ request('activity_type') === 'user_delete' ? 'selected' : '' }}>Hapus User</option>
                         <option value="camera_down" {{ request('activity_type') === 'camera_down' ? 'selected' : '' }}>Kamera Down</option>
                         <option value="camera_up" {{ request('activity_type') === 'camera_up' ? 'selected' : '' }}>Kamera Up</option>
                     </select>
@@ -189,6 +192,24 @@
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 text-teal-600 font-bold text-[9px] uppercase border border-teal-100 shadow-sm">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
                                                 Camera Up
+                                            </span>
+                                            @break
+                                        @case('user_add')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 font-bold text-[9px] uppercase border border-teal-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                                                User Add
+                                            </span>
+                                            @break
+                                        @case('user_edit')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[9px] uppercase border border-indigo-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                                User Edit
+                                            </span>
+                                            @break
+                                        @case('user_delete')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-bold text-[9px] uppercase border border-rose-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                User Delete
                                             </span>
                                             @break
                                         @default
@@ -303,6 +324,52 @@
                                                 </p>
                                                 <p class="text-[10px] text-slate-400 mt-0.5">
                                                     IP: {{ $details['ip'] ?? '-' }} &bull; <span class="text-green-600 font-bold">Terhubung Kembali (Online)</span>
+                                                </p>
+                                            </div>
+                                            @break
+                                        @case('user_add')
+                                            <div>
+                                                <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fas fa-user-plus text-teal-500 text-[10px]"></i>
+                                                    {{ $details['name'] ?? 'User Baru' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Email: {{ $details['email'] ?? '-' }} &bull; Role: <span class="uppercase font-bold">{{ $details['role'] ?? '-' }}</span>
+                                                </p>
+                                            </div>
+                                            @break
+                                        @case('user_edit')
+                                            <div>
+                                                <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fas fa-user-cog text-indigo-500 text-[10px]"></i>
+                                                    {{ $details['name'] ?? 'User' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Email: {{ $details['email'] ?? '-' }}
+                                                </p>
+                                                @if(!empty($details['changes']))
+                                                    <div class="text-[9px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100 mt-1 font-mono">
+                                                        <span class="font-bold text-slate-400 font-sans">Perubahan:</span>
+                                                        <ul class="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                                            @foreach($details['changes'] as $key => $val)
+                                                                <li>
+                                                                    <span class="text-slate-600 font-semibold">{{ $key }}:</span> 
+                                                                    <span class="text-slate-800">"{{ is_array($val) ? json_encode($val) : $val }}"</span>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            @break
+                                        @case('user_delete')
+                                            <div>
+                                                <p class="font-bold text-red-600 flex items-center gap-1.5">
+                                                    <i class="fas fa-user-minus text-red-500 text-[10px]"></i>
+                                                    {{ $details['name'] ?? 'User' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Email: {{ $details['email'] ?? '-' }}
                                                 </p>
                                             </div>
                                             @break

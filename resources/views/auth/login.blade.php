@@ -82,14 +82,14 @@
                 <div class="mb-6">
                     <a href="{{ route('auth.paus') }}" class="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-cyan-200 bg-cyan-50/50 hover:bg-cyan-100/50 text-cyan-700 font-bold text-base shadow-sm hover:border-cyan-300 transition-all duration-300 hover:scale-[1.01] hover:shadow-md group">
                         <img src="{{ asset('logo-unpad.png') }}" alt="Unpad Logo" class="w-7 h-7 rounded shadow-sm group-hover:scale-110 transition-transform">
-                        Masuk dengan PAUS ID (SSO Unpad)
+                        Masuk dengan PAUS ID
                     </a>
                 </div>
 
                 <!-- Toggle Local Login Button -->
                 <div class="text-center">
                     <button type="button" id="toggle-local-btn" class="text-xs text-slate-400 hover:text-cyan-600 transition-colors font-medium">
-                        <i class="fas fa-key mr-1.5"></i> Login dengan Akun Lokal / Sistem
+                        <i class="fas fa-key mr-1.5"></i> Login dengan Akun Sistem
                     </button>
                 </div>
 
