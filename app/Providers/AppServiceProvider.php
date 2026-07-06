@@ -32,5 +32,16 @@ class AppServiceProvider extends ServiceProvider
 
             return Socialite::buildProvider(PAuSIDProvider::class, $config);
         });
+
+        // Register Activity Log Event Listeners directly
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            \App\Listeners\LogSuccessfulLogin::class
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Logout::class,
+            \App\Listeners\LogSuccessfulLogout::class
+        );
     }
 }
