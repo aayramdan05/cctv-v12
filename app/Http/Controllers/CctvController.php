@@ -202,7 +202,40 @@ class CctvController extends Controller
         }
 
         if (!empty($updateData)) {
+            // 1. Dapatkan IP address dari server-server lama sebelum memindahkan
+            $oldServerIps = [];
+            if (isset($updateData['server_id'])) {
+                $oldServerIps = Cctv::whereIn('id', $request->cctv_ids)
+                    ->whereNotNull('server_id')
+                    ->with('server')
+                    ->get()
+                    ->pluck('server.ip_address')
+                    ->filter()
+                    ->unique()
+                    ->toArray();
+            }
+
             Cctv::whereIn('id', $request->cctv_ids)->update($updateData);
+
+            // 2. Beritahu Server Baru & Server-Server Lama secara real-time via PG NOTIFY
+            if (isset($updateData['server_id'])) {
+                $targetServer = Server::find($updateData['server_id']);
+                $targetServerIp = $targetServer ? $targetServer->ip_address : 'ALL';
+                
+                // Beritahu server baru
+                \DB::statement("NOTIFY cctv_update, '{$targetServerIp}'");
+                
+                // Beritahu semua server lama
+                foreach ($oldServerIps as $ip) {
+                    if ($ip !== $targetServerIp) {
+                        \DB::statement("NOTIFY cctv_update, '{$ip}'");
+                    }
+                }
+            } else {
+                // Jika hanya update lokasi penempatan, infokan ALL
+                \DB::statement("NOTIFY cctv_update, 'ALL'");
+            }
+
             \Artisan::call('cctv:sync-config');
             return redirect()->route('cctv.index')->with('success', count($request->cctv_ids) . ' Kamera berhasil diperbarui secara masal.');
         }

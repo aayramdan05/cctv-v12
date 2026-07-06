@@ -19,9 +19,20 @@ class Cctv extends Model
         // Trigger Real-time Sync ke Node saat data berubah
         static::saved(function ($cctv) {
             try {
-                // Beritahu Node spesifik atau semua node untuk sync
+                // 1. Beritahu Node spesifik atau semua node (Server Baru) untuk sync
                 $payload = $cctv->server ? $cctv->server->ip_address : 'ALL';
                 DB::statement("NOTIFY cctv_update, '{$payload}'");
+
+                // 2. Beritahu Server Lama jika terjadi perpindahan server/node
+                if ($cctv->isDirty('server_id')) {
+                    $oldServerId = $cctv->getOriginal('server_id');
+                    if ($oldServerId) {
+                        $oldServer = \App\Models\Server::find($oldServerId);
+                        if ($oldServer && $oldServer->ip_address) {
+                            DB::statement("NOTIFY cctv_update, '{$oldServer->ip_address}'");
+                        }
+                    }
+                }
             } catch (\Exception $e) {
                 // Jangan sampai error notify menggagalkan save
             }
