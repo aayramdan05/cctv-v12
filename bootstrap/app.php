@@ -11,10 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Daftarkan Middleware Manual (Gaya Lama)
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'dashboard.access' => \App\Http\Middleware\CheckDashboardAccess::class,
+            'permission' => \App\Http\Middleware\PermissionCheck::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
