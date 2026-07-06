@@ -16,16 +16,16 @@
                 <p class="text-slate-500">Daftar seluruh perangkat CCTV yang terdaftar</p>
             </div>
             <div class="flex items-center gap-3">
-                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
+                @can('cctv_import')
                 <a href="{{ route('cctv.migration') }}" class="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-medium shadow-sm hover:border-cyan-400 hover:text-cyan-600 transition-all duration-300 flex items-center">
                     <i class="fas fa-file-excel mr-2 text-green-600"></i> Import Excel
                 </a>
-                @endif
-                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
+                @endcan
+                @can('cctv_create')
                 <a href="{{ route('cctv.create') }}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 flex items-center">
                     <i class="fas fa-plus mr-2"></i> Tambah Kamera
                 </a>
-                @endif
+                @endcan
             </div>
         </div>
 
@@ -249,9 +249,9 @@
                                     <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'server_id' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
                                 </th>
                                 <th class="pb-4 font-semibold">Penempatan</th>
-                                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
+                                @canany(['cctv_edit', 'cctv_delete'])
                                 <th class="pb-4 pr-4 text-right font-semibold">Aksi</th>
-                                @endif
+                                @endcanany
                             </tr>
                         </thead>
                         <tbody id="cctv-table-body" class="text-sm text-slate-600">
@@ -285,19 +285,23 @@
                                             </span>
                                         @endif
                                     </td>
-                                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'superadmin')
+                                    @canany(['cctv_edit', 'cctv_delete'])
                                     <td class="py-4 pr-4 text-right space-x-2">
+                                        @can('cctv_edit')
                                         <a href="{{ route('cctv.edit', $cctv->id) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-cyan-300 hover:text-cyan-600 transition-all shadow-sm">
                                             <i class="fas fa-pencil-alt text-xs"></i>
                                         </a>
+                                        @endcan
+                                        @can('cctv_delete')
                                         <form action="{{ route('cctv.destroy', $cctv->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus kamera ini?');">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-red-300 hover:text-red-600 transition-all shadow-sm">
                                                 <i class="fas fa-trash-alt text-xs"></i>
                                             </button>
                                         </form>
+                                        @endcan
                                     </td>
-                                    @endif
+                                    @endcanany
                                 </tr>
                             @empty
                                 <tr><td colspan="6" class="py-12 text-center text-slate-400">Belum ada data kamera.</td></tr>

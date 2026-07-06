@@ -239,11 +239,11 @@
                             </div>
                         </div>
                         
-                        @if(auth()->user()->role !== 'user')
+                        @can('cctv_edit')
                             <a href="{{ route('cctv.edit', $cctv->id) }}" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-cyan-50 hover:text-cyan-600 transition-colors border border-transparent hover:border-cyan-100 shrink-0">
                                 <i class="fas fa-cog text-sm"></i>
                             </a>
-                        @endif
+                        @endcan
                     </div>
                 </div>
                 @empty
