@@ -319,9 +319,13 @@ Route::middleware(['auth', 'permission:event_view'])->group(function () {
     Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
 });
 
-// Halaman Aktivitas Log & Konfigurasi RBAC - Only Super Admin
+// Konfigurasi RBAC - Only Super Admin
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::get('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'rbacIndex'])->name('superadmin.rbac.index');
     Route::post('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'updateRbac'])->name('superadmin.rbac.update');
+});
+
+// Halaman Aktivitas Log - Dinamis Berbasis Permission
+Route::middleware(['auth', 'permission:activity_log_view'])->group(function () {
     Route::get('/superadmin/logs', [App\Http\Controllers\SuperAdminController::class, 'userLogs'])->name('superadmin.logs');
 });

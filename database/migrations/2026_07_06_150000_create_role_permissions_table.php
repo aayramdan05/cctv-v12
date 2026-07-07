@@ -43,6 +43,7 @@ return new class extends Migration
                 'event_view',
                 'notification_manage',
                 'building_manage',
+                'activity_log_view',
             ],
             'operator' => [
                 'dashboard_view',

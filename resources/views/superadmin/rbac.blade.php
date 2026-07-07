@@ -210,7 +210,8 @@
                                     'report_view' => 'Mengakses menu Laporan (Report CCTV) serta mengunduh CSV/PDF',
                                     'event_view' => 'Melihat log kejadian kecerdasan buatan (Intelligence Events / Motion Detection)',
                                     'notification_manage' => 'Membaca atau menandai selesai notifikasi sistem',
-                                    'building_manage' => 'Mengelola CRUD Master Gedung dan Master Fakultas'
+                                    'building_manage' => 'Mengelola CRUD Master Gedung dan Master Fakultas',
+                                    'activity_log_view' => 'Mengakses menu Log Aktivitas Pengguna (Super Admin Log)'
                                 ]
                             ]
                         ];

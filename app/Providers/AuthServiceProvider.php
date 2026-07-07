@@ -55,6 +55,7 @@ class AuthServiceProvider extends ServiceProvider
             'event_view',
             'notification_manage',
             'building_manage',
+            'activity_log_view',
         ];
 
         foreach ($permissions as $permission) {
