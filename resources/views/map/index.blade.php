@@ -392,6 +392,8 @@
         let allCameras = [];
         let markersMap = new Map();
         let hlsInstance = null;
+        let closeTimeoutId = null;
+        let closeEditTimeoutId = null;
 
         const modal = document.getElementById('cctv-modal');
         const hlsPlayer = document.getElementById('hls-player');
@@ -470,6 +472,11 @@
         }
 
         function openModal(camera, event) {
+            if (closeTimeoutId) {
+                clearTimeout(closeTimeoutId);
+                closeTimeoutId = null;
+            }
+
             document.getElementById('modal-title-text').innerText = camera.name;
             document.getElementById('modal-location-text').innerText = camera.building;
             
@@ -556,6 +563,11 @@
 
         const editCoordModal = document.getElementById('edit-coord-modal');
         function openEditCoordModal(camera) {
+            if (closeEditTimeoutId) {
+                clearTimeout(closeEditTimeoutId);
+                closeEditTimeoutId = null;
+            }
+
             document.getElementById('edit-lat').value = camera.lat;
             document.getElementById('edit-lng').value = camera.lng;
             document.getElementById('edit-id').value = camera.id;
@@ -571,8 +583,12 @@
 
         function closeEditModal() {
             if (editCoordModal) {
+                if (closeEditTimeoutId) clearTimeout(closeEditTimeoutId);
                 editCoordModal.classList.remove('opacity-100', 'scale-100');
-                setTimeout(() => { editCoordModal.classList.add('hidden'); }, 200);
+                closeEditTimeoutId = setTimeout(() => { 
+                    editCoordModal.classList.add('hidden'); 
+                    closeEditTimeoutId = null;
+                }, 200);
             }
         }
 
@@ -611,8 +627,13 @@
         }
 
         function closeModal() {
+            if (closeTimeoutId) clearTimeout(closeTimeoutId);
             modal.classList.remove('opacity-100', 'scale-100');
-            setTimeout(() => { modal.classList.add('hidden'); stopVideo(); }, 200);
+            closeTimeoutId = setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                stopVideo(); 
+                closeTimeoutId = null;
+            }, 200);
         }
 
         function stopVideo() {
