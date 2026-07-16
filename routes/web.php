@@ -93,7 +93,7 @@ Route::get('/pending-approval', function () {
         return redirect()->route('login');
     }
     if (auth()->user()->status !== 'pending') {
-        return redirect()->route('dashboard');
+        return redirect()->route('monitoring.index');
     }
     return view('auth.pending-approval');
 })->name('pending-approval')->middleware(['auth']);

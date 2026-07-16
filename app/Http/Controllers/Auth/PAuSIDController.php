@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use App\Models\User;
+use App\Providers\RouteServiceProvider;
 use Exception;
 
 class PAuSIDController extends Controller
@@ -92,7 +93,7 @@ class PAuSIDController extends Controller
 
             Auth::login($user);
 
-            return redirect()->intended('/dashboard');
+            return redirect()->intended(RouteServiceProvider::HOME);
         } catch (Exception $e) {
             return redirect('/login')->with('error', 'Gagal login menggunakan SSO Unpad: ' . $e->getMessage());
         }
