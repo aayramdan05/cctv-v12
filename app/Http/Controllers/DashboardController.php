@@ -64,9 +64,36 @@ class DashboardController extends Controller
                 $chartData[] = $count;
             }
 
+            $offlineCamerasData = Cctv::accessibleByAuth()->with(['building', 'server'])->where('status', 'offline')->get();
+            $offlineCameraDetails = $offlineCamerasData->map(function($cam) use ($offlineCamerasData) {
+                $cause = "Koneksi terputus ke kamera (Cek kabel LAN / Power PoE)";
+                $causeType = "Kamera Mati";
+
+                if ($cam->server && $cam->server->status === 'offline') {
+                    $cause = "Server perekam (Node {$cam->server->id}) sedang offline.";
+                    $causeType = "Server Down";
+                } else {
+                    $offlineInSameBuilding = $offlineCamerasData->where('building_id', $cam->building_id)->count();
+                    if ($offlineInSameBuilding > 1) {
+                        $cause = "Terdeteksi {$offlineInSameBuilding} kamera mati di gedung ini. Kemungkinan masalah listrik atau switch jaringan.";
+                        $causeType = "Jaringan Gedung";
+                    }
+                }
+
+                return (object)[
+                    'id' => $cam->id,
+                    'nama' => $cam->nama_cctv,
+                    'kode' => $cam->kode_cctv ?? 'N/A',
+                    'gedung' => $cam->building->nama_gedung ?? 'Unknown',
+                    'last_seen' => $cam->updated_at->diffForHumans(),
+                    'cause' => $cause,
+                    'cause_type' => $causeType
+                ];
+            });
+
             return view('dashboard', compact(
                 'totalCctv', 'totalGedung', 'activeCctv', 'offlineCctv', 'indoorCount', 'outdoorCount',
-                'buildings', 'previewCctvs', 'alerts', 'chartDates', 'chartData'
+                'buildings', 'previewCctvs', 'alerts', 'chartDates', 'chartData', 'offlineCameraDetails'
             ));
         } catch (\Exception $e) {
             \Log::error("Dashboard Error: " . $e->getMessage());

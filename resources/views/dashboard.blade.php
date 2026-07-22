@@ -64,7 +64,8 @@
             </div>
             
             <!-- 5. Offline Alert -->
-            <div class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1">
+            <div onclick="document.getElementById('offline-modal').classList.remove('hidden')"
+                 class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-4 hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
                         <i class="fas fa-exclamation-triangle text-white text-base"></i>
@@ -265,6 +266,68 @@
                 <h3 class="text-xl font-bold text-slate-800">Daily Activity</h3>
             </div>
             <div id="activity-chart" style="height: 300px"></div>
+        </div>
+
+        <!-- Smart Diagnostic Modal -->
+        <div id="offline-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl border border-red-100 shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden relative">
+                
+                <!-- Modal Header -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-red-500/5 to-rose-500/5 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+                            <i class="fas fa-exclamation-triangle text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base uppercase tracking-wider">Diagnostic: Offline Cameras</h3>
+                            <p class="text-xs text-slate-500 font-medium">Daftar {{ $offlineCctv }} kamera yang saat ini tidak dapat dijangkau.</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('offline-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                    @forelse($offlineCameraDetails ?? [] as $cam)
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-red-300 transition-colors flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate">{{ $cam->nama }}</h4>
+                                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-mono border border-slate-200">{{ $cam->kode }}</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
+                                    <div class="flex items-center gap-1.5"><i class="fas fa-building text-slate-400"></i> {{ $cam->gedung }}</div>
+                                    <div class="flex items-center gap-1.5"><i class="fas fa-clock text-slate-400"></i> Terakhir aktif: {{ $cam->last_seen }}</div>
+                                </div>
+                            </div>
+
+                            <div class="w-full sm:w-1/2 shrink-0 bg-red-50 rounded-lg p-3 border border-red-100 flex flex-col justify-center">
+                                <div class="flex items-center gap-1.5 mb-1 text-red-600 font-bold text-[11px] uppercase tracking-wider">
+                                    <i class="fas fa-search"></i> Diagnosa: {{ $cam->cause_type }}
+                                </div>
+                                <p class="text-xs text-red-500/80 leading-relaxed">{{ $cam->cause }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-12 text-center text-slate-500 flex flex-col items-center">
+                            <i class="fas fa-check-circle text-4xl text-green-400 mb-3"></i>
+                            <p class="font-bold">Semua Kamera Online</p>
+                            <p class="text-xs">Tidak ada data kamera offline saat ini.</p>
+                        </div>
+                    @endforelse
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+                    <button onclick="document.getElementById('offline-modal').classList.add('hidden')" 
+                            class="px-5 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition shadow-sm">
+                        Tutup Panel
+                    </button>
+                </div>
+            </div>
         </div>
     </main>
 
