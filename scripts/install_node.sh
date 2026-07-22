@@ -108,7 +108,7 @@ chmod o+x "$HOME_DIR"
 
 # 7. SETUP PYTHON ENVIRONMENT
 echo -e "${GREEN}>>> Mengatur Python Environment...${NC}"
-pip3 install psycopg2-binary pyyaml python-dotenv --break-system-packages || pip3 install psycopg2-binary pyyaml python-dotenv
+pip3 install psycopg2-binary pyyaml python-dotenv onvif_zeep --break-system-packages || pip3 install psycopg2-binary pyyaml python-dotenv onvif_zeep
 
 # Buat file .env
 cat <<EOF > "$HOME_DIR/cctv-scripts/.env"

@@ -63,7 +63,27 @@ def subscribe_to_camera(cam):
     while True:
         try:
             print(f"🔍 [CAM {cam_id}] Mencoba koneksi ONVIF ke {cam_ip}:{port}...")
-            mycam = ONVIFCamera(cam_ip, port, user, password)
+            
+            import sys
+            import onvif
+            wsdl_dirs = [
+                '/usr/local/wsdl',
+                '/usr/wsdl',
+                os.path.join(sys.prefix, 'wsdl'),
+                os.path.join(os.path.dirname(onvif.__file__), 'wsdl'),
+                os.path.join(os.path.dirname(onvif.__file__), '..', 'wsdl'),
+                '/usr/local/lib/python3.13/dist-packages/wsdl'
+            ]
+            valid_wsdl_dir = None
+            for d in wsdl_dirs:
+                if os.path.exists(os.path.join(d, 'devicemgmt.wsdl')):
+                    valid_wsdl_dir = d
+                    break
+                    
+            if valid_wsdl_dir:
+                mycam = ONVIFCamera(cam_ip, port, user, password, wsdl_dir=valid_wsdl_dir)
+            else:
+                mycam = ONVIFCamera(cam_ip, port, user, password)
             
             # Inisialisasi Event Service
             event_service = mycam.create_events_service()
