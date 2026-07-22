@@ -100,8 +100,10 @@
                         
                         <template x-for="i in gridSize">
                             <div class="relative border border-slate-800 bg-black group overflow-hidden cursor-pointer"
+                                 :id="'slot-container-' + i"
                                  :class="{'ring-2 ring-cyan-400 z-20': selectedSlot === i}"
                                  @click="selectSlot(i)"
+                                 @dblclick="activeSlots[i] ? toggleSlotFullscreen(i) : null"
                                  @dragover.prevent @drop="handleDrop($event, i)"
                                  oncontextmenu="return false;"> 
                                 
@@ -163,7 +165,10 @@
                                                 </button>
                                             </div>
 
-                                            <button @click.stop="removeCamera(i)" class="absolute top-2 right-2 w-6 h-6 bg-red-600/80 hover:bg-red-500 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-30 pointer-events-auto"><i class="fas fa-times text-xs"></i></button>
+                                            <div class="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30 pointer-events-auto">
+                                                <button @click.stop="removeCamera(i)" class="w-6 h-6 bg-red-600/80 hover:bg-red-500 text-white rounded shadow-md flex items-center justify-center transition" title="Tutup Kamera"><i class="fas fa-times text-xs"></i></button>
+                                                <button @click.stop="toggleSlotFullscreen(i)" class="w-6 h-6 bg-slate-800/80 hover:bg-cyan-500 text-white rounded shadow-md flex items-center justify-center transition" title="Fullscreen"><i class="fas fa-expand text-xs"></i></button>
+                                            </div>
                                     </div>
                                 </template>
                             </div>
@@ -541,6 +546,28 @@
 
                 // Preset & Auto-save state
                 presets: [],
+
+                toggleSlotFullscreen(i) {
+                    const el = document.getElementById('slot-container-' + i);
+                    if (!el) return;
+                    if (!document.fullscreenElement) {
+                        if (el.requestFullscreen) {
+                            el.requestFullscreen();
+                        } else if (el.webkitRequestFullscreen) {
+                            el.webkitRequestFullscreen();
+                        } else if (el.msRequestFullscreen) {
+                            el.msRequestFullscreen();
+                        }
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) {
+                            document.webkitExitFullscreen();
+                        } else if (document.msExitFullscreen) {
+                            document.msExitFullscreen();
+                        }
+                    }
+                },
 
                 get isToday() {
                     const d = new Date();
