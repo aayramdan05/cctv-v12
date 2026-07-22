@@ -1,190 +1,330 @@
 <x-app-layout>
-    <main id="main-content" class="pt-20 p-6 md:p-8">
-        <!-- Breadcrumb -->
-        <div id="breadcrumb" class="mb-6">
-            <div class="flex items-center space-x-2 text-sm">
-                <i class="fas fa-home text-cyan-500"></i>
-                <span class="text-slate-400">/</span>
-                <span class="text-slate-500">Manajemen</span>
-                <span class="text-slate-400">/</span>
-                <span class="text-slate-800 font-medium">System Health</span>
-            </div>
-        </div>
-
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold text-slate-800 mb-2">System Health Monitoring</h2>
-            <p class="text-slate-500 font-medium">Status perekaman kamera real-time di setiap node server.</p>
-        </div>
-
-        <!-- Server Stats Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            @foreach($serverStats as $stat)
-            <div class="glass-effect overflow-hidden rounded-2xl border border-cyan-100 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800">{{ $stat->name }}</h3>
-                        <p class="text-sm text-slate-400 font-mono">{{ $stat->ip }}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-2xl font-bold text-cyan-600">{{ $stat->active }}</span>
-                        <span class="text-slate-400 font-medium">/ {{ $stat->total }} Merekam</span>
-                    </div>
-                </div>
-                
-                <div class="w-full bg-slate-100 rounded-full h-2">
-                    <div class="bg-cyan-500 h-2 rounded-full transition-all duration-500" style="width: {{ $stat->total > 0 ? ($stat->active / $stat->total) * 100 : 0 }}%"></div>
-                </div>
-            </div>
-            @endforeach
-        </div>
-
-        <!-- Wrapper for AlpineJS Context -->
-        <div x-data="{
-            loading: false,
-            async updateTable() {
-                this.loading = true;
-                const form = document.getElementById('filter-form');
-                const params = new URLSearchParams(new FormData(form)).toString();
-                
-                try {
-                    const res = await fetch(`{{ route('ffmpeg.monitor') }}?${params}`, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-                    const html = await res.text();
-                    const doc = new DOMParser().parseFromString(html, 'text/html');
-                    
-                    document.getElementById('cctv-table-body').innerHTML = doc.getElementById('cctv-table-body').innerHTML;
-                    document.getElementById('pagination-container').innerHTML = doc.getElementById('pagination-container').innerHTML;
-                    
-                    window.history.pushState({}, '', `?${params}`);
-                } catch (e) {
-                    console.error('Filter error:', e);
-                } finally {
-                    this.loading = false;
-                }
+    @push('scripts')
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      try{
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                      "surface-dim": "#cbdbf5",
+                      "on-secondary-container": "#5c647a",
+                      "on-surface-variant": "#3d4947",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-low": "#eff4ff",
+                      "secondary-container": "#dae2fd",
+                      "on-tertiary-container": "#fffbff",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#213145",
+                      "tertiary-container": "#b05e3d",
+                      "on-secondary-fixed-variant": "#3f465c",
+                      "on-error": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#924628",
+                      "background": "#f8f9ff",
+                      "primary": "#00685f",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary-fixed-variant": "#773215",
+                      "secondary-fixed-dim": "#bec6e0",
+                      "primary-fixed": "#89f5e7",
+                      "error": "#ba1a1a",
+                      "primary-container": "#008378",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#565e74",
+                      "secondary-fixed": "#dae2fd",
+                      "surface-container-lowest": "#ffffff",
+                      "outline": "#6d7a77",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "inverse-primary": "#6bd8cb",
+                      "surface": "#f8f9ff",
+                      "on-tertiary-fixed": "#370e00",
+                      "on-primary-fixed-variant": "#005049",
+                      "surface-tint": "#006a61",
+                      "outline-variant": "#bcc9c6",
+                      "surface-container-high": "#dce9ff",
+                      "error-container": "#ffdad6",
+                      "surface-variant": "#d3e4fe",
+                      "on-primary-fixed": "#00201d",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface-container": "#e5eeff",
+                      "on-secondary-fixed": "#131b2e",
+                      "tertiary-fixed": "#ffdbce",
+                      "on-background": "#0b1c30",
+                      "on-secondary": "#ffffff",
+                      "on-primary-container": "#f4fffc",
+                      "primary-fixed-dim": "#6bd8cb"
+              },
+              borderRadius: {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              spacing: {
+                      "gutter": "20px",
+                      "base": "4px",
+                      "stack-md": "16px",
+                      "stack-sm": "8px",
+                      "container-margin": "24px",
+                      "card-padding": "20px"
+              },
+              fontFamily: {
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "data-mono": ["JetBrains Mono"],
+                      "headline-lg": ["Inter"],
+                      "label-caps": ["Inter"]
+              },
+              fontSize: {
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                      "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+              }
             }
-        }">
-            <!-- Filter Bar -->
-            <div class="glass-effect rounded-2xl p-6 border border-cyan-100 mb-6">
-                <form id="filter-form" action="{{ route('ffmpeg.monitor') }}" method="GET" class="flex flex-wrap items-center gap-4 w-full" @submit.prevent="updateTable()">
-                    <!-- Search Input -->
-                    <div class="relative flex-1 min-w-[240px]">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-slate-400 text-xs"></i>
-                        </div>
-                        <input type="text" name="search" value="{{ request('search') }}" 
-                               @input.debounce.500ms="updateTable()"
-                               placeholder="Cari nama kamera, kode, atau IP..." 
-                               class="w-full pl-9 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 shadow-sm">
-                        
-                        <div x-show="loading" class="absolute inset-y-0 right-3 flex items-center">
-                            <i class="fas fa-circle-notch fa-spin text-cyan-500 text-xs"></i>
-                        </div>
-                    </div>
+          }
+        }
+      }catch(_e){}
+    </script>
+    <style>
+      .font-body-md { font-family: 'Inter', sans-serif; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+    @endpush
 
-                    <!-- Server Node Dropdown -->
-                    <div class="relative">
-                        <select name="server_id" @change="updateTable()" 
-                                class="w-48 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white cursor-pointer shadow-sm appearance-none">
-                            <option value="">Semua Node</option>
-                            @foreach($servers as $s)
-                                <option value="{{ $s->id }}" {{ request('server_id') == $s->id ? 'selected' : '' }}>Node {{ $s->id }} ({{ $s->name }})</option>
-                            @endforeach
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
-                    </div>
+    <div class="font-body-md text-on-surface pb-32" x-data="{ activeNode: 'MASTER' }">
+        
+        <!-- Top AppBar -->
+        <header class="sticky top-[64px] md:top-0 z-40 flex justify-between items-center px-container-margin py-stack-md w-full max-w-full bg-surface shadow-sm">
+            <div class="flex items-center gap-stack-sm">
+                <span class="material-symbols-outlined text-primary" data-icon="health_and_safety">health_and_safety</span>
+                <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface m-0">System Health</h1>
+            </div>
+            <div class="flex gap-stack-sm">
+                <button class="p-base rounded-full hover:bg-surface-container-high active:scale-95 duration-100 transition-all">
+                    <span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
+                </button>
+                <button class="p-base rounded-full hover:bg-surface-container-high active:scale-95 duration-100 transition-all">
+                    <span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+                </button>
+            </div>
+        </header>
 
-                    <!-- Reset Button -->
-                    @if(request()->anyFilled(['search', 'server_id']))
-                        <a href="{{ route('ffmpeg.monitor') }}" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider flex items-center transition-colors ml-2">
-                            <i class="fas fa-times-circle mr-1"></i> Reset
-                        </a>
-                    @endif
+        <main class="px-container-margin mt-stack-md space-y-gutter max-w-7xl mx-auto">
+            
+            <!-- Search & Filter Area -->
+            <section class="flex flex-col gap-stack-sm">
+                <form id="filter-form" action="{{ route('ffmpeg.monitor') }}" method="GET">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-stack-md flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-outline text-body-md" data-icon="search">search</span>
+                        </div>
+                        <input name="search" value="{{ request('search') }}" class="w-full pl-10 pr-stack-md py-stack-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md outline-none" placeholder="Cari nama kamera, kode, atau IP..." type="text"/>
+                    </div>
                 </form>
+                <p class="text-on-surface-variant text-body-md px-base">Status perekaman kamera real-time di setiap node server.</p>
+            </section>
+
+            <!-- Node Status Section -->
+            <section class="space-y-stack-md">
+                <div class="flex gap-stack-sm overflow-x-auto pb-base px-base no-scrollbar">
+                    <button @click="activeNode = 'MASTER'" 
+                            :class="activeNode === 'MASTER' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'"
+                            class="flex-none px-stack-md py-base rounded-full font-label-caps text-label-caps transition-all">
+                        MASTER
+                    </button>
+                    @foreach($serverStats as $s)
+                        <button @click="activeNode = '{{ $s->id }}'" 
+                                :class="activeNode === '{{ $s->id }}' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'"
+                                class="flex-none px-stack-md py-base rounded-full font-label-caps text-label-caps transition-all">
+                            NODE {{ $s->id }}
+                        </button>
+                    @endforeach
+                </div>
+
+                <div class="flex justify-between items-end px-base">
+                    <h2 class="font-headline-md text-headline-md text-on-surface m-0">Node Status</h2>
+                    <span class="text-label-caps font-label-caps text-primary">1 MASTER + {{ count($serverStats) }} NODES</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-stack-sm">
+                    <!-- Master Server Detail -->
+                    <div x-show="activeNode === 'MASTER'" class="bg-surface-container-lowest border border-primary rounded-xl shadow-sm p-stack-sm">
+                        <div class="flex justify-between items-start mb-base">
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-base">
+                                    <span class="material-symbols-outlined text-primary text-[16px]" data-icon="star">star</span>
+                                    <h3 class="text-body-md font-bold text-on-surface m-0">Master Server (Primary)</h3>
+                                </div>
+                                <code class="font-data-mono text-[11px] text-on-surface-variant">{{ request()->getHost() }}</code>
+                            </div>
+                            <span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Online</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-stack-sm mt-stack-sm">
+                            <div class="p-base bg-surface-container-low rounded-lg">
+                                <p class="text-[10px] text-on-surface-variant font-label-caps m-0">CPU LOAD</p>
+                                <p class="text-body-md font-bold text-primary m-0">Normal</p>
+                            </div>
+                            <div class="p-base bg-surface-container-low rounded-lg">
+                                <p class="text-[10px] text-on-surface-variant font-label-caps m-0">SYSTEM</p>
+                                <p class="text-body-md font-bold text-primary m-0">Active</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nodes Detail -->
+                    @foreach($serverStats as $stat)
+                        <div x-show="activeNode === '{{ $stat->id }}'" class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-stack-sm" style="display: none;">
+                            <div class="flex justify-between items-start mb-base">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-base">
+                                        <span class="material-symbols-outlined text-on-surface-variant text-[16px]" data-icon="dns">dns</span>
+                                        <h3 class="text-body-md font-bold text-on-surface m-0">{{ $stat->name }}</h3>
+                                    </div>
+                                    <code class="font-data-mono text-[11px] text-on-surface-variant">{{ $stat->ip }}</code>
+                                </div>
+                                <span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Online</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-stack-sm mt-stack-sm">
+                                <div class="p-base bg-surface-container-low rounded-lg">
+                                    <p class="text-[10px] text-on-surface-variant font-label-caps m-0">CAMERAS</p>
+                                    <p class="text-body-md font-bold text-primary m-0">{{ $stat->total }} Total</p>
+                                </div>
+                                <div class="p-base bg-surface-container-low rounded-lg">
+                                    <p class="text-[10px] text-on-surface-variant font-label-caps m-0">RECORDING</p>
+                                    <p class="text-body-md font-bold text-primary m-0">{{ $stat->active }} Active</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+                <!-- Database Actions -->
+                <section class="space-y-stack-md">
+                    <h2 class="font-headline-md text-headline-md text-on-surface px-base m-0">Database</h2>
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+                        <div class="p-card-padding flex flex-col gap-stack-md">
+                            <div class="flex items-center gap-stack-md p-stack-sm bg-surface-container-low rounded-lg border border-outline-variant/30">
+                                <div class="p-stack-sm bg-secondary-container text-on-secondary-container rounded-lg">
+                                    <span class="material-symbols-outlined" data-icon="database">database</span>
+                                </div>
+                                <div>
+                                    <p class="text-body-md font-bold m-0">SQL Cluster 01</p>
+                                    <p class="text-label-caps text-on-surface-variant m-0">LAST BACKUP: 2 HOURS AGO</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-stack-sm">
+                                <button class="flex flex-col items-center justify-center gap-base p-stack-md bg-primary text-on-primary rounded-lg active:scale-95 transition-all">
+                                    <span class="material-symbols-outlined" data-icon="backup">backup</span>
+                                    <span class="text-label-caps">Backup</span>
+                                </button>
+                                <button class="flex flex-col items-center justify-center gap-base p-stack-md border border-primary text-primary rounded-lg active:scale-95 transition-all">
+                                    <span class="material-symbols-outlined" data-icon="restore">restore</span>
+                                    <span class="text-label-caps">Restore</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Nginx Configuration -->
+                <section class="space-y-stack-md">
+                    <h2 class="font-headline-md text-headline-md text-on-surface px-base m-0">Infrastructure</h2>
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-stack-sm">
+                                <div class="w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,104,95,0.6)]"></div>
+                                <div>
+                                    <p class="text-body-md font-bold m-0">Nginx Configuration</p>
+                                    <p class="text-body-md text-primary m-0">Active/Running</p>
+                                </div>
+                            </div>
+                            <button class="p-stack-sm bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-highest transition-colors">
+                                <span class="material-symbols-outlined" data-icon="settings_ethernet">settings_ethernet</span>
+                            </button>
+                        </div>
+                        <div class="mt-stack-md">
+                            <button class="w-full py-stack-sm bg-surface-container-low border border-outline-variant text-on-surface-variant rounded-lg font-label-caps transition-all hover:bg-surface-container-high">
+                                VIEW CONFIG FILE
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <!-- Detail Kamera Table -->
-            <div class="glass-effect rounded-2xl p-6 border border-cyan-100">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-cyan-100 select-none">
-                                <th class="pb-4 pl-4 font-semibold w-12">No.</th>
-                                <th class="pb-4 font-semibold w-40">Server Node</th>
-                                <th class="pb-4 font-semibold w-64">Nama Kamera</th>
-                                <th class="pb-4 font-semibold w-36">IP Address</th>
-                                <th class="pb-4 font-semibold w-32 text-center">Status</th>
-                                <th class="pb-4 font-semibold w-48">Terakhir Rekam</th>
-                                <th class="pb-4 font-semibold w-32">Ukuran File</th>
-                                <th class="pb-4 pr-4 font-semibold w-56">File Terakhir</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cctv-table-body" class="text-sm text-slate-600">
-                            @forelse($cctvs as $index => $cctv)
-                                @php
-                                    $isRecording = false;
-                                    $lastUpdateText = 'Never';
-                                    $fileSize = '-';
-                                    $filename = '-';
+            <!-- Recording Summary (Cameras) -->
+            <section class="space-y-stack-md">
+                <h2 class="font-headline-md text-headline-md text-on-surface px-base m-0">Cameras Detail</h2>
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto no-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-outline-variant/30">
+                                    <th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Camera</th>
+                                    <th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Node</th>
+                                    <th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Status</th>
+                                    <th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Last Record</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/30">
+                                @forelse($cctvs as $cctv)
+                                    @php
+                                        $isRecording = false;
+                                        $lastUpdateText = 'Never';
 
-                                    if ($cctv->latest_rec_created_at) {
-                                        $createdTime = \Carbon\Carbon::parse($cctv->latest_rec_created_at);
-                                        if ($createdTime->diffInMinutes(now()) < 25) {
-                                            $isRecording = true;
+                                        if ($cctv->latest_rec_created_at) {
+                                            $createdTime = \Carbon\Carbon::parse($cctv->latest_rec_created_at);
+                                            if ($createdTime->diffInMinutes(now()) < 25) {
+                                                $isRecording = true;
+                                            }
+                                            $lastUpdateText = $createdTime->diffForHumans();
                                         }
-                                        $lastUpdateText = $createdTime->diffForHumans();
-                                        $fileSize = $cctv->latest_rec_size_mb ? round($cctv->latest_rec_size_mb, 2) . ' MB' : '0 MB';
-                                        $filename = $cctv->latest_rec_filename;
-                                    }
-                                @endphp
-                                <tr class="hover:bg-cyan-50/50 transition-colors border-b border-slate-50 last:border-none">
-                                    <td class="py-4 pl-4 font-medium text-slate-400">
-                                        {{ ($cctvs->currentPage() - 1) * $cctvs->perPage() + $index + 1 }}
-                                    </td>
-                                    <td class="py-4 font-semibold text-slate-700">
-                                        @if($cctv->server)
-                                            Node {{ $cctv->server_id }} ({{ $cctv->server->name }})
-                                        @else
-                                            SINGLE / MASTER
-                                        @endif
-                                    </td>
-                                    <td class="py-4">
-                                        <div class="font-semibold text-slate-800">{{ $cctv->nama_cctv }}</div>
-                                        <div class="text-[10px] text-slate-400 mt-0.5 font-mono">Kode: {{ $cctv->kode_cctv }}</div>
-                                    </td>
-                                    <td class="py-4 font-mono text-xs">{{ $cctv->ip ?? '-' }}</td>
-                                    <td class="py-4 text-center">
-                                        @if($isRecording)
-                                            <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block w-24">
-                                                Recording
-                                            </span>
-                                        @else
-                                            <span class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block w-24">
-                                                Idle
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="py-4 text-slate-500 font-medium">{{ $lastUpdateText }}</td>
-                                    <td class="py-4 font-semibold text-slate-700">{{ $fileSize }}</td>
-                                    <td class="py-4 pr-4 font-mono text-[10px] text-slate-400 truncate max-w-xs" title="{{ $filename }}">{{ $filename }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="py-12 text-center text-slate-400">
-                                        <i class="fas fa-heartbeat text-4xl text-slate-200 mb-3 block"></i>
-                                        Tidak ada data kamera yang terhubung atau pencarian tidak cocok.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                    @endphp
+                                    <tr class="hover:bg-surface-container-low transition-colors">
+                                        <td class="p-stack-md">
+                                            <p class="text-body-md font-bold m-0">{{ $cctv->nama_cctv }}</p>
+                                            <p class="text-[10px] font-mono text-on-surface-variant m-0">{{ $cctv->kode_cctv }}</p>
+                                        </td>
+                                        <td class="p-stack-md text-body-md font-bold text-on-surface-variant">
+                                            {{ $cctv->server_id ? 'Node ' . $cctv->server_id : 'MASTER' }}
+                                        </td>
+                                        <td class="p-stack-md">
+                                            @if($isRecording)
+                                                <span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Recording</span>
+                                            @else
+                                                <span class="px-base py-[2px] bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded uppercase">Idle</span>
+                                            @endif
+                                        </td>
+                                        <td class="p-stack-md text-body-md text-on-surface-variant">{{ $lastUpdateText }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="p-stack-md text-center text-on-surface-variant text-body-md">Tidak ada data kamera.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    @if($cctvs->hasPages())
+                        <div class="p-stack-sm bg-surface-container-low border-t border-outline-variant/30 text-center">
+                            {{ $cctvs->links() }}
+                        </div>
+                    @endif
                 </div>
-
-                <!-- Pagination Container -->
-                <div id="pagination-container" class="mt-6">
-                    {{ $cctvs->links() }}
-                </div>
-            </div>
-        </div>
-    </main>
+            </section>
+        </main>
+    </div>
 </x-app-layout>

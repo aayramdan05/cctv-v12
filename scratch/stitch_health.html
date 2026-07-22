@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#cbdbf5",
+                    "on-secondary-container": "#5c647a",
+                    "on-surface-variant": "#3d4947",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#eff4ff",
+                    "secondary-container": "#dae2fd",
+                    "on-tertiary-container": "#fffbff",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#213145",
+                    "tertiary-container": "#b05e3d",
+                    "on-secondary-fixed-variant": "#3f465c",
+                    "on-error": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#924628",
+                    "background": "#f8f9ff",
+                    "primary": "#00685f",
+                    "surface-bright": "#f8f9ff",
+                    "on-tertiary-fixed-variant": "#773215",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "primary-fixed": "#89f5e7",
+                    "error": "#ba1a1a",
+                    "primary-container": "#008378",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-surface": "#0b1c30",
+                    "secondary": "#565e74",
+                    "secondary-fixed": "#dae2fd",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#6d7a77",
+                    "tertiary-fixed-dim": "#ffb59a",
+                    "inverse-primary": "#6bd8cb",
+                    "surface": "#f8f9ff",
+                    "on-tertiary-fixed": "#370e00",
+                    "on-primary-fixed-variant": "#005049",
+                    "surface-tint": "#006a61",
+                    "outline-variant": "#bcc9c6",
+                    "surface-container-high": "#dce9ff",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#d3e4fe",
+                    "on-primary-fixed": "#00201d",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-container": "#e5eeff",
+                    "on-secondary-fixed": "#131b2e",
+                    "tertiary-fixed": "#ffdbce",
+                    "on-background": "#0b1c30",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#f4fffc",
+                    "primary-fixed-dim": "#6bd8cb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "20px",
+                    "base": "4px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px",
+                    "container-margin": "24px",
+                    "card-padding": "20px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-lg": ["Inter"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    }catch(_e){}</script></head><body class="font-body-md text-on-surface pb-32">
+<!-- Top AppBar -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-container-margin py-stack-md w-full max-w-full bg-surface shadow-sm">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-primary" data-icon="health_and_safety" data-original-icon="health_and_safety">health_and_safety</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">System Health</h1>
+</div>
+<div class="flex gap-stack-sm">
+<button class="p-base rounded-full hover:bg-surface-container-high active:scale-95 duration-100 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
+</button>
+<button class="p-base rounded-full hover:bg-surface-container-high active:scale-95 duration-100 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="px-container-margin mt-stack-md space-y-gutter">
+<!-- Search & Filter Area -->
+<section class="flex flex-col gap-stack-sm">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-stack-md flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-body-md" data-icon="search">search</span>
+</div>
+<input class="w-full pl-10 pr-stack-md py-stack-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md outline-none" placeholder="Cari nama kamera, kode, atau IP..." type="text"/>
+</div>
+<p class="text-on-surface-variant text-body-md px-base">Status perekaman kamera real-time di setiap node server.</p>
+</section>
+<!-- Node Status Section -->
+<section class="space-y-stack-md"><div class="flex gap-stack-sm overflow-x-auto pb-base px-base no-scrollbar">
+<button class="flex-none px-stack-md py-base bg-primary text-on-primary rounded-full font-label-caps text-label-caps transition-all">MASTER</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 1</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 2</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 3</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 4</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 5</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 6</button>
+<button class="flex-none px-stack-md py-base bg-surface-container-high text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-highest transition-all">NODE 7</button>
+</div>
+<div class="flex justify-between items-end px-base">
+<h2 class="font-headline-md text-headline-md text-on-surface">Node Status</h2>
+<span class="text-label-caps font-label-caps text-primary">1 MASTER + 7 NODES</span>
+</div>
+<div class="grid grid-cols-1 gap-stack-sm"><!-- Master Server Detail (Active) -->
+<div class="bg-surface-container-lowest border border-primary rounded-xl shadow-sm p-stack-sm">
+<div class="flex justify-between items-start mb-base">
+<div class="flex flex-col">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="star">star</span>
+<h3 class="text-body-md font-bold text-on-surface">Master Server (Primary)</h3>
+</div>
+<code class="font-data-mono text-[11px] text-on-surface-variant">10.69.69.10</code>
+</div>
+<span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Online</span>
+</div>
+<div class="grid grid-cols-2 gap-stack-sm mt-stack-sm">
+<div class="p-base bg-surface-container-low rounded-lg">
+<p class="text-[10px] text-on-surface-variant font-label-caps">CPU LOAD</p>
+<p class="text-body-md font-bold text-primary">12%</p>
+</div>
+<div class="p-base bg-surface-container-low rounded-lg">
+<p class="text-[10px] text-on-surface-variant font-label-caps">MEMORY</p>
+<p class="text-body-md font-bold text-primary">4.2GB/16GB</p>
+</div>
+</div>
+</div></div>
+</section>
+<!-- Database Actions -->
+<section class="space-y-stack-md">
+<h2 class="font-headline-md text-headline-md text-on-surface px-base">Database</h2>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="p-card-padding flex flex-col gap-stack-md">
+<div class="flex items-center gap-stack-md p-stack-sm bg-surface-container-low rounded-lg border border-outline-variant/30">
+<div class="p-stack-sm bg-secondary-container text-on-secondary-container rounded-lg">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+</div>
+<div>
+<p class="text-body-md font-bold">SQL Cluster 01</p>
+<p class="text-label-caps text-on-surface-variant">LAST BACKUP: 2 HOURS AGO</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-stack-sm">
+<button class="flex flex-col items-center justify-center gap-base p-stack-md bg-primary text-on-primary rounded-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="backup">backup</span>
+<span class="text-label-caps">Backup</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-base p-stack-md border border-primary text-primary rounded-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="restore">restore</span>
+<span class="text-label-caps">Restore</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Nginx Configuration -->
+<section class="space-y-stack-md">
+<h2 class="font-headline-md text-headline-md text-on-surface px-base">Infrastructure</h2>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-stack-sm">
+<div class="w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,104,95,0.6)]"></div>
+<div>
+<p class="text-body-md font-bold">Nginx Configuration</p>
+<p class="text-body-md text-primary">Active/Running</p>
+</div>
+</div>
+<button class="p-stack-sm bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="settings_ethernet">settings_ethernet</span>
+</button>
+</div>
+<div class="mt-stack-md">
+<button class="w-full py-stack-sm bg-surface-container-low border border-outline-variant text-on-surface-variant rounded-lg font-label-caps">
+                        VIEW CONFIG FILE
+                    </button>
+</div>
+</div>
+</section><section class="space-y-stack-md">
+<h2 class="font-headline-md text-headline-md text-on-surface px-base">Recording Summary</h2>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="overflow-x-auto no-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30">
+<th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Node</th>
+<th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Status</th>
+<th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Last Record</th>
+<th class="p-stack-md text-label-caps font-label-caps text-on-surface-variant uppercase">Size</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-stack-md text-body-md font-bold">Node 1</td>
+<td class="p-stack-md">
+<span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Recording</span>
+</td>
+<td class="p-stack-md text-body-md text-on-surface-variant">11m ago</td>
+<td class="p-stack-md text-body-md font-data-mono">0 MB</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-stack-md text-body-md font-bold">Node 2</td>
+<td class="p-stack-md">
+<span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Recording</span>
+</td>
+<td class="p-stack-md text-body-md text-on-surface-variant">9m ago</td>
+<td class="p-stack-md text-body-md font-data-mono">0 MB</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-stack-md text-body-md font-bold">Node 3</td>
+<td class="p-stack-md">
+<span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Recording</span>
+</td>
+<td class="p-stack-md text-body-md text-on-surface-variant">14m ago</td>
+<td class="p-stack-md text-body-md font-data-mono">0 MB</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-stack-md text-body-md font-bold">Node 4</td>
+<td class="p-stack-md">
+<span class="px-base py-[2px] bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Recording</span>
+</td>
+<td class="p-stack-md text-body-md text-on-surface-variant">3m ago</td>
+<td class="p-stack-md text-body-md font-data-mono">0 MB</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-stack-sm bg-surface-container-low border-t border-outline-variant/30 text-center">
+<button class="text-label-caps font-label-caps text-primary uppercase">View All Nodes</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface flex justify-around items-center px-gutter py-stack-sm border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-full px-base py-stack-sm transition-all scale-100 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dns" style="font-variation-settings: 'FILL' 1;">dns</span>
+<span class="font-label-caps text-label-caps mt-1">Nodes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container px-base py-stack-sm hover:bg-surface-container-highest transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+<span class="font-label-caps text-label-caps mt-1">Database</span>
+</a>
+</nav></body></html>
