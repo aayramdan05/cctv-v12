@@ -102,7 +102,21 @@
     </style>
     @endpush
 
-    <div class="font-body-md text-on-surface pb-32" x-data="{ activeNode: 'MASTER', showNginxModal: false }">
+    <div class="font-body-md text-on-surface pb-32" x-data="{ 
+        activeNode: 'MASTER', 
+        showNginxModal: false,
+        nginxContent: 'Loading...',
+        async loadNginxConfig() {
+            try {
+                this.nginxContent = 'Mengambil konfigurasi dari server...';
+                const res = await fetch(`{{ route('ffmpeg.nginx') }}`);
+                const data = await res.json();
+                this.nginxContent = data.config;
+            } catch (e) {
+                this.nginxContent = 'Gagal memuat file Nginx.';
+            }
+        }
+    }">
         
         <!-- Top AppBar -->
         <header class="sticky top-[64px] md:top-0 z-40 flex justify-between items-center px-container-margin py-stack-md w-full max-w-full bg-surface shadow-sm">
@@ -226,7 +240,7 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 gap-stack-sm">
-                                <button onclick="alert('Memulai proses backup... \n(Fitur ini akan segera diimplementasikan)')" class="flex flex-col items-center justify-center gap-base p-stack-md bg-primary text-on-primary rounded-lg active:scale-95 transition-all">
+                                <button onclick="window.location.href='{{ route('ffmpeg.backup') }}'" class="flex flex-col items-center justify-center gap-base p-stack-md bg-primary text-on-primary rounded-lg active:scale-95 transition-all">
                                     <span class="material-symbols-outlined" data-icon="backup">backup</span>
                                     <span class="text-label-caps">Backup Database</span>
                                 </button>
@@ -252,7 +266,7 @@
                             </button>
                         </div>
                         <div class="mt-stack-md">
-                            <button @click="showNginxModal = true" class="w-full py-stack-sm bg-surface-container-low border border-outline-variant text-on-surface-variant rounded-lg font-label-caps transition-all hover:bg-surface-container-high">
+                            <button @click="showNginxModal = true; loadNginxConfig()" class="w-full py-stack-sm bg-surface-container-low border border-outline-variant text-on-surface-variant rounded-lg font-label-caps transition-all hover:bg-surface-container-high">
                                 VIEW CONFIG FILE
                             </button>
                         </div>
@@ -347,35 +361,12 @@
                 </div>
                 
                 <div class="p-stack-md overflow-y-auto font-data-mono text-[12px] bg-[#1e1e1e] text-[#d4d4d4] flex-1">
-<pre class="m-0 leading-relaxed">
-<span class="text-[#569cd6]">server</span> {
-    <span class="text-[#9cdcfe]">listen</span> <span class="text-[#b5cea8]">80</span>;
-    <span class="text-[#9cdcfe]">server_name</span> <span class="text-[#ce9178]">cctv.unpad.ac.id</span>;
-
-    <span class="text-[#9cdcfe]">root</span> <span class="text-[#ce9178]">/var/www/cctv-v12/public</span>;
-    <span class="text-[#9cdcfe]">index</span> <span class="text-[#ce9178]">index.php index.html</span>;
-
-    <span class="text-[#569cd6]">location</span> <span class="text-[#ce9178]">/</span> {
-        <span class="text-[#9cdcfe]">try_files</span> <span class="text-[#ce9178]">$uri $uri/ /index.php?$query_string</span>;
-    }
-
-    <span class="text-[#569cd6]">location</span> ~ \.php$ {
-        <span class="text-[#9cdcfe]">include</span> <span class="text-[#ce9178]">snippets/fastcgi-php.conf</span>;
-        <span class="text-[#9cdcfe]">fastcgi_pass</span> <span class="text-[#ce9178]">unix:/var/run/php/php8.2-fpm.sock</span>;
-        <span class="text-[#9cdcfe]">fastcgi_param</span> <span class="text-[#ce9178]">SCRIPT_FILENAME $realpath_root$fastcgi_script_name</span>;
-    }
-
-    <span class="text-[#569cd6]">location</span> <span class="text-[#ce9178]">/api/stream</span> {
-        <span class="text-[#9cdcfe]">proxy_pass</span> <span class="text-[#ce9178]">http://127.0.0.1:1984</span>;
-        <span class="text-[#9cdcfe]">proxy_set_header</span> <span class="text-[#ce9178]">Host $host</span>;
-        <span class="text-[#9cdcfe]">proxy_set_header</span> <span class="text-[#ce9178]">X-Real-IP $remote_addr</span>;
-    }
-}
+<pre class="m-0 leading-relaxed" x-text="nginxContent">
 </pre>
                 </div>
                 
                 <div class="p-stack-sm bg-surface-container-low border-t border-outline-variant/30 flex justify-end gap-stack-sm rounded-b-2xl">
-                    <button class="px-stack-md py-stack-sm bg-surface-container-high text-on-surface-variant font-label-caps rounded-lg hover:bg-surface-container-highest transition-colors">
+                    <button @click="navigator.clipboard.writeText(nginxContent); alert('Copied to clipboard!')" class="px-stack-md py-stack-sm bg-surface-container-high text-on-surface-variant font-label-caps rounded-lg hover:bg-surface-container-highest transition-colors">
                         COPY TO CLIPBOARD
                     </button>
                     <button @click="showNginxModal = false" class="px-stack-md py-stack-sm bg-primary text-on-primary font-label-caps rounded-lg hover:brightness-110 transition-all">

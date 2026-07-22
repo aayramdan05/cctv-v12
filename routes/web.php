@@ -137,6 +137,8 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
 Route::middleware(['auth', 'permission:server_manage'])->group(function () {
     Route::resource('servers', ServerController::class);
     Route::get('/ffmpeg-monitor', [FfmpegStatusController::class, 'index'])->name('ffmpeg.monitor');
+    Route::get('/ffmpeg-monitor/nginx-config', [FfmpegStatusController::class, 'getNginxConfig'])->name('ffmpeg.nginx');
+    Route::get('/ffmpeg-monitor/backup-db', [FfmpegStatusController::class, 'backupDatabase'])->name('ffmpeg.backup');
 });
 
 Route::middleware(['auth', 'permission:api_key_manage'])->group(function () {
