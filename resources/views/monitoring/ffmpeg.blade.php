@@ -102,7 +102,7 @@
     </style>
     @endpush
 
-    <div class="font-body-md text-on-surface pb-32" x-data="{ activeNode: 'MASTER' }">
+    <div class="font-body-md text-on-surface pb-32" x-data="{ activeNode: 'MASTER', showNginxModal: false }">
         
         <!-- Top AppBar -->
         <header class="sticky top-[64px] md:top-0 z-40 flex justify-between items-center px-container-margin py-stack-md w-full max-w-full bg-surface shadow-sm">
@@ -225,14 +225,10 @@
                                     <p class="text-label-caps text-on-surface-variant m-0">LAST BACKUP: 2 HOURS AGO</p>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-stack-sm">
-                                <button class="flex flex-col items-center justify-center gap-base p-stack-md bg-primary text-on-primary rounded-lg active:scale-95 transition-all">
+                            <div class="grid grid-cols-1 gap-stack-sm">
+                                <button onclick="alert('Memulai proses backup... \n(Fitur ini akan segera diimplementasikan)')" class="flex flex-col items-center justify-center gap-base p-stack-md bg-primary text-on-primary rounded-lg active:scale-95 transition-all">
                                     <span class="material-symbols-outlined" data-icon="backup">backup</span>
-                                    <span class="text-label-caps">Backup</span>
-                                </button>
-                                <button class="flex flex-col items-center justify-center gap-base p-stack-md border border-primary text-primary rounded-lg active:scale-95 transition-all">
-                                    <span class="material-symbols-outlined" data-icon="restore">restore</span>
-                                    <span class="text-label-caps">Restore</span>
+                                    <span class="text-label-caps">Backup Database</span>
                                 </button>
                             </div>
                         </div>
@@ -256,7 +252,7 @@
                             </button>
                         </div>
                         <div class="mt-stack-md">
-                            <button class="w-full py-stack-sm bg-surface-container-low border border-outline-variant text-on-surface-variant rounded-lg font-label-caps transition-all hover:bg-surface-container-high">
+                            <button @click="showNginxModal = true" class="w-full py-stack-sm bg-surface-container-low border border-outline-variant text-on-surface-variant rounded-lg font-label-caps transition-all hover:bg-surface-container-high">
                                 VIEW CONFIG FILE
                             </button>
                         </div>
@@ -326,5 +322,67 @@
                 </div>
             </section>
         </main>
+
+        <!-- Nginx Config Modal -->
+        <div x-show="showNginxModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/50 backdrop-blur-sm"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div @click.away="showNginxModal = false" class="bg-surface rounded-2xl w-full max-w-3xl shadow-xl flex flex-col max-h-[90vh]"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="scale-95 opacity-0 translate-y-4"
+                 x-transition:enter-end="scale-100 opacity-100 translate-y-0">
+                
+                <div class="flex justify-between items-center p-stack-md border-b border-outline-variant/30">
+                    <div class="flex items-center gap-stack-sm">
+                        <span class="material-symbols-outlined text-primary">description</span>
+                        <h3 class="font-headline-md m-0">Nginx Configuration</h3>
+                    </div>
+                    <button @click="showNginxModal = false" class="p-base text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                
+                <div class="p-stack-md overflow-y-auto font-data-mono text-[12px] bg-[#1e1e1e] text-[#d4d4d4] flex-1">
+<pre class="m-0 leading-relaxed">
+<span class="text-[#569cd6]">server</span> {
+    <span class="text-[#9cdcfe]">listen</span> <span class="text-[#b5cea8]">80</span>;
+    <span class="text-[#9cdcfe]">server_name</span> <span class="text-[#ce9178]">cctv.unpad.ac.id</span>;
+
+    <span class="text-[#9cdcfe]">root</span> <span class="text-[#ce9178]">/var/www/cctv-v12/public</span>;
+    <span class="text-[#9cdcfe]">index</span> <span class="text-[#ce9178]">index.php index.html</span>;
+
+    <span class="text-[#569cd6]">location</span> <span class="text-[#ce9178]">/</span> {
+        <span class="text-[#9cdcfe]">try_files</span> <span class="text-[#ce9178]">$uri $uri/ /index.php?$query_string</span>;
+    }
+
+    <span class="text-[#569cd6]">location</span> ~ \.php$ {
+        <span class="text-[#9cdcfe]">include</span> <span class="text-[#ce9178]">snippets/fastcgi-php.conf</span>;
+        <span class="text-[#9cdcfe]">fastcgi_pass</span> <span class="text-[#ce9178]">unix:/var/run/php/php8.2-fpm.sock</span>;
+        <span class="text-[#9cdcfe]">fastcgi_param</span> <span class="text-[#ce9178]">SCRIPT_FILENAME $realpath_root$fastcgi_script_name</span>;
+    }
+
+    <span class="text-[#569cd6]">location</span> <span class="text-[#ce9178]">/api/stream</span> {
+        <span class="text-[#9cdcfe]">proxy_pass</span> <span class="text-[#ce9178]">http://127.0.0.1:1984</span>;
+        <span class="text-[#9cdcfe]">proxy_set_header</span> <span class="text-[#ce9178]">Host $host</span>;
+        <span class="text-[#9cdcfe]">proxy_set_header</span> <span class="text-[#ce9178]">X-Real-IP $remote_addr</span>;
+    }
+}
+</pre>
+                </div>
+                
+                <div class="p-stack-sm bg-surface-container-low border-t border-outline-variant/30 flex justify-end gap-stack-sm rounded-b-2xl">
+                    <button class="px-stack-md py-stack-sm bg-surface-container-high text-on-surface-variant font-label-caps rounded-lg hover:bg-surface-container-highest transition-colors">
+                        COPY TO CLIPBOARD
+                    </button>
+                    <button @click="showNginxModal = false" class="px-stack-md py-stack-sm bg-primary text-on-primary font-label-caps rounded-lg hover:brightness-110 transition-all">
+                        DONE
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </x-app-layout>
