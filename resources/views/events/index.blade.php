@@ -57,7 +57,18 @@
             <!-- Cameras ONVIF Status Table -->
             <section class="bg-white/50 glass-effect border border-cyan-100 rounded-xl overflow-hidden shadow-sm">
                 <div class="px-6 py-4 border-b border-cyan-100 bg-white/30 flex justify-between items-center">
-                    <h2 class="text-lg font-bold">Status Konfigurasi ONVIF Kamera</h2>
+                    <div class="flex items-center gap-4">
+                        <h2 class="text-lg font-bold">ONVIF Status</h2>
+                        <div class="flex bg-white border border-cyan-100 rounded text-[10px] font-bold shadow-sm overflow-hidden">
+                            <a href="{{ request()->fullUrlWithQuery(['cam_filter' => 'all']) }}" class="px-3 py-1 transition-colors {{ $cameraFilter === 'all' ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">ALL</a>
+                            <a href="{{ request()->fullUrlWithQuery(['cam_filter' => 'configured']) }}" class="px-3 py-1 transition-colors border-l border-r border-cyan-100 {{ $cameraFilter === 'configured' ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">CONFIGURED</a>
+                            <a href="{{ request()->fullUrlWithQuery(['cam_filter' => 'missing']) }}" class="px-3 py-1 transition-colors {{ $cameraFilter === 'missing' ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">MISSING</a>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-slate-400">
+                        <a href="{{ request()->url() }}" class="hover:text-cyan-600 transition-colors" title="Reload"><i class="fas fa-redo-alt"></i></a>
+                        <button class="hover:text-cyan-600 transition-colors" title="Expand"><i class="fas fa-expand"></i></button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto max-h-[400px]">
                     <table class="w-full text-left border-collapse">
@@ -111,15 +122,25 @@
                         </tbody>
                     </table>
                 </div>
+                @if($cameras->hasPages())
+                    <div class="px-6 py-4 bg-white/30 border-t border-cyan-100">
+                        {{ $cameras->links() }}
+                    </div>
+                @endif
             </section>
 
             <!-- Logs Section -->
             <section class="bg-white/50 glass-effect border border-cyan-100 rounded-xl overflow-hidden shadow-sm mt-8">
                 <div class="px-6 py-4 border-b border-cyan-100 bg-white/30 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <h2 class="text-lg font-bold">Riwayat Kejadian (Logs)</h2>
-                    <div class="flex bg-white border border-cyan-100 rounded-lg p-1 shadow-sm">
-                        <button @click="activeTab = 'onvif'" :class="activeTab === 'onvif' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-1.5 rounded text-xs font-bold transition-all">LOG ONVIF EVENT</button>
-                        <button @click="activeTab = 'intelligence'" :class="activeTab === 'intelligence' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-1.5 rounded text-xs font-bold transition-all">LOG INTELLIGENCE EVENT</button>
+                    <div class="flex items-center gap-3">
+                        <div class="flex bg-white border border-cyan-100 rounded-lg p-1 shadow-sm">
+                            <button @click="activeTab = 'onvif'" :class="activeTab === 'onvif' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-1.5 rounded text-xs font-bold transition-all">LOG ONVIF EVENT</button>
+                            <button @click="activeTab = 'intelligence'" :class="activeTab === 'intelligence' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-1.5 rounded text-xs font-bold transition-all">LOG INTELLIGENCE EVENT</button>
+                        </div>
+                        <a :href="`{{ route('events.exportCsv') }}?type=${activeTab}`" class="px-3 py-1.5 bg-white border border-cyan-200 text-cyan-700 rounded text-xs font-bold hover:bg-cyan-50 shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-file-csv text-cyan-600"></i> EXPORT CSV
+                        </a>
                     </div>
                 </div>
                 
@@ -153,10 +174,10 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <a href="{{ route('monitoring.index', ['cctv' => $event->cctv_id]) }}" class="font-medium text-cyan-600 hover:underline flex items-center gap-2">
+                                        <div class="font-medium text-slate-700 flex items-center gap-2">
                                             <i class="fas fa-video text-xs opacity-70"></i>
                                             {{ $event->cctv->nama_cctv ?? 'Unknown' }}
-                                        </a>
+                                        </div>
                                     </td>
                                     <td class="px-4 py-3">
                                         <span class="text-sm text-slate-600">
@@ -228,10 +249,10 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <a href="{{ route('monitoring.index', ['cctv' => $event->cctv_id]) }}" class="font-medium text-cyan-600 hover:underline flex items-center gap-2">
+                                        <div class="font-medium text-slate-700 flex items-center gap-2">
                                             <i class="fas fa-video text-xs opacity-70"></i>
                                             {{ $event->cctv->nama_cctv ?? 'Unknown' }}
-                                        </a>
+                                        </div>
                                     </td>
                                     <td class="px-4 py-3">
                                         <span class="text-sm text-slate-600">

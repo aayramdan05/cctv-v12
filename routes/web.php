@@ -319,6 +319,7 @@ Route::middleware(['auth', 'permission:event_view'])->group(function () {
     Route::get('/events', [App\Http\Controllers\EventController::class, 'index'])->name('events.index');
     Route::post('/events/mark-all-read', [App\Http\Controllers\EventController::class, 'markAllRead'])->name('events.markAllRead');
     Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
+    Route::get('/events/export-csv', [App\Http\Controllers\EventController::class, 'exportCsv'])->name('events.exportCsv');
 });
 
 // Konfigurasi RBAC - Only Super Admin
