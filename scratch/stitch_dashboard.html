@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CCTV UNPAD - Monitoring System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#6d797e",
+                        "tertiary-container": "#25b4ce",
+                        "primary": "#00677d",
+                        "outline-variant": "#bcc9ce",
+                        "surface-tint": "#00677d",
+                        "on-primary-container": "#00414f",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "secondary-container": "#67bafd",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface-variant": "#3d494d",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#006399",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#58d6f1",
+                        "primary-fixed": "#b3ebff",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "surface": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#00b4d8",
+                        "inverse-primary": "#4cd6fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-container": "#004972",
+                        "surface-container-high": "#e6e8ea",
+                        "on-tertiary-container": "#00414c",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary-fixed": "#a7edff",
+                        "on-surface": "#191c1e",
+                        "on-tertiary-fixed": "#001f25",
+                        "surface-container": "#eceef0",
+                        "on-secondary-fixed": "#001d32",
+                        "secondary-fixed": "#cde5ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#004e5b",
+                        "tertiary": "#006878",
+                        "surface-variant": "#e0e3e5",
+                        "surface-dim": "#d8dadc",
+                        "background": "#f7f9fb",
+                        "secondary-fixed-dim": "#94ccff",
+                        "on-primary-fixed": "#001f27",
+                        "on-secondary-fixed-variant": "#004b74"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-width": "260px",
+                        "stack-md": "1rem",
+                        "stack-sm": "0.5rem",
+                        "margin-mobile": "1rem",
+                        "container-max": "1440px",
+                        "stack-lg": "1.5rem",
+                        "margin-desktop": "2rem",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-xl": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #bcc9ce;
+            border-radius: 10px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-low border-r border-outline-variant/30 flex flex-col z-50">
+<!-- Brand Header -->
+<div class="px-6 py-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-on-surface leading-tight">CCTV UNPAD</h1>
+<p class="text-label-sm text-outline">Monitoring System</p>
+</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 px-4 sidebar-scroll overflow-y-auto pb-8">
+<div class="space-y-1">
+<!-- Dashboard Active -->
+<a class="flex items-center gap-3 px-4 py-3 bg-tertiary-container text-on-tertiary-container rounded-lg font-bold border-l-4 border-primary transition-all translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">videocam</span>
+<span class="text-label-md">Live Monitoring</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="text-label-md">Map Monitoring</span>
+</a>
+</div>
+<div class="mt-8">
+<p class="px-4 text-[10px] font-bold uppercase tracking-widest text-outline mb-2">Manajemen</p>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="text-label-md">Master Fakultas</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="text-label-md">Master Gedung</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-md">Manage Users</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">photo_camera</span>
+<span class="text-label-md">Master Kamera</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">dns</span>
+<span class="text-label-md">Master Server</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span class="text-label-md">System Health</span>
+</a>
+</div>
+</div>
+<div class="mt-8">
+<p class="px-4 text-[10px] font-bold uppercase tracking-widest text-outline mb-2">Super Admin</p>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="text-label-md">Hak Akses (RBAC)</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-label-md">Log Aktivitas</span>
+</a>
+</div>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width flex-1 flex flex-col">
+<!-- TopAppBar -->
+<header class="h-16 w-full bg-surface shadow-sm border-b border-outline-variant/10 px-margin-desktop flex justify-between items-center sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<button class="md:hidden p-2 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex items-center gap-2 text-outline font-label-md">
+<span class="material-symbols-outlined text-[18px]">home</span>
+<span class="text-[14px]">/</span>
+<span class="text-primary font-bold">Dashboard</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container px-4 py-2 rounded-full border border-outline-variant/30 w-80">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full ml-2 text-on-surface" placeholder="Cari kamera atau lokasi..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<div class="flex items-center gap-3 pl-2 group cursor-pointer">
+<div class="text-right">
+<p class="text-label-md font-bold text-on-surface leading-tight">Super Admin</p>
+<p class="text-[10px] text-outline uppercase tracking-tighter">Superadmin Access</p>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-primary-container overflow-hidden group-hover:scale-105 transition-transform">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a high-level system administrator in a clean modern office setting, wearing a corporate smart-casual outfit. The background is softly blurred with subtle hints of computer monitors showing network graphs. The lighting is crisp and natural, following a bright light-mode aesthetic with teal and blue tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6oGaw8o5ufQgJOeNVhBk0VkoLpZPYE_59J-I1L3_uCtVZvS2qsWd1SXfYMhPEHcrGYRmoB4ddKu4H_1uRDJa05H_4ehgXpEtMOVJIZ0nyKpo0zHliV88EG5zTOoi0gIUEkGD6RVOytQyurK75Ms-Wc6IBuXadV44r0RFRjr1TsbVeo56hwAskVXxP5LJ9tN5ED9_lT9HnhNrXREo7goXRm-ZoQWTvdZHuZo8EgVPgfthZQ0OhJ7PiZ9RImS34oHQgUTwnkwS4yHE"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-8 max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="text-headline-xl font-headline-xl text-on-surface mb-1">System Overview</h2>
+<p class="text-body-lg text-outline">Real-time monitoring and analytics dashboard for UNPAD security network.</p>
+</div>
+<!-- Summary Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
+<!-- Total Cameras -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20 hover:border-primary/30 transition-all group">
+<div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">videocam</span>
+</div>
+<p class="text-headline-lg font-headline-lg text-on-surface">631</p>
+<p class="text-label-sm text-outline uppercase font-bold tracking-wider">Total Cameras</p>
+</div>
+<!-- Active Streams -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20 group">
+<div class="w-12 h-12 bg-secondary-container/20 rounded-xl flex items-center justify-center text-secondary mb-4 relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="absolute -top-1 -right-1 bg-tertiary-container text-[8px] text-white px-1.5 py-0.5 rounded-full font-bold">LIVE</span>
+</div>
+<p class="text-headline-lg font-headline-lg text-on-surface">614</p>
+<p class="text-label-sm text-outline uppercase font-bold tracking-wider">Active Streams</p>
+</div>
+<!-- Indoor Units -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20">
+<div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">apartment</span>
+</div>
+<p class="text-headline-lg font-headline-lg text-on-surface">498</p>
+<p class="text-label-sm text-outline uppercase font-bold tracking-wider">Indoor Units</p>
+</div>
+<!-- Outdoor Units -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20">
+<div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">wb_sunny</span>
+</div>
+<p class="text-headline-lg font-headline-lg text-on-surface">133</p>
+<p class="text-label-sm text-outline uppercase font-bold tracking-wider">Outdoor Units</p>
+</div>
+<!-- Offline -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20 border-l-4 border-l-error">
+<div class="w-12 h-12 bg-error-container/30 rounded-xl flex items-center justify-center text-error mb-4 relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">report</span>
+<span class="absolute -top-1 -right-1 bg-error text-[8px] text-white px-1.5 py-0.5 rounded-full font-bold">DOWN</span>
+</div>
+<p class="text-headline-lg font-headline-lg text-error">17</p>
+<p class="text-label-sm text-outline uppercase font-bold tracking-wider">Cameras Offline</p>
+</div>
+<!-- Locations -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20">
+<div class="w-12 h-12 bg-primary-fixed rounded-xl flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<p class="text-headline-lg font-headline-lg text-on-surface">156</p>
+<p class="text-label-sm text-outline uppercase font-bold tracking-wider">Gedung / Lokasi</p>
+</div>
+</div>
+<!-- Dashboard Centerpiece -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+<!-- Main Grid Section -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Campus Overview -->
+<div class="bg-white rounded-2xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/10">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-primary-container/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">map</span>
+</div>
+<h3 class="text-headline-md font-bold">Campus Overview</h3>
+</div>
+<button class="text-primary font-bold text-label-md hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Card 1 -->
+<div class="p-4 border border-outline-variant/20 rounded-xl hover:bg-surface transition-colors cursor-pointer flex justify-between items-start">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-outline">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Perpustakaan Blok 1</h4>
+<p class="text-label-sm text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">videocam</span> 25 Cameras
+                                        </p>
+<p class="text-[10px] text-outline-variant mt-1 uppercase tracking-wider">Rektorat Area</p>
+</div>
+</div>
+<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold">ONLINE</span>
+</div>
+<!-- Card 2 -->
+<div class="p-4 border border-outline-variant/20 rounded-xl hover:bg-surface transition-colors cursor-pointer flex justify-between items-start">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-outline">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">PPBS D</h4>
+<p class="text-label-sm text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">videocam</span> 18 Cameras
+                                        </p>
+<p class="text-[10px] text-outline-variant mt-1 uppercase tracking-wider">Rektorat Area</p>
+</div>
+</div>
+<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold">ONLINE</span>
+</div>
+<!-- Card 3 -->
+<div class="p-4 border border-outline-variant/20 rounded-xl hover:bg-surface transition-colors cursor-pointer flex justify-between items-start">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-outline">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">FH Gedung Perkuliahan 1</h4>
+<p class="text-label-sm text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">videocam</span> 17 Cameras
+                                        </p>
+<p class="text-[10px] text-outline-variant mt-1 uppercase tracking-wider">Fakultas Hukum</p>
+</div>
+</div>
+<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold">ONLINE</span>
+</div>
+<!-- Card 4 -->
+<div class="p-4 border border-outline-variant/20 rounded-xl hover:bg-surface transition-colors cursor-pointer flex justify-between items-start">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-outline">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">FISIP Gedung Perkuliahan 2</h4>
+<p class="text-label-sm text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">videocam</span> 16 Cameras
+                                        </p>
+<p class="text-[10px] text-outline-variant mt-1 uppercase tracking-wider">Ilmu Sosial Politik</p>
+</div>
+</div>
+<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold">ONLINE</span>
+</div>
+</div>
+</div>
+<!-- Health & Analytics -->
+<div class="bg-white rounded-2xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/10">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-tertiary-container/20 rounded-lg text-tertiary">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<h3 class="text-headline-md font-bold">System Health Analytics</h3>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+<div class="relative w-48 h-48 mx-auto md:ml-0">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="97, 100" stroke-width="6"></path>
+<path class="text-error" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="3, 100" stroke-dashoffset="-97" stroke-width="6"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-headline-lg font-bold">97%</span>
+<span class="text-[10px] text-outline font-bold">UPTIME</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+<span class="text-body-md text-on-surface">Online Cameras</span>
+</div>
+<span class="font-bold">614</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-error"></div>
+<span class="text-body-md text-on-surface">Offline Cameras</span>
+</div>
+<span class="font-bold text-error">17</span>
+</div>
+<div class="pt-4 border-t border-outline-variant/20">
+<p class="text-label-sm text-outline mb-2">Health Trend (Last 24h)</p>
+<div class="h-12 w-full bg-surface-container rounded-lg overflow-hidden flex items-end px-1 gap-1">
+<div class="bg-emerald-400/40 w-full h-[80%] rounded-t-sm"></div>
+<div class="bg-emerald-400/40 w-full h-[85%] rounded-t-sm"></div>
+<div class="bg-emerald-400/40 w-full h-[70%] rounded-t-sm"></div>
+<div class="bg-emerald-400/40 w-full h-[95%] rounded-t-sm"></div>
+<div class="bg-emerald-400/40 w-full h-[90%] rounded-t-sm"></div>
+<div class="bg-error/40 w-full h-[30%] rounded-t-sm"></div>
+<div class="bg-emerald-400/40 w-full h-[90%] rounded-t-sm"></div>
+<div class="bg-emerald-400/40 w-full h-[92%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Section -->
+<div class="lg:col-span-4 space-y-8">
+<!-- Alerts Sidebar -->
+<div class="bg-white rounded-2xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/10 h-full">
+<div class="flex items-center gap-3 mb-6">
+<div class="p-2 bg-error-container/20 rounded-lg text-error">
+<span class="material-symbols-outlined">notifications_active</span>
+</div>
+<h3 class="text-headline-md font-bold">Recent Alerts</h3>
+</div>
+<div class="space-y-4">
+<!-- Alert 1 -->
+<div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+<div class="flex justify-between items-start mb-1">
+<span class="text-emerald-700 font-bold text-label-md">Camera Restored</span>
+<span class="text-[10px] text-outline font-medium">22s ago</span>
+</div>
+<p class="text-label-sm text-emerald-800">FH Gedung Perkuliahan 1 - Pintu Masuk</p>
+<p class="text-[10px] text-emerald-600 mt-1">Automatic recovery successful</p>
+</div>
+<!-- Alert 2 -->
+<div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+<div class="flex justify-between items-start mb-1">
+<span class="text-emerald-700 font-bold text-label-md">Camera Restored</span>
+<span class="text-[10px] text-outline font-medium">24s ago</span>
+</div>
+<p class="text-label-sm text-emerald-800">Rektorat Lantai 1 A - Theater BJB 3</p>
+</div>
+<!-- Alert 3 -->
+<div class="p-4 bg-error-container/10 border border-error-container/30 rounded-xl relative overflow-hidden animate-pulse">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex justify-between items-start mb-1">
+<span class="text-error font-bold text-label-md">Camera Offline</span>
+<span class="text-[10px] text-outline font-medium">28s ago</span>
+</div>
+<p class="text-label-sm text-on-error-container font-medium">RK30 - Gerbang D Tugu Makalangan</p>
+<div class="mt-2 flex gap-2">
+<button class="bg-error text-white text-[9px] px-3 py-1 rounded-full font-bold">REBOOT</button>
+<button class="bg-surface border border-outline-variant/30 text-outline text-[9px] px-3 py-1 rounded-full font-bold">IGNORE</button>
+</div>
+</div>
+<!-- Alert 4 -->
+<div class="p-4 bg-error-container/10 border border-error-container/30 rounded-xl relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex justify-between items-start mb-1">
+<span class="text-error font-bold text-label-md">Camera Offline</span>
+<span class="text-[10px] text-outline font-medium">34s ago</span>
+</div>
+<p class="text-label-sm text-on-error-container">Pos Satpam Gerbang A - Camera 4</p>
+</div>
+<!-- Alert 5 -->
+<div class="p-4 bg-error-container/10 border border-error-container/30 rounded-xl relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex justify-between items-start mb-1">
+<span class="text-error font-bold text-label-md">Camera Offline</span>
+<span class="text-[10px] text-outline font-medium">56s ago</span>
+</div>
+<p class="text-label-sm text-on-error-container">FISIP Gedung Dekanat - Sudut SBA</p>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border border-outline-variant/30 rounded-xl text-label-md font-bold text-outline hover:bg-surface transition-colors">
+                            VIEW ALL ACTIVITY LOG
+                        </button>
+</div>
+</div>
+</div>
+<!-- Footer Preview / Visualizers -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="aspect-video bg-inverse-surface rounded-2xl relative overflow-hidden group">
+<img class="w-full h-full object-cover opacity-60" data-alt="A wide-angle CCTV security camera view of a modern university library courtyard at UNPAD during a sunny afternoon. The image shows several students walking and sitting on benches, with lush green trees and contemporary architecture in the background. Digital overlay of camera metadata, time-stamp, and motion detection boxes in bright teal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjr6g1EpXBmq6jQCnJmo9my4W9aU_YN-hbW-B54-uU4atDzjZGuGCVaeHtKDnR54rHhSnGDK9v2qR6x-w2pgkgnhlC6S_Jcy0KezxvwsxNqU-o4Dgr-7ebe39nLLJNREgu2TkzEaBkreJN1zV9jA1Feal_mUvF9JEXyifYOBWUlqWsoqoVBhBegLjzlx90WAVrUiw2b3e4TlLxgYCokPgRXOz3XNoM8VoT-CfcZsSlZViOube3kUu_dR-SDQrvbszzk9lSBAvizXs"/>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="bg-primary/80 backdrop-blur-md text-white text-[9px] px-2 py-1 rounded font-bold uppercase tracking-widest">CAM_01_REKTORAT</span>
+<span class="w-2 h-2 bg-error rounded-full animate-ping"></span>
+</div>
+<div class="flex items-center gap-2 text-white/70 text-[10px]">
+<span class="material-symbols-outlined text-[14px]">videocam</span>
+<span>Live Preview • 1080p</span>
+</div>
+</div>
+</div>
+<div class="aspect-video bg-inverse-surface rounded-2xl relative overflow-hidden group">
+<img class="w-full h-full object-cover opacity-60" data-alt="A high-angle surveillance camera view of a university faculty parking lot at UNPAD during twilight. The streetlights are casting a warm glow over rows of parked cars. The campus buildings are visible in the background with lit windows. A digital teal grid and license plate recognition overlays are subtly integrated into the UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLCIeKa4kZ0Zw-H3jPEo6shqS8VVgq6TFDNAobpPO6EoR3NUpT-YcZ5rBdMmUPfiG35Uf-PRKlmiGyULSBvzR9vpOYtYDGDmWJfVS4z_a9NXQk6jjVvmDtTGNgcmmjiS0owSF_c310k46IhrTrrNzCEmZV500keBwjXG98J3f_JZGrG8k6wTO091RUpC-dpftrcsquiMmjMD9a6_g_X6qf5VQDPOxMYPQUGO8QevPkfG1w2BSClaP7-Wc5ouBBuTqooEfG0m1Y42c"/>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="bg-primary/80 backdrop-blur-md text-white text-[9px] px-2 py-1 rounded font-bold uppercase tracking-widest">CAM_44_FH_OUTDOOR</span>
+<span class="w-2 h-2 bg-error rounded-full animate-ping"></span>
+</div>
+<div class="flex items-center gap-2 text-white/70 text-[10px]">
+<span class="material-symbols-outlined text-[14px]">videocam</span>
+<span>Live Preview • 1080p</span>
+</div>
+</div>
+</div>
+<div class="aspect-video bg-inverse-surface rounded-2xl relative overflow-hidden group">
+<div class="absolute inset-0 flex items-center justify-center bg-black/40">
+<span class="material-symbols-outlined text-white/20 text-[48px]">videocam_off</span>
+</div>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="bg-error/80 backdrop-blur-md text-white text-[9px] px-2 py-1 rounded font-bold uppercase tracking-widest">CAM_102_FISIP_OFFLINE</span>
+</div>
+<div class="text-error font-bold text-label-md text-center bg-error-container/10 p-2 rounded-lg backdrop-blur-sm">
+                            SIGNAL LOST
+                        </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple hover effect for summary cards
+        document.querySelectorAll('.bg-surface-container-lowest').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'all 0.3s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Current time update for dashboard realism
+        function updateClock() {
+            const now = new Date();
+            // Could add a clock to the top bar if needed
+        }
+        setInterval(updateClock, 1000);
+    </script>
+</body></html>

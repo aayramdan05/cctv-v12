@@ -91,7 +91,8 @@
         
         <div id="main-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
-            <div id="campus-map" class="lg:col-span-2 bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6">
+            <div class="lg:col-span-2 flex flex-col gap-6">
+                <div id="campus-map" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-cyan-50 rounded-lg text-cyan-600">
@@ -136,9 +137,59 @@
                     </div>
                     @endforeach
                 </div>
+                </div>
+                
+                <!-- System Health Analytics -->
+                <div id="system-health" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-cyan-50 rounded-lg text-cyan-600">
+                                <i class="fas fa-heartbeat text-lg"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800">System Health Analytics</h3>
+                        </div>
+                    </div>
+                    
+                    @php
+                        $total = $totalCctv;
+                        $offline = $offlineCctv;
+                        $online = $total - $offline;
+                        $uptimePercent = $total > 0 ? round(($online / $total) * 100) : 0;
+                    @endphp
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="relative w-48 h-48 mx-auto md:ml-0">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="6"></path>
+                                <path class="text-red-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="{{ 100 - $uptimePercent }}, 100" stroke-dashoffset="-{{ $uptimePercent }}" stroke-width="6"></path>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-3xl font-bold text-slate-800">{{ $uptimePercent }}%</span>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">UPTIME</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                    <span class="text-sm text-slate-700">Online Cameras</span>
+                                </div>
+                                <span class="font-bold text-slate-800">{{ $online }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <span class="text-sm text-slate-700">Offline Cameras</span>
+                                </div>
+                                <span class="font-bold text-red-500">{{ $offline }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div id="recent-alerts" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 h-fit">
+            <div id="recent-alerts" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 h-full flex flex-col">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-red-50 rounded-lg text-red-500">
