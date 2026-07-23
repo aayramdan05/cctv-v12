@@ -19,6 +19,8 @@ class EventController extends Controller
             return empty($cam->onvif_user) && empty($cam->onvif_password);
         })->count();
         
+        $configuredCount = $totalCameras - ($onlineCount + $failedCount + $unconfiguredCount);
+        
         // 2. Fetch Events (Separated for Tabs)
         $onvifEvents = CameraEvent::with(['cctv.building'])
             ->where('event_type', 'onvif')
@@ -42,6 +44,7 @@ class EventController extends Controller
             'onlineCount',
             'failedCount',
             'unconfiguredCount',
+            'configuredCount',
             'activeTab'
         ));
     }

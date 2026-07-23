@@ -26,6 +26,7 @@
                 let matchFilter = true;
                 if (this.camFilter === 'online') matchFilter = c.onvif_status === 'online';
                 if (this.camFilter === 'failed') matchFilter = c.onvif_status === 'failed';
+                if (this.camFilter === 'configured') matchFilter = c.onvif_status === 'configured';
                 if (this.camFilter === 'unconfigured') matchFilter = c.onvif_status === 'unconfigured';
                 
                 let searchLower = this.searchQuery.toLowerCase();
@@ -75,20 +76,12 @@
                     <h1 class="text-3xl font-bold text-slate-800">ONVIF Status</h1>
                     <p class="text-slate-500 mt-1 text-sm">Pantau status koneksi ONVIF dari agent dan riwayat kejadian kamera.</p>
                 </div>
-                @if($onvifEvents->count() > 0 || $intelEvents->count() > 0)
-                    <form action="{{ route('events.markAllRead') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-cyan-200 rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-2">
-                            <i class="fas fa-check-double text-cyan-500"></i> Mark All Read
-                        </button>
-                    </form>
-                @endif
             </div>
         </header>
 
         <main class="space-y-6">
             <!-- Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
                 <!-- Total -->
                 <div class="bg-white/50 glass-effect p-4 rounded-xl border border-cyan-100 flex flex-col shadow-sm">
                     <span class="text-[10px] font-semibold text-slate-500 mb-1 tracking-wider uppercase">TOTAL KAMERA</span>
@@ -113,6 +106,14 @@
                         <i class="fas fa-times-circle text-red-200 text-xl"></i>
                     </div>
                 </div>
+                <!-- Configured (Waiting) -->
+                <div class="bg-white/50 glass-effect p-4 rounded-xl border-l-4 border-l-blue-500 border-cyan-100 flex flex-col shadow-sm">
+                    <span class="text-[10px] font-semibold text-blue-600 mb-1 tracking-wider uppercase">CONFIGURED</span>
+                    <div class="flex items-end justify-between">
+                        <span class="text-2xl font-bold text-blue-600">{{ $configuredCount }}</span>
+                        <i class="fas fa-cog text-blue-200 text-xl"></i>
+                    </div>
+                </div>
                 <!-- Unconfigured -->
                 <div class="bg-white/50 glass-effect p-4 rounded-xl border-l-4 border-l-amber-500 border-cyan-100 flex flex-col shadow-sm">
                     <span class="text-[10px] font-semibold text-amber-600 mb-1 tracking-wider uppercase">UNCONFIGURED</span>
@@ -132,6 +133,7 @@
                             <button @click="camFilter = 'all'; page = 1" :class="camFilter === 'all' ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 transition-colors">ALL</button>
                             <button @click="camFilter = 'online'; page = 1" :class="camFilter === 'online' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 transition-colors border-l border-cyan-100">ONLINE</button>
                             <button @click="camFilter = 'failed'; page = 1" :class="camFilter === 'failed' ? 'bg-red-600 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 transition-colors border-l border-cyan-100">FAILED</button>
+                            <button @click="camFilter = 'configured'; page = 1" :class="camFilter === 'configured' ? 'bg-blue-500 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 transition-colors border-l border-cyan-100">CONFIG</button>
                             <button @click="camFilter = 'unconfigured'; page = 1" :class="camFilter === 'unconfigured' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 transition-colors border-l border-cyan-100">UNCONFIGURED</button>
                         </div>
                     </div>
@@ -250,25 +252,16 @@
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 shadow-sm">
                             <tr class="text-[11px] text-slate-500 uppercase border-b border-cyan-100">
-                                <th class="px-5 py-2.5 font-medium w-16">Status</th>
                                 <th class="px-4 py-2.5 font-medium">Waktu</th>
                                 <th class="px-4 py-2.5 font-medium">Kamera</th>
                                 <th class="px-4 py-2.5 font-medium">Lokasi</th>
                                 <th class="px-4 py-2.5 font-medium">Tipe Event</th>
                                 <th class="px-4 py-2.5 font-medium">Info Metadata</th>
-                                <th class="px-5 py-2.5 font-medium text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-cyan-100/50 text-sm">
                             @forelse($onvifEvents as $event)
-                                <tr class="hover:bg-cyan-50/50 transition-colors {{ !$event->is_read ? 'bg-cyan-50/30' : '' }}">
-                                    <td class="px-5 py-2 text-center">
-                                        @if(!$event->is_read)
-                                            <span class="w-2 h-2 bg-orange-500 rounded-full inline-block animate-pulse shadow-[0_0_5px_rgba(249,115,22,0.6)]" title="Unread"></span>
-                                        @else
-                                            <span class="w-2 h-2 bg-slate-300 rounded-full inline-block" title="Read"></span>
-                                        @endif
-                                    </td>
+                                <tr class="hover:bg-cyan-50/50 transition-colors">
                                     <td class="px-4 py-2 whitespace-nowrap">
                                         <div class="flex flex-col">
                                             <span class="text-slate-800">{{ $event->created_at->format('d M Y') }}</span>
@@ -305,20 +298,10 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="px-5 py-2 text-right">
-                                        @if(!$event->is_read)
-                                            <form action="{{ route('events.read', $event->id) }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="p-1.5 bg-white border border-cyan-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 rounded-lg shadow-sm transition-all" title="Tandai Dibaca">
-                                                    <i class="fas fa-check text-xs"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-5 py-8 text-center text-slate-500 text-sm">
+                                    <td colspan="5" class="px-5 py-8 text-center text-slate-500 text-sm">
                                         <div class="flex flex-col items-center gap-2">
                                             <i class="fas fa-folder-open text-3xl text-slate-300"></i>
                                             <p>Tidak ada log event ONVIF saat ini.</p>
@@ -340,24 +323,15 @@
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 shadow-sm">
                             <tr class="text-[11px] text-slate-500 uppercase border-b border-cyan-100">
-                                <th class="px-5 py-2.5 font-medium w-16">Status</th>
                                 <th class="px-4 py-2.5 font-medium">Waktu</th>
                                 <th class="px-4 py-2.5 font-medium">Kamera</th>
                                 <th class="px-4 py-2.5 font-medium">Lokasi</th>
                                 <th class="px-4 py-2.5 font-medium">Tipe Event</th>
-                                <th class="px-5 py-2.5 font-medium text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-cyan-100/50 text-sm">
                             @forelse($intelEvents as $event)
-                                <tr class="hover:bg-cyan-50/50 transition-colors {{ !$event->is_read ? 'bg-cyan-50/30' : '' }}">
-                                    <td class="px-5 py-2 text-center">
-                                        @if(!$event->is_read)
-                                            <span class="w-2 h-2 bg-orange-500 rounded-full inline-block animate-pulse shadow-[0_0_5px_rgba(249,115,22,0.6)]" title="Unread"></span>
-                                        @else
-                                            <span class="w-2 h-2 bg-slate-300 rounded-full inline-block" title="Read"></span>
-                                        @endif
-                                    </td>
+                                <tr class="hover:bg-cyan-50/50 transition-colors">
                                     <td class="px-4 py-2 whitespace-nowrap">
                                         <div class="flex flex-col">
                                             <span class="text-slate-800">{{ $event->created_at->format('d M Y') }}</span>
@@ -380,20 +354,10 @@
                                             {{ $event->event_type }}
                                         </span>
                                     </td>
-                                    <td class="px-5 py-2 text-right">
-                                        @if(!$event->is_read)
-                                            <form action="{{ route('events.read', $event->id) }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="p-1.5 bg-white border border-cyan-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 rounded-lg shadow-sm transition-all" title="Tandai Dibaca">
-                                                    <i class="fas fa-check text-xs"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-5 py-8 text-center text-slate-500 text-sm">
+                                    <td colspan="4" class="px-5 py-8 text-center text-slate-500 text-sm">
                                         <div class="flex flex-col items-center gap-2">
                                             <i class="fas fa-folder-open text-3xl text-slate-300"></i>
                                             <p>Tidak ada log event Intelligence saat ini.</p>
