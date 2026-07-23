@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ONVIF Status Dashboard - Precision Monitor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#dce9ff",
+                    "tertiary-container": "#b05e3d",
+                    "on-surface-variant": "#3d4947",
+                    "on-background": "#0b1c30",
+                    "on-secondary-container": "#5c647a",
+                    "tertiary-fixed": "#ffdbce",
+                    "surface-container-low": "#eff4ff",
+                    "surface": "#f8f9ff",
+                    "primary": "#0d9488",
+                    "on-tertiary-container": "#fffbff",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#213145",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#0b1c30",
+                    "tertiary": "#924628",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "secondary-fixed": "#dae2fd",
+                    "on-secondary-fixed": "#131b2e",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#773215",
+                    "secondary-container": "#dae2fd",
+                    "on-secondary-fixed-variant": "#3f465c",
+                    "surface-tint": "#0d9488",
+                    "on-primary-fixed-variant": "#005049",
+                    "tertiary-fixed-dim": "#ffb59a",
+                    "surface-bright": "#f8f9ff",
+                    "inverse-primary": "#6bd8cb",
+                    "surface-variant": "#d3e4fe",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#6bd8cb",
+                    "outline-variant": "#bcc9c6",
+                    "surface-container": "#e5eeff",
+                    "error": "#ba1a1a",
+                    "surface-dim": "#cbdbf5",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#370e00",
+                    "secondary": "#565e74",
+                    "primary-container": "#14b8a6",
+                    "outline": "#6d7a77",
+                    "on-primary-fixed": "#00201d",
+                    "on-primary-container": "#f4fffc",
+                    "background": "#f8f9ff",
+                    "primary-fixed": "#99f6e4",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "4px",
+                    "lg": "4px",
+                    "xl": "8px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "20px",
+                    "base": "4px",
+                    "stack-md": "16px",
+                    "card-padding": "20px",
+                    "stack-sm": "8px",
+                    "container-margin": "24px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "data-mono": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9ff;
+        }
+        .list-row {
+            transition: background-color 0.15s ease-in-out;
+        }
+        .list-row:hover {
+            background-color: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex">
+<!-- Desktop Sidebar -->
+<aside class="hidden md:flex flex-col w-64 bg-surface-container-lowest border-r border-outline-variant h-screen sticky top-0">
+<div class="p-container-margin flex items-center gap-stack-sm border-b border-outline-variant mb-stack-md">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-on-primary font-bold">P</div>
+<span class="font-headline-md text-primary tracking-tight">Precision Monitor</span>
+</div>
+<nav class="flex-grow px-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg font-medium transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dns</span>
+<span class="text-body-md">Nodes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg font-medium transition-colors" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="text-body-md">Database</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg font-medium transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-body-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg font-medium transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-body-md">Settings</span>
+</a>
+</nav>
+<div class="p-container-margin border-t border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">person</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-body-md font-semibold truncate">Admin User</span>
+<span class="text-[10px] text-outline uppercase font-bold">Root Access</span>
+</div>
+</div>
+</div>
+</aside>
+<div class="flex-grow flex flex-col min-w-0">
+<!-- Top Header -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-container-margin py-3 w-full bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-stack-md flex-grow">
+<h1 class="font-headline-lg text-headline-lg text-on-surface whitespace-nowrap">System Health</h1>
+<div class="relative w-full max-w-md ml-10 hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-body-md" placeholder="Search nodes or IP..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-3 py-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span class="text-label-caps">FILTERS</span>
+</button>
+<div class="h-6 w-[1px] bg-outline-variant mx-2"></div>
+<button class="material-symbols-outlined text-outline p-2 rounded-full hover:bg-surface-container-low transition-colors relative">
+                notifications
+                <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface-container-lowest"></span>
+</button>
+</div>
+</header>
+<main class="p-container-margin space-y-stack-md max-w-[1600px]">
+<!-- Summary Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-stack-md">
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant flex flex-col shadow-sm">
+<span class="text-label-caps text-outline mb-1">TOTAL NODES</span>
+<div class="flex items-end justify-between">
+<span class="font-headline-lg text-headline-lg">500</span>
+<span class="material-symbols-outlined text-outline/40">dns</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant border-l-4 border-l-primary flex flex-col shadow-sm">
+<span class="text-label-caps text-primary mb-1">CONNECTED</span>
+<div class="flex items-end justify-between">
+<span class="font-headline-lg text-headline-lg text-primary">450</span>
+<span class="material-symbols-outlined text-primary/40">link</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant border-l-4 border-l-error flex flex-col shadow-sm">
+<span class="text-label-caps text-error mb-1">FAILED</span>
+<div class="flex items-end justify-between">
+<span class="font-headline-lg text-headline-lg text-error">50</span>
+<span class="material-symbols-outlined text-error/40">report</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant flex flex-col shadow-sm">
+<span class="text-label-caps text-on-surface-variant mb-1">AVERAGE LATENCY</span>
+<div class="flex items-end justify-between">
+<span class="font-headline-lg text-headline-lg">18ms</span>
+<span class="material-symbols-outlined text-outline/40">speed</span>
+</div>
+</div>
+</div>
+<!-- Camera Table Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="px-container-margin py-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<div class="flex gap-stack-sm items-center">
+<span class="font-headline-md text-headline-md mr-4">Managed Nodes</span>
+<div class="flex bg-surface-container-lowest border border-outline-variant rounded-lg p-1">
+<button class="px-3 py-1 bg-primary text-on-primary rounded text-label-caps">ALL</button>
+<button class="px-3 py-1 text-on-surface-variant hover:bg-surface-container-high rounded text-label-caps">FAILED</button>
+<button class="px-3 py-1 text-on-surface-variant hover:bg-surface-container-high rounded text-label-caps">ONLINE</button>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-outline hover:bg-surface-container-high rounded-lg material-symbols-outlined" title="Refresh">refresh</button>
+<button class="p-2 text-outline hover:bg-surface-container-high rounded-lg material-symbols-outlined" title="Grid View">grid_view</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 text-label-caps text-outline uppercase border-b border-outline-variant">
+<th class="px-container-margin py-3 font-semibold">Status</th>
+<th class="px-4 py-3 font-semibold">Camera Name</th>
+<th class="px-4 py-3 font-semibold">IP Address</th>
+<th class="px-4 py-3 font-semibold">Protocol</th>
+<th class="px-4 py-3 font-semibold">Performance</th>
+<th class="px-container-margin py-3 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Camera 01 -->
+<tr class="list-row group">
+<td class="px-container-margin py-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-green-600 rounded-full"></span>
+<span class="text-label-caps text-green-700">CONNECTED</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">videocam</span>
+<span class="font-medium text-body-lg">Lobby Entrance 01</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<code class="font-data-mono text-data-mono text-on-surface-variant">192.168.1.104</code>
+</td>
+<td class="px-4 py-3">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[11px] font-bold text-on-surface-variant">ONVIF-P</span>
+</td>
+<td class="px-4 py-3">
+<div class="flex flex-col">
+<span class="text-body-md">14ms</span>
+<span class="text-[10px] text-outline uppercase">Latency</span>
+</div>
+</td>
+<td class="px-container-margin py-3 text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded material-symbols-outlined" title="View Stream">play_circle</button>
+<button class="p-1.5 text-outline hover:bg-surface-container-high rounded material-symbols-outlined">settings</button>
+</div>
+</td>
+</tr>
+<!-- Camera 02 (Failed) -->
+<tr class="list-row group bg-error-container/5">
+<td class="px-container-margin py-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-error rounded-full animate-pulse"></span>
+<span class="text-label-caps text-error">FAILED</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error">videocam_off</span>
+<span class="font-medium text-body-lg">Parking Gate North</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<code class="font-data-mono text-data-mono text-on-surface-variant">192.168.1.211</code>
+</td>
+<td class="px-4 py-3">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[11px] font-bold text-on-surface-variant">ONVIF-S</span>
+</td>
+<td class="px-4 py-3">
+<span class="text-error font-medium text-body-md uppercase text-[10px]">TIMEOUT</span>
+</td>
+<td class="px-container-margin py-3 text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-error hover:bg-error/10 rounded material-symbols-outlined" title="Diagnose">report</button>
+<button class="p-1.5 text-outline hover:bg-surface-container-high rounded material-symbols-outlined">settings</button>
+</div>
+</td>
+</tr>
+<!-- Camera 03 -->
+<tr class="list-row group">
+<td class="px-container-margin py-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-error rounded-full"></span>
+<span class="text-label-caps text-error">UNAUTHORIZED</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">no_encryption</span>
+<span class="font-medium text-body-lg">Server Room 01</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<code class="font-data-mono text-data-mono text-on-surface-variant">10.0.4.52</code>
+</td>
+<td class="px-4 py-3">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[11px] font-bold text-on-surface-variant">ONVIF-T</span>
+</td>
+<td class="px-4 py-3">
+<span class="text-outline text-body-md">—</span>
+</td>
+<td class="px-container-margin py-3 text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-secondary hover:bg-secondary/10 rounded material-symbols-outlined" title="Reset Credentials">key</button>
+<button class="p-1.5 text-outline hover:bg-surface-container-high rounded material-symbols-outlined">settings</button>
+</div>
+</td>
+</tr>
+<!-- Camera 04 -->
+<tr class="list-row group">
+<td class="px-container-margin py-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-green-600 rounded-full"></span>
+<span class="text-label-caps text-green-700">CONNECTED</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">videocam</span>
+<span class="font-medium text-body-lg">Loading Dock B</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<code class="font-data-mono text-data-mono text-on-surface-variant">192.168.1.115</code>
+</td>
+<td class="px-4 py-3">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[11px] font-bold text-on-surface-variant">ONVIF-P</span>
+</td>
+<td class="px-4 py-3">
+<div class="flex flex-col">
+<span class="text-body-md">4.2 Mbps</span>
+<span class="text-[10px] text-outline uppercase">Bitrate</span>
+</div>
+</td>
+<td class="px-container-margin py-3 text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded material-symbols-outlined" title="View Stream">play_circle</button>
+<button class="p-1.5 text-outline hover:bg-surface-container-high rounded material-symbols-outlined">settings</button>
+</div>
+</td>
+</tr>
+<!-- Camera 05 -->
+<tr class="list-row group">
+<td class="px-container-margin py-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-tertiary rounded-full animate-spin"></span>
+<span class="text-label-caps text-tertiary">RECONNECTING</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary">sync</span>
+<span class="font-medium text-body-lg">Staff Breakroom</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<code class="font-data-mono text-data-mono text-on-surface-variant">192.168.1.120</code>
+</td>
+<td class="px-4 py-3">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[11px] font-bold text-on-surface-variant">ONVIF-S</span>
+</td>
+<td class="px-4 py-3">
+<div class="flex flex-col">
+<span class="text-body-md">85%</span>
+<span class="text-[10px] text-outline uppercase">Progress</span>
+</div>
+</td>
+<td class="px-container-margin py-3 text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container-high rounded material-symbols-outlined" title="Details">info</button>
+<button class="p-1.5 text-outline hover:bg-surface-container-high rounded material-symbols-outlined">settings</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-container-margin py-3 border-t border-outline-variant bg-surface-container-low/30 flex justify-between items-center">
+<span class="text-body-md text-on-surface-variant">Showing 5 of 500 nodes</span>
+<div class="flex gap-1">
+<button class="p-1 border border-outline-variant rounded hover:bg-surface-container-high disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 border border-outline-variant rounded hover:bg-surface-container-high"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</section>
+<!-- Event Logs Section -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm">
+<div class="px-container-margin py-3 bg-surface-container-low flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-on-surface text-[20px]">history</span>
+<h2 class="font-headline-md text-headline-md">General ONVIF Event Logs</h2>
+</div>
+<button class="text-label-caps text-primary hover:bg-primary/5 px-3 py-1 rounded-md transition-colors border border-primary/20">EXPORT CSV</button>
+</div>
+<div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-lowest z-10 border-b border-outline-variant">
+<tr>
+<th class="px-container-margin py-3 text-label-caps text-outline uppercase">Timestamp</th>
+<th class="px-4 py-3 text-label-caps text-outline uppercase">Source</th>
+<th class="px-4 py-3 text-label-caps text-outline uppercase">Event Type</th>
+<th class="px-4 py-3 text-label-caps text-outline uppercase">Message</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30 text-body-md">
+<tr class="hover:bg-surface-container-low/30">
+<td class="px-container-margin py-2.5 text-on-surface-variant font-data-mono whitespace-nowrap text-xs">2023-10-27 14:22:01</td>
+<td class="px-4 py-2.5 font-semibold text-xs">Camera 05</td>
+<td class="px-4 py-2.5"><span class="text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase">RECONNECT</span></td>
+<td class="px-4 py-2.5 text-on-surface-variant text-xs">Staff Breakroom re-established ONVIF handshaking.</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30">
+<td class="px-container-margin py-2.5 text-on-surface-variant font-data-mono whitespace-nowrap text-xs">2023-10-27 14:15:33</td>
+<td class="px-4 py-2.5 font-semibold text-xs">System Core</td>
+<td class="px-4 py-2.5"><span class="text-secondary bg-secondary/10 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase">SERVICE</span></td>
+<td class="px-4 py-2.5 text-on-surface-variant text-xs">ONVIF Discovery Service restart detected.</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30">
+<td class="px-container-margin py-2.5 text-on-surface-variant font-data-mono whitespace-nowrap text-xs">2023-10-27 14:12:09</td>
+<td class="px-4 py-2.5 font-semibold text-xs">Parking Gate N</td>
+<td class="px-4 py-2.5"><span class="text-error bg-error/10 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase">CRITICAL</span></td>
+<td class="px-4 py-2.5 text-on-surface-variant text-xs">Network timeout (10000ms) during GetDeviceInformation.</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30">
+<td class="px-container-margin py-2.5 text-on-surface-variant font-data-mono whitespace-nowrap text-xs">2023-10-27 14:05:44</td>
+<td class="px-4 py-2.5 font-semibold text-xs">Server Room 01</td>
+<td class="px-4 py-2.5"><span class="text-error bg-error/10 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase">AUTH</span></td>
+<td class="px-4 py-2.5 text-on-surface-variant text-xs">Invalid credentials provided for ONVIF-T Profile.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script>
+    // Search Bar Micro-interaction
+    const searchInput = document.querySelector('input[placeholder="Search nodes or IP..."]');
+    if(searchInput) {
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+            searchInput.classList.add('bg-surface-container-lowest');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+            searchInput.classList.remove('bg-surface-container-lowest');
+        });
+    }
+</script>
+</body></html>

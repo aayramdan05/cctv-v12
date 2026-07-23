@@ -107,8 +107,8 @@
             <div class="pt-4 mt-4 border-t border-cyan-100">
                 @can('event_view')
                 <a href="{{ route('events.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('events.*') ? 'active' : '' }} relative">
-                    <i class="fas fa-robot w-5 {{ request()->routeIs('events.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
-                    <span class="font-medium text-sm">Intelligence Events</span>
+                    <i class="fas fa-satellite-dish w-5 {{ request()->routeIs('events.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                    <span class="font-medium text-sm">ONVIF Dashboard</span>
                     
                     @php
                         $unreadEvents = \App\Models\CameraEvent::where('is_read', false)->count();
