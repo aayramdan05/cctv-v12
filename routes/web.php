@@ -301,6 +301,26 @@ Route::get('/api/report-event', function (Request $request) {
     $type = $request->query('type', 'motion');
     
     if (!$cctvId) return response()->json(['error' => 'Missing CCTV ID'], 400);
+    
+    $cctv = \App\Models\Cctv::find($cctvId);
+    if ($cctv && $type === 'onvif_status') {
+        $status = $request->query('status');
+        $error = $request->query('error');
+        
+        $cctv->update([
+            'onvif_status' => $status,
+            'onvif_error' => $error
+        ]);
+        
+        \App\Models\CameraEvent::create([
+            'cctv_id' => $cctvId,
+            'event_type' => 'onvif',
+            'event_time' => now(),
+            'metadata' => ['status' => $status, 'error' => $error]
+        ]);
+        
+        return response()->json(['status' => 'Status Updated']);
+    }
 
     \App\Models\CameraEvent::create([
         'cctv_id' => $cctvId,

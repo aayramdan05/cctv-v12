@@ -46,6 +46,16 @@ def report_to_master(cctv_id, event_type):
     except Exception as e:
         print(f"❌ Gagal lapor event: {e}")
 
+def report_status(cctv_id, status, error_msg=""):
+    """Melaporkan status koneksi ONVIF (online/failed) ke Master Server"""
+    try:
+        import urllib.parse
+        error_enc = urllib.parse.quote(str(error_msg))
+        url = f"{MASTER_URL}/api/report-event?cctv_id={cctv_id}&type=onvif_status&status={status}&error={error_enc}&token={SYNC_TOKEN}"
+        requests.get(url, timeout=5)
+    except Exception as e:
+        print(f"❌ Gagal lapor status ONVIF: {e}")
+
 def subscribe_to_camera(cam):
     """Berlangganan event dari kamera via ONVIF"""
     cam_id = cam['id']
@@ -92,6 +102,7 @@ def subscribe_to_camera(cam):
             pullpoint = mycam.create_pullpoint_service()
             
             print(f"✅ [CAM {cam_id}] Berhasil subscribe ONVIF!")
+            report_status(cam_id, 'online', 'Berhasil terkoneksi')
 
             while True:
                 # Tarik pesan
@@ -136,6 +147,7 @@ def subscribe_to_camera(cam):
 
         except Exception as e:
             print(f"❌ [CAM {cam_id}] ONVIF Error: {e}")
+            report_status(cam_id, 'failed', str(e))
             print(f"🔄 [CAM {cam_id}] Mencoba ulang dalam 1 menit...")
             time.sleep(60)
 

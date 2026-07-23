@@ -12,10 +12,12 @@ class EventController extends Controller
         // 1. Fetch ONVIF Stats (Always from total cameras)
         $cameras = \App\Models\Cctv::with('server')->get();
         $totalCameras = $cameras->count();
-        $hasOnvifCount = $cameras->filter(function($cam) {
-            return !empty($cam->onvif_user) || !empty($cam->onvif_password);
+        
+        $onlineCount = $cameras->where('onvif_status', 'online')->count();
+        $failedCount = $cameras->where('onvif_status', 'failed')->count();
+        $unconfiguredCount = $cameras->filter(function($cam) {
+            return empty($cam->onvif_user) && empty($cam->onvif_password);
         })->count();
-        $noOnvifCount = $totalCameras - $hasOnvifCount;
         
         // 2. Fetch Events (Separated for Tabs)
         $onvifEvents = CameraEvent::with(['cctv.building'])
@@ -37,8 +39,9 @@ class EventController extends Controller
             'intelEvents',
             'cameras',
             'totalCameras',
-            'hasOnvifCount',
-            'noOnvifCount',
+            'onlineCount',
+            'failedCount',
+            'unconfiguredCount',
             'activeTab'
         ));
     }
