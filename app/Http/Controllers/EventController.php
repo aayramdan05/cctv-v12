@@ -10,28 +10,12 @@ class EventController extends Controller
     public function index(Request $request)
     {
         // 1. Fetch ONVIF Stats (Always from total cameras)
-        $totalCameras = \App\Models\Cctv::count();
-        $allCameras = \App\Models\Cctv::all();
-        $hasOnvifCount = $allCameras->filter(function($cam) {
+        $cameras = \App\Models\Cctv::with('server')->get();
+        $totalCameras = $cameras->count();
+        $hasOnvifCount = $cameras->filter(function($cam) {
             return !empty($cam->onvif_user) || !empty($cam->onvif_password);
         })->count();
         $noOnvifCount = $totalCameras - $hasOnvifCount;
-        
-        $cameraFilter = $request->query('cam_filter', 'all');
-        $cameraQuery = \App\Models\Cctv::with('server');
-        
-        if ($cameraFilter === 'configured') {
-            $cameraQuery->where(function($q) {
-                $q->whereNotNull('onvif_user')->where('onvif_user', '!=', '')
-                  ->orWhereNotNull('onvif_password')->where('onvif_password', '!=', '');
-            });
-        } elseif ($cameraFilter === 'missing') {
-            $cameraQuery->where(function($q) {
-                $q->where(function($q2) { $q2->whereNull('onvif_user')->orWhere('onvif_user', ''); })
-                  ->where(function($q2) { $q2->whereNull('onvif_password')->orWhere('onvif_password', ''); });
-            });
-        }
-        $cameras = $cameraQuery->paginate(10, ['*'], 'camera_page')->withQueryString();
         
         // 2. Fetch Events (Separated for Tabs)
         $onvifEvents = CameraEvent::with(['cctv.building'])
@@ -55,8 +39,7 @@ class EventController extends Controller
             'totalCameras',
             'hasOnvifCount',
             'noOnvifCount',
-            'activeTab',
-            'cameraFilter'
+            'activeTab'
         ));
     }
 

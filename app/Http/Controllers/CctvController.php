@@ -98,6 +98,21 @@ class CctvController extends Controller
                 'status'        => 'nullable|in:online,offline,maintenance',
             ]);
 
+            // Handle Password RTSP (Jangan timpa dengan NULL jika kosong)
+            if (empty($validated['rtsp_password'])) {
+                unset($validated['rtsp_password']);
+            }
+
+            // Handle Password ONVIF (Jangan timpa dengan NULL jika kosong)
+            if (empty($validated['onvif_password'])) {
+                unset($validated['onvif_password']);
+            }
+            
+            // Set default onvif_port if null
+            if (empty($validated['onvif_port'])) {
+                $validated['onvif_port'] = 80;
+            }
+
             Cctv::create($validated);
             Artisan::call('cctv:sync-config');
 
@@ -154,6 +169,11 @@ class CctvController extends Controller
             // Handle Password ONVIF (Jangan timpa dengan NULL jika kosong)
             if (empty($validated['onvif_password'])) {
                 unset($validated['onvif_password']);
+            }
+            
+            // Set default onvif_port if null
+            if (empty($validated['onvif_port'])) {
+                $validated['onvif_port'] = 80;
             }
 
             $cctv->update($validated);
