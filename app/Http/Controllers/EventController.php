@@ -20,30 +20,29 @@ class EventController extends Controller
         $hasOnvifCount = $onvifCameras->count();
         $noOnvifCount = $totalCameras - $hasOnvifCount;
         
-        // 2. Fetch Events (Filter by type)
-        $query = CameraEvent::with(['cctv.building'])->latest();
+        // 2. Fetch Events (Separated for Tabs)
+        $onvifEvents = CameraEvent::with(['cctv.building'])
+            ->where('event_type', 'onvif')
+            ->latest()
+            ->paginate(20, ['*'], 'onvif_page')
+            ->withQueryString();
 
-        if ($request->filled('cctv_id')) {
-            $query->where('cctv_id', $request->cctv_id);
-        }
+        $intelEvents = CameraEvent::with(['cctv.building'])
+            ->where('event_type', '!=', 'onvif')
+            ->latest()
+            ->paginate(20, ['*'], 'intel_page')
+            ->withQueryString();
 
-        $eventType = $request->query('type', 'onvif'); // Default to onvif
-        
-        if ($eventType === 'onvif') {
-            $query->where('event_type', 'onvif');
-        } else {
-            $query->where('event_type', '!=', 'onvif'); // Everything else is intelligence/motion
-        }
+        $activeTab = $request->has('intel_page') ? 'intelligence' : 'onvif';
 
-        $events = $query->paginate(20)->withQueryString();
-        
         return view('events.index', compact(
-            'events', 
+            'onvifEvents', 
+            'intelEvents',
             'cameras',
             'totalCameras',
             'hasOnvifCount',
             'noOnvifCount',
-            'eventType'
+            'activeTab'
         ));
     }
 

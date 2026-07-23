@@ -1,14 +1,20 @@
 <x-app-layout>
-    <div class="font-body-md text-slate-800 pb-32">
+    <div class="font-body-md text-slate-800 pb-32 pt-6 px-6 max-w-[1600px] mx-auto" x-data="{ activeTab: '{{ $activeTab }}' }">
         <!-- Header -->
-        <header class="sticky top-[64px] md:top-0 z-40 flex justify-between items-center px-6 py-4 w-full max-w-full bg-white/50 glass-effect shadow-sm">
-            <div class="flex items-center gap-4">
-                <span class="w-10 h-10 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center"><i class="fas fa-satellite-dish"></i></span>
-                <h1 class="text-2xl font-bold text-slate-800 m-0">ONVIF Dashboard</h1>
+        <header class="mb-6">
+            <div class="flex items-center text-sm text-slate-500 mb-2">
+                <a href="{{ route('dashboard') }}" class="hover:text-cyan-600"><i class="fas fa-home"></i></a>
+                <span class="mx-2">/</span>
+                <span class="text-slate-500">Manajemen</span>
+                <span class="mx-2">/</span>
+                <span class="text-slate-700 font-medium">ONVIF Dashboard</span>
             </div>
-            
-            <div class="flex items-center gap-3">
-                @if($events->count() > 0)
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">ONVIF Dashboard</h1>
+                    <p class="text-slate-500 mt-1">Pantau status konfigurasi ONVIF dan riwayat kejadian (Event Logs) kamera.</p>
+                </div>
+                @if($onvifEvents->count() > 0 || $intelEvents->count() > 0)
                     <form action="{{ route('events.markAllRead') }}" method="POST">
                         @csrf
                         <button type="submit" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-cyan-200 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
@@ -19,7 +25,7 @@
             </div>
         </header>
 
-        <main class="px-6 mt-6 space-y-6 max-w-[1600px] mx-auto">
+        <main class="space-y-6">
             <!-- Stats -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <!-- Total -->
@@ -112,12 +118,13 @@
                 <div class="px-6 py-4 border-b border-cyan-100 bg-white/30 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <h2 class="text-lg font-bold">Riwayat Kejadian (Logs)</h2>
                     <div class="flex bg-white border border-cyan-100 rounded-lg p-1 shadow-sm">
-                        <a href="{{ route('events.index', ['type' => 'onvif']) }}" class="px-4 py-1.5 rounded text-xs font-bold transition-all {{ $eventType === 'onvif' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50' }}">LOG ONVIF EVENT</a>
-                        <a href="{{ route('events.index', ['type' => 'intelligence']) }}" class="px-4 py-1.5 rounded text-xs font-bold transition-all {{ $eventType === 'intelligence' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50' }}">LOG INTELLIGENCE EVENT</a>
+                        <button @click="activeTab = 'onvif'" :class="activeTab === 'onvif' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-1.5 rounded text-xs font-bold transition-all">LOG ONVIF EVENT</button>
+                        <button @click="activeTab = 'intelligence'" :class="activeTab === 'intelligence' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-1.5 rounded text-xs font-bold transition-all">LOG INTELLIGENCE EVENT</button>
                     </div>
                 </div>
                 
-                <div class="overflow-x-auto">
+                <!-- ONVIF Table -->
+                <div x-show="activeTab === 'onvif'" class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 shadow-sm">
                             <tr class="text-xs text-slate-500 uppercase border-b border-cyan-100">
@@ -130,7 +137,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-cyan-100/50">
-                            @forelse($events as $event)
+                            @forelse($onvifEvents as $event)
                                 <tr class="hover:bg-cyan-50/50 transition-colors {{ !$event->is_read ? 'bg-cyan-50/30' : '' }}">
                                     <td class="px-6 py-3 text-center">
                                         @if(!$event->is_read)
@@ -177,7 +184,7 @@
                                     <td colspan="6" class="px-6 py-12 text-center text-slate-500">
                                         <div class="flex flex-col items-center gap-3">
                                             <i class="fas fa-folder-open text-4xl text-slate-300"></i>
-                                            <p class="text-sm">Tidak ada log event {{ $eventType }} saat ini.</p>
+                                            <p class="text-sm">Tidak ada log event ONVIF saat ini.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -185,10 +192,84 @@
                         </tbody>
                     </table>
                 </div>
-                
-                @if($events->hasPages())
-                    <div class="px-6 py-4 bg-white/30 border-t border-cyan-100">
-                        {{ $events->links() }}
+                @if($onvifEvents->hasPages())
+                    <div x-show="activeTab === 'onvif'" class="px-6 py-4 bg-white/30 border-t border-cyan-100">
+                        {{ $onvifEvents->links() }}
+                    </div>
+                @endif
+
+                <!-- Intelligence Table -->
+                <div x-show="activeTab === 'intelligence'" x-cloak class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 shadow-sm">
+                            <tr class="text-xs text-slate-500 uppercase border-b border-cyan-100">
+                                <th class="px-6 py-3 font-semibold w-16">Status</th>
+                                <th class="px-4 py-3 font-semibold">Waktu</th>
+                                <th class="px-4 py-3 font-semibold">Kamera</th>
+                                <th class="px-4 py-3 font-semibold">Lokasi</th>
+                                <th class="px-4 py-3 font-semibold">Tipe Event</th>
+                                <th class="px-6 py-3 font-semibold text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-cyan-100/50">
+                            @forelse($intelEvents as $event)
+                                <tr class="hover:bg-cyan-50/50 transition-colors {{ !$event->is_read ? 'bg-cyan-50/30' : '' }}">
+                                    <td class="px-6 py-3 text-center">
+                                        @if(!$event->is_read)
+                                            <span class="w-2.5 h-2.5 bg-orange-500 rounded-full inline-block animate-pulse shadow-[0_0_5px_rgba(249,115,22,0.6)]" title="Unread"></span>
+                                        @else
+                                            <span class="w-2.5 h-2.5 bg-slate-300 rounded-full inline-block" title="Read"></span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-slate-800">{{ $event->created_at->format('d M Y') }}</span>
+                                            <span class="text-xs text-slate-500">{{ $event->created_at->format('H:i:s') }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <a href="{{ route('monitoring.index', ['cctv' => $event->cctv_id]) }}" class="font-medium text-cyan-600 hover:underline flex items-center gap-2">
+                                            <i class="fas fa-video text-xs opacity-70"></i>
+                                            {{ $event->cctv->nama_cctv ?? 'Unknown' }}
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-slate-600">
+                                            {{ $event->cctv->building->name ?? '-' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="bg-slate-100 px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 uppercase border border-slate-200 shadow-sm">
+                                            {{ $event->event_type }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3 text-right">
+                                        @if(!$event->is_read)
+                                            <form action="{{ route('events.read', $event->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="p-2 bg-white border border-cyan-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 rounded-lg shadow-sm transition-all" title="Tandai Dibaca">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <i class="fas fa-folder-open text-4xl text-slate-300"></i>
+                                            <p class="text-sm">Tidak ada log event Intelligence saat ini.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if($intelEvents->hasPages())
+                    <div x-show="activeTab === 'intelligence'" x-cloak class="px-6 py-4 bg-white/30 border-t border-cyan-100">
+                        {{ $intelEvents->links() }}
                     </div>
                 @endif
             </section>

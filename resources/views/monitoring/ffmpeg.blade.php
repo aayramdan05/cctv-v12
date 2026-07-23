@@ -62,13 +62,13 @@
             <section class="space-y-stack-md">
                 <div class="flex gap-stack-sm overflow-x-auto pb-base px-base no-scrollbar">
                     <button @click="activeNode = 'MASTER'" 
-                            :class="activeNode === 'MASTER' ? 'bg-cyan-600 text-white' : 'bg-slate-100/50 text-slate-500 hover:bg-slate-100/50est'"
+                            :class="activeNode === 'MASTER' ? 'bg-cyan-600 text-white' : 'bg-slate-100/50 text-slate-500 hover:bg-slate-200/50'"
                             class="flex-none px-stack-md py-base rounded-full font-label-caps text-label-caps transition-all">
                         MASTER
                     </button>
                     @foreach($serverStats as $s)
                         <button @click="activeNode = '{{ $s->id }}'" 
-                                :class="activeNode === '{{ $s->id }}' ? 'bg-cyan-600 text-white' : 'bg-slate-100/50 text-slate-500 hover:bg-slate-100/50est'"
+                                :class="activeNode === '{{ $s->id }}' ? 'bg-cyan-600 text-white' : 'bg-slate-100/50 text-slate-500 hover:bg-slate-200/50'"
                                 class="flex-none px-stack-md py-base rounded-full font-label-caps text-label-caps transition-all">
                             NODE {{ $s->id }}
                         </button>
@@ -170,7 +170,7 @@
                                     <p class="text-body-md text-cyan-600 m-0">Active/Running</p>
                                 </div>
                             </div>
-                            <button class="p-stack-sm bg-slate-100/50 text-slate-500 rounded-lg hover:bg-slate-100/50est transition-colors">
+                            <button class="p-stack-sm bg-slate-100/50 text-slate-500 rounded-lg hover:bg-slate-200/50 transition-colors">
                                 <span class="material-symbols-outlined" data-icon="settings_ethernet">settings_ethernet</span>
                             </button>
                         </div>
@@ -275,7 +275,7 @@
                 </div>
                 
                 <div class="p-stack-sm bg-white/30 border-t border-cyan-100/30 flex justify-end gap-stack-sm rounded-b-2xl">
-                    <button @click="navigator.clipboard.writeText(nginxContent); alert('Copied to clipboard!')" class="px-stack-md py-stack-sm bg-slate-100/50 text-slate-500 font-label-caps rounded-lg hover:bg-slate-100/50est transition-colors">
+                    <button @click="navigator.clipboard.writeText(nginxContent); alert('Copied to clipboard!')" class="px-stack-md py-stack-sm bg-slate-100/50 text-slate-500 font-label-caps rounded-lg hover:bg-slate-200/50 transition-colors">
                         COPY TO CLIPBOARD
                     </button>
                     <button @click="showNginxModal = false" class="px-stack-md py-stack-sm bg-cyan-600 text-white font-label-caps rounded-lg hover:brightness-110 transition-all">
