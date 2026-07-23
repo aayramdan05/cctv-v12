@@ -7,7 +7,13 @@
         sortAsc: true,
         page: 1, 
         perPage: 5,
-        isExpanded: false,
+        async reloadCameras() {
+            try {
+                let res = await fetch('{{ route('events.camerasJson') }}');
+                let data = await res.json();
+                this.cameras = data;
+            } catch (e) { console.error('Failed to reload cameras', e); }
+        },
         cameras: [
             @foreach($cameras as $cam)
             {
@@ -137,21 +143,21 @@
                             <button @click="camFilter = 'unconfigured'; page = 1" :class="camFilter === 'unconfigured' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 transition-colors border-l border-cyan-100">UNCONFIGURED</button>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="flex items-center gap-3 w-full md:w-auto h-[34px]">
                         <!-- Search Box -->
-                        <div class="relative flex-1 md:w-48">
-                            <input type="text" x-model="searchQuery" @input="page = 1" placeholder="Cari Kamera/IP..." class="w-full text-xs pl-8 pr-3 py-1.5 border border-cyan-200 rounded-lg focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 shadow-sm">
-                            <i class="fas fa-search absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                        <div class="relative flex-1 md:w-48 h-full">
+                            <input type="text" x-model="searchQuery" @input="page = 1" placeholder="Cari Kamera/IP..." class="w-full h-full text-xs pl-8 pr-3 border border-cyan-200 rounded-lg focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 shadow-sm">
+                            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         </div>
-                        <button @click="window.location.reload()" class="p-1.5 text-slate-400 hover:text-cyan-600 transition-colors bg-white border border-cyan-100 rounded shadow-sm" title="Reload Data">
+                        <button @click="reloadCameras()" class="px-2.5 h-full flex items-center justify-center text-slate-400 hover:text-cyan-600 transition-colors bg-white border border-cyan-100 rounded shadow-sm" title="Reload Tabel">
                             <i class="fas fa-redo-alt text-xs"></i>
                         </button>
-                        <button @click="isExpanded = !isExpanded" class="p-1.5 text-slate-400 hover:text-cyan-600 transition-colors bg-white border border-cyan-100 rounded shadow-sm" :title="isExpanded ? 'Collapse' : 'Expand'">
-                            <i class="fas text-xs" :class="isExpanded ? 'fa-compress' : 'fa-expand'"></i>
-                        </button>
+                        <a href="{{ route('events.expanded') }}" class="px-2.5 h-full flex items-center justify-center text-slate-400 hover:text-cyan-600 transition-colors bg-white border border-cyan-100 rounded shadow-sm" title="Buka Halaman Penuh">
+                            <i class="fas fa-expand text-xs"></i>
+                        </a>
                     </div>
                 </div>
-                <div class="overflow-x-auto" :class="isExpanded ? 'h-[calc(100vh-120px)]' : 'min-h-[300px] max-h-[500px]'">
+                <div class="overflow-x-auto min-h-[300px] max-h-[500px]">
                     <table class="w-full text-left border-collapse">
                         <thead class="sticky top-0 bg-slate-50/90 backdrop-blur-sm shadow-sm z-10">
                             <tr class="text-[11px] text-slate-500 uppercase border-b border-cyan-100 font-medium">
@@ -221,7 +227,7 @@
                     </table>
                 </div>
                 <!-- Pagination -->
-                <div class="px-5 py-3 bg-white/30 border-t border-cyan-100 flex items-center justify-between text-xs text-slate-500" :class="isExpanded ? 'sticky bottom-0 bg-slate-50' : ''">
+                <div class="px-5 py-3 bg-white/30 border-t border-cyan-100 flex items-center justify-between text-xs text-slate-500">
                     <div>
                         Menampilkan <span x-text="filteredCameras.length > 0 ? (page - 1) * perPage + 1 : 0"></span> - <span x-text="Math.min(page * perPage, filteredCameras.length)"></span> dari <span x-text="filteredCameras.length"></span>
                     </div>
@@ -241,8 +247,8 @@
                             <button @click="activeTab = 'onvif'" :class="activeTab === 'onvif' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 rounded text-[10px] font-bold transition-all uppercase">Log ONVIF Event</button>
                             <button @click="activeTab = 'intelligence'" :class="activeTab === 'intelligence' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1 rounded text-[10px] font-bold transition-all uppercase">Log Intelligence Event</button>
                         </div>
-                        <a :href="`{{ route('events.exportCsv') }}?type=${activeTab}`" class="px-3 py-1 bg-white border border-cyan-200 text-cyan-700 rounded text-[10px] font-bold hover:bg-cyan-50 shadow-sm transition-all flex items-center gap-2">
-                            <i class="fas fa-file-csv text-cyan-600"></i> EXPORT CSV
+                        <a :href="`{{ route('events.exportCsv') }}?type=${activeTab}`" class="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded text-[10px] font-bold hover:bg-emerald-100 shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-file-csv text-emerald-600"></i> EXPORT CSV
                         </a>
                     </div>
                 </div>

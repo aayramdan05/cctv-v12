@@ -344,6 +344,8 @@ Route::middleware(['auth', 'permission:event_view'])->group(function () {
     Route::post('/events/mark-all-read', [App\Http\Controllers\EventController::class, 'markAllRead'])->name('events.markAllRead');
     Route::post('/events/{id}/read', [App\Http\Controllers\EventController::class, 'markAsRead'])->name('events.read');
     Route::get('/events/export-csv', [App\Http\Controllers\EventController::class, 'exportCsv'])->name('events.exportCsv');
+    Route::get('events/onvif-status/expanded', [App\Http\Controllers\EventController::class, 'expanded'])->name('events.expanded');
+    Route::get('events/onvif-cameras-json', [App\Http\Controllers\EventController::class, 'camerasJson'])->name('events.camerasJson');
 });
 
 // Konfigurasi RBAC - Only Super Admin

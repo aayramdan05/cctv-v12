@@ -105,4 +105,26 @@ class EventController extends Controller
         CameraEvent::where('is_read', false)->update(['is_read' => true]);
         return back()->with('success', 'Semua event telah ditandai sebagai dibaca.');
     }
+
+    public function expanded()
+    {
+        $cameras = Cctv::orderBy('nama_cctv')->get();
+        return view('events.expanded', compact('cameras'));
+    }
+
+    public function camerasJson()
+    {
+        $cameras = Cctv::orderBy('nama_cctv')->get()->map(function($cam) {
+            return [
+                'id' => $cam->id,
+                'nama' => addslashes($cam->nama_cctv),
+                'ip' => $cam->ip,
+                'port' => $cam->onvif_port ?? 80,
+                'onvif_status' => $cam->onvif_status ?? ( (!empty($cam->onvif_user) || !empty($cam->onvif_password)) ? "configured" : "unconfigured" ),
+                'onvif_error' => addslashes($cam->onvif_error ?? ""),
+                'editUrl' => route('cctv.edit', $cam->id)
+            ];
+        });
+        return response()->json($cameras);
+    }
 }
