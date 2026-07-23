@@ -108,13 +108,13 @@ class EventController extends Controller
 
     public function expanded()
     {
-        $cameras = Cctv::orderBy('nama_cctv')->get();
+        $cameras = \App\Models\Cctv::orderBy('nama_cctv')->get();
         return view('events.expanded', compact('cameras'));
     }
 
     public function camerasJson()
     {
-        $cameras = Cctv::orderBy('nama_cctv')->get()->map(function($cam) {
+        $cameras = \App\Models\Cctv::orderBy('nama_cctv')->get()->map(function($cam) {
             return [
                 'id' => $cam->id,
                 'nama' => addslashes($cam->nama_cctv),
