@@ -149,6 +149,8 @@ class Cctv extends Model
         'penempatan',
         'lat',
         'lng',
+        'onvif_status',
+        'onvif_error',
     ];
 
     protected $casts = [
