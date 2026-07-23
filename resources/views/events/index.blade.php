@@ -6,7 +6,7 @@
         sortCol: 'nama',
         sortAsc: true,
         page: 1, 
-        perPage: 10,
+        perPage: 5,
         isExpanded: false,
         cameras: [
             @foreach($cameras as $cam)
