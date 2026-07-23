@@ -307,21 +307,25 @@ Route::get('/api/report-event', function (Request $request) {
         $status = $request->query('status');
         $error = $request->query('error');
         
-        try {
-            $cctv->update([
-                'onvif_status' => $status,
-                'onvif_error' => $error
-            ]);
-        } catch (\Exception $e) {
-            // Ignore if migration not run
-        }
+        $statusChanged = $cctv->onvif_status !== $status || $cctv->onvif_error !== $error;
         
-        \App\Models\CameraEvent::create([
-            'cctv_id' => $cctvId,
-            'event_type' => 'onvif',
-            'event_time' => now(),
-            'metadata' => ['status' => $status, 'error' => $error]
-        ]);
+        if ($statusChanged) {
+            try {
+                $cctv->update([
+                    'onvif_status' => $status,
+                    'onvif_error' => $error
+                ]);
+            } catch (\Exception $e) {
+                // Ignore if migration not run
+            }
+            
+            \App\Models\CameraEvent::create([
+                'cctv_id' => $cctvId,
+                'event_type' => 'onvif',
+                'event_time' => now(),
+                'metadata' => ['status' => $status, 'error' => $error]
+            ]);
+        }
         
         return response()->json(['status' => 'Status Updated']);
     }
