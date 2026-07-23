@@ -265,7 +265,7 @@
                                 <th class="px-4 py-2.5 font-medium">Info Metadata</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-cyan-100/50 text-sm">
+                        <tbody class="divide-y divide-cyan-100/50 text-xs">
                             @forelse($onvifEvents as $event)
                                 <tr class="hover:bg-cyan-50/50 transition-colors">
                                     <td class="px-4 py-2 whitespace-nowrap">
@@ -335,7 +335,7 @@
                                 <th class="px-4 py-2.5 font-medium">Tipe Event</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-cyan-100/50 text-sm">
+                        <tbody class="divide-y divide-cyan-100/50 text-xs">
                             @forelse($intelEvents as $event)
                                 <tr class="hover:bg-cyan-50/50 transition-colors">
                                     <td class="px-4 py-2 whitespace-nowrap">
