@@ -142,6 +142,10 @@ class PlaybackController extends Controller
             $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', $fullSourceUrl, '-c', 'copy', $tempPath];
         }
         
+        // SANGAT PENTING: Lepaskan kunci session Laravel agar tidak terjadi DEADLOCK
+        // ketika FFmpeg melakukan HTTP request (dengan cookie yang sama) ke route internal!
+        session()->save();
+        
         $process = new \Symfony\Component\Process\Process($cmd);
         $process->setTimeout(60);
         $process->run();
