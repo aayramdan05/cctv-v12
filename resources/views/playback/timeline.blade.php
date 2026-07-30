@@ -533,6 +533,14 @@
                 if (rec.is_live) {
                     // Play directly from the active .temp.mp4 file!
                     player.src = rec.url.replace('.mp4', '.temp.mp4');
+                    player.onerror = function() {
+                        // Jika .temp.mp4 gagal diload (404), fallback ke .mp4 standar
+                        if (player.src.includes('.temp.mp4')) {
+                            console.log("Fallback: mencoba file utama .mp4");
+                            player.src = rec.url;
+                            player.play();
+                        }
+                    };
                     player.play();
                 } else {
                     player.src = rec.url;

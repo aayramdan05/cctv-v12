@@ -952,6 +952,22 @@
                         if (segment.is_live) {
                             // Play directly from the active .temp.mp4 file!
                             this.playRecord(this.selectedSlot, segment.url.replace('.mp4', '.temp.mp4'), offset, segment.start);
+                            
+                            // Tambahkan fallback via javascript untuk elemen video ini
+                            setTimeout(() => {
+                                const vid = document.getElementById('video-playback-' + this.selectedSlot);
+                                if (vid) {
+                                    vid.onerror = function() {
+                                        if (vid.src.includes('.temp.mp4')) {
+                                            console.log("Fallback: mencoba file utama .mp4");
+                                            vid.src = segment.url;
+                                            vid.currentTime = offset;
+                                            vid.play();
+                                        }
+                                    };
+                                }
+                            }, 100);
+
                         } else {
                             this.playRecord(this.selectedSlot, segment.url, offset, segment.start);
                         }
