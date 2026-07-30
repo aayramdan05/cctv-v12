@@ -948,7 +948,26 @@
                     const segment = this.currentTimelineData.find(seg => clickedSeconds >= seg.start && clickedSeconds <= (seg.start + seg.duration));
                     if (segment) {
                         const offset = clickedSeconds - segment.start;
-                        this.playRecord(this.selectedSlot, segment.url, offset, segment.start);
+                        
+                        if (segment.is_live) {
+                            // Fetch Live Buffer via Snap
+                            const cctvId = this.activeSlots[this.selectedSlot].id;
+                            const vid = document.getElementById('video-playback-' + this.selectedSlot);
+                            if(vid) vid.src = ''; // Loading effect
+                            
+                            fetch(`/playback/live-buffer/${cctvId}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    if(data.url) {
+                                        this.playRecord(this.selectedSlot, data.url, offset, segment.start);
+                                    } else if(data.error) {
+                                        console.error("Live buffer error:", data.error);
+                                    }
+                                })
+                                .catch(e => console.error("Live buffer request failed", e));
+                        } else {
+                            this.playRecord(this.selectedSlot, segment.url, offset, segment.start);
+                        }
                     } else { console.log("Tidak ada rekaman pada jam ini."); }
                 },
 

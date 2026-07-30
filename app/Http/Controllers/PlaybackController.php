@@ -73,10 +73,9 @@ class PlaybackController extends Controller
                 return response()->json([]);
             }
 
-            // Ambil dari database Recording berdasarkan tanggal
+            // Ambil dari database Recording berdasarkan tanggal (termasuk yang sedang berjalan: size_mb == 0)
             $recordings = \App\Models\Recording::where('cctv_id', $targetCamId)
                 ->where('date', $date)
-                ->where('size_mb', '>', 0)
                 ->orderBy('start_time', 'asc')
                 ->get();
 
@@ -96,15 +95,52 @@ class PlaybackController extends Controller
                     'cctv_name' => $cctvInfo->nama_cctv,
                     'building_name' => $cctvInfo->building->nama_gedung ?? 'Unknown Building',
                     'faculty_name' => $cctvInfo->building->fakultas ?? 'Unknown Faculty',
+                    'is_live' => ($rec->size_mb == 0)
                 ];
             }
 
-            return response()->json($data);
-            
+            return response()->json(['segments' => $data]);
         } catch (\Exception $e) {
-            \Log::error("Error fetching recordings: " . $e->getMessage());
-            return response()->json(['error' => 'Gagal mengambil data rekaman'], 500);
+            \Log::error("Playback Error: " . $e->getMessage());
+            return response()->json(['segments' => [], 'error' => $e->getMessage()], 500);
         }
+    }
+
+    public function getLiveBuffer($cctv_id, Request $request)
+    {
+        $cctv = Cctv::findOrFail($cctv_id);
+        $date = now()->format('Y-m-d');
+        
+        $activeRecording = \App\Models\Recording::where('cctv_id', $cctv_id)
+            ->where('date', $date)
+            ->orderBy('start_time', 'desc')
+            ->first();
+
+        if (!$activeRecording || $activeRecording->size_mb > 0) {
+            return response()->json(['error' => 'No active recording found'], 404);
+        }
+
+        $sourceUrl = $cctv->getRecordingUrl($date, $activeRecording->filename);
+        $tempFilename = 'live_buffer_' . $cctv_id . '.mp4';
+        $tempPath = storage_path('app/public/live_buffers/' . $tempFilename);
+
+        if (!File::exists(storage_path('app/public/live_buffers'))) {
+            File::makeDirectory(storage_path('app/public/live_buffers'), 0755, true);
+        }
+
+        // Jalankan ekstraksi instan dari URL source
+        $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', $sourceUrl, '-c', 'copy', $tempPath];
+        $process = new \Symfony\Component\Process\Process($cmd);
+        $process->setTimeout(60);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return response()->json(['error' => 'FFmpeg Snap failed: ' . $process->getErrorOutput()], 500);
+        }
+
+        return response()->json([
+            'url' => asset('storage/live_buffers/' . $tempFilename . '?t=' . time())
+        ]);
     }
 
     public function exportRecordings(Request $request)

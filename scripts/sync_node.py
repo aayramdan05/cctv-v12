@@ -241,7 +241,7 @@ def record_worker(cam_id, stream_url):
                 '-i', stream_url,
                 '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
                 '-f', 'mp4',
-                '-movflags', '+faststart',
+                '-movflags', 'frag_keyframe+empty_moov',
                 '-t', str(RECORD_DURATION),
                 final_path
             ]

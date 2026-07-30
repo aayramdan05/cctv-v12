@@ -530,8 +530,23 @@
                 currentIndex = index;
                 let rec = recordings[index];
                 
-                player.src = rec.url;
-                player.play();
+                if (rec.is_live) {
+                    player.src = ''; // Loading effect
+                    fetch(`/playback/live-buffer/${camIdParam}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.url) {
+                                player.src = data.url;
+                                player.play();
+                            } else if(data.error) {
+                                console.error("Live buffer error:", data.error);
+                            }
+                        })
+                        .catch(e => console.error("Live buffer request failed", e));
+                } else {
+                    player.src = rec.url;
+                    player.play();
+                }
                 
                 let faculty = rec.faculty_name || 'FACULTY';
                 let building = rec.building_name || 'BUILDING';

@@ -70,10 +70,9 @@ class MonitoringController extends Controller
             return response()->json([]);
         }
 
-        // Ambil riwayat rekaman dari Database
+        // Ambil riwayat rekaman dari Database (termasuk yang sedang berjalan: size_mb == 0)
         $recordings = \App\Models\Recording::where('cctv_id', $cctvId)
             ->where('date', $date)
-            ->where('size_mb', '>', 0) // Sembunyikan yang masih 0 MB
             ->orderBy('start_time')
             ->get();
 
@@ -116,7 +115,8 @@ class MonitoringController extends Controller
                 'url' => $cctvInfo->getRecordingUrl($date, $rec->filename),
                 'has_motion' => $motionEventsCount > 0, // Tanda motion
                 'motion_percentage' => $motionPercentage,
-                'size_mb' => $rec->size_mb
+                'size_mb' => $rec->size_mb,
+                'is_live' => ($rec->size_mb == 0)
             ];
         }
        
