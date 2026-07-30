@@ -99,10 +99,10 @@ class PlaybackController extends Controller
                 ];
             }
 
-            return response()->json(['segments' => $data]);
+            return response()->json($data);
         } catch (\Exception $e) {
             \Log::error("Playback Error: " . $e->getMessage());
-            return response()->json(['segments' => [], 'error' => $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
