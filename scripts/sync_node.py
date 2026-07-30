@@ -234,17 +234,18 @@ def record_worker(cam_id, stream_url):
             except Exception as e:
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
-            ts_filename = filename.replace('.mp4', '.ts')
-            ts_path = os.path.join(folder_path, ts_filename)
+            tmp_filename = final_filename + '.tmp'
+            tmp_path = f"{folder_path}/{tmp_filename}"
             
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
                 '-i', stream_url,
                 '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
-                '-f', 'mpegts',
+                '-f', 'mp4',
+                '-movflags', 'frag_keyframe+empty_moov',
                 '-t', str(RECORD_DURATION),
-                ts_path
+                tmp_path
             ]
             
             # Start Recording
@@ -252,17 +253,17 @@ def record_worker(cam_id, stream_url):
             active_processes[cam_id] = process
             process.wait()
             
-            # Setelah selesai 15 menit, remux .ts menjadi .mp4 (+faststart) secara instan tanpa membebani CPU
-            if os.path.exists(ts_path):
+            # Setelah selesai 15 menit, remux .mp4.tmp (fragmented) menjadi .mp4 (+faststart) secara instan
+            if os.path.exists(tmp_path):
                 remux_cmd = [
                     'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
-                    '-i', ts_path,
+                    '-i', tmp_path,
                     '-c', 'copy',
                     '-movflags', '+faststart',
                     final_path
                 ]
                 subprocess.run(remux_cmd)
-                os.remove(ts_path) # Hapus file .ts setelah sukses menjadi .mp4
+                os.remove(tmp_path) # Hapus file .tmp setelah sukses menjadi .mp4
             
             # Cek apakah berhasil: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
             if (datetime.now() - now).seconds < 10:
