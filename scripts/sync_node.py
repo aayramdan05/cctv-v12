@@ -234,7 +234,7 @@ def record_worker(cam_id, stream_url):
             except Exception as e:
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
-            tmp_filename = final_filename + '.tmp'
+            tmp_filename = final_filename.replace('.mp4', '.temp.mp4')
             tmp_path = f"{folder_path}/{tmp_filename}"
             
             ffmpeg_cmd = [
@@ -253,7 +253,7 @@ def record_worker(cam_id, stream_url):
             active_processes[cam_id] = process
             process.wait()
             
-            # Setelah selesai 15 menit, remux .mp4.tmp (fragmented) menjadi .mp4 (+faststart) secara instan
+            # Setelah selesai 15 menit, remux .temp.mp4 (fragmented) menjadi .mp4 (+faststart) secara instan
             if os.path.exists(tmp_path):
                 remux_cmd = [
                     'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
@@ -263,7 +263,7 @@ def record_worker(cam_id, stream_url):
                     final_path
                 ]
                 subprocess.run(remux_cmd)
-                os.remove(tmp_path) # Hapus file .tmp setelah sukses menjadi .mp4
+                os.remove(tmp_path) # Hapus file .temp.mp4 setelah sukses menjadi .mp4
             
             # Cek apakah berhasil: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
             if (datetime.now() - now).seconds < 10:

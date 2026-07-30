@@ -531,8 +531,8 @@
                 let rec = recordings[index];
                 
                 if (rec.is_live) {
-                    // Play directly from the active .mp4.tmp file!
-                    player.src = rec.url + '.tmp';
+                    // Play directly from the active .temp.mp4 file!
+                    player.src = rec.url.replace('.mp4', '.temp.mp4');
                     player.play();
                 } else {
                     player.src = rec.url;

@@ -950,8 +950,8 @@
                         const offset = clickedSeconds - segment.start;
                         
                         if (segment.is_live) {
-                            // Play directly from the active .mp4.tmp file!
-                            this.playRecord(this.selectedSlot, segment.url + '.tmp', offset, segment.start);
+                            // Play directly from the active .temp.mp4 file!
+                            this.playRecord(this.selectedSlot, segment.url.replace('.mp4', '.temp.mp4'), offset, segment.start);
                         } else {
                             this.playRecord(this.selectedSlot, segment.url, offset, segment.start);
                         }
