@@ -957,14 +957,18 @@
                             setTimeout(() => {
                                 const vid = document.getElementById('video-playback-' + this.selectedSlot);
                                 if (vid) {
-                                    vid.onerror = function() {
-                                        if (vid.src.includes('.temp.mp4')) {
-                                            console.log("Fallback: mencoba file utama .mp4");
-                                            vid.src = segment.url;
-                                            vid.currentTime = offset;
-                                            vid.play();
-                                        }
-                                    };
+                                    // Tangkap error jika promise play() tertolak akibat 404
+                                    let playPromise = vid.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.catch(error => {
+                                            if (vid.src.includes('.temp.mp4')) {
+                                                console.log("Fallback (catch): mencoba file utama .mp4");
+                                                vid.src = segment.url;
+                                                vid.currentTime = offset;
+                                                vid.play();
+                                            }
+                                        });
+                                    }
                                 }
                             }, 100);
 
