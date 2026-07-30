@@ -121,6 +121,9 @@ class PlaybackController extends Controller
         }
 
         $sourceUrl = $cctv->getRecordingUrl($date, $activeRecording->filename);
+        // Pastikan URL absolute (berawalan http/https) agar FFmpeg tidak mengiranya sebagai local path
+        $fullSourceUrl = url($sourceUrl); 
+        
         $tempFilename = 'live_buffer_' . $cctv_id . '.mp4';
         $tempPath = storage_path('app/public/live_buffers/' . $tempFilename);
 
@@ -129,7 +132,7 @@ class PlaybackController extends Controller
         }
 
         // Jalankan ekstraksi instan dari URL source
-        $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', $sourceUrl, '-c', 'copy', $tempPath];
+        $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', $fullSourceUrl, '-c', 'copy', $tempPath];
         $process = new \Symfony\Component\Process\Process($cmd);
         $process->setTimeout(60);
         $process->run();
