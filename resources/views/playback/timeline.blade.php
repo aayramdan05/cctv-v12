@@ -531,18 +531,9 @@
                 let rec = recordings[index];
                 
                 if (rec.is_live) {
-                    player.src = ''; // Loading effect
-                    fetch(`/playback/live-buffer/${camIdParam}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data.url) {
-                                player.src = data.url;
-                                player.play();
-                            } else if(data.error) {
-                                console.error("Live buffer error:", data.error);
-                            }
-                        })
-                        .catch(e => console.error("Live buffer request failed", e));
+                    // Play directly from the active .mp4.tmp file!
+                    player.src = rec.url + '.tmp';
+                    player.play();
                 } else {
                     player.src = rec.url;
                     player.play();

@@ -950,21 +950,8 @@
                         const offset = clickedSeconds - segment.start;
                         
                         if (segment.is_live) {
-                            // Fetch Live Buffer via Snap
-                            const cctvId = this.activeSlots[this.selectedSlot].id;
-                            const vid = document.getElementById('video-playback-' + this.selectedSlot);
-                            if(vid) vid.src = ''; // Loading effect
-                            
-                            fetch(`/playback/live-buffer/${cctvId}`)
-                                .then(res => res.json())
-                                .then(data => {
-                                    if(data.url) {
-                                        this.playRecord(this.selectedSlot, data.url, offset, segment.start);
-                                    } else if(data.error) {
-                                        console.error("Live buffer error:", data.error);
-                                    }
-                                })
-                                .catch(e => console.error("Live buffer request failed", e));
+                            // Play directly from the active .mp4.tmp file!
+                            this.playRecord(this.selectedSlot, segment.url + '.tmp', offset, segment.start);
                         } else {
                             this.playRecord(this.selectedSlot, segment.url, offset, segment.start);
                         }
