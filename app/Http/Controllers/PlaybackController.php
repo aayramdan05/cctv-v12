@@ -121,6 +121,9 @@ class PlaybackController extends Controller
         }
 
         $sourceUrl = $cctv->getRecordingUrl($date, $activeRecording->filename);
+        // Karena sekarang file aktif sedang direkam dengan format .ts, ganti ekstensi di URL
+        $sourceUrl = str_replace('.mp4', '.ts', $sourceUrl);
+        
         // Pastikan URL absolute (berawalan http/https) agar FFmpeg tidak mengiranya sebagai local path
         $fullSourceUrl = url($sourceUrl); 
         

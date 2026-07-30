@@ -234,23 +234,37 @@ def record_worker(cam_id, stream_url):
             except Exception as e:
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
-            # 🎥 MULAI REKAMAN (Standard MP4)
+            ts_filename = filename.replace('.mp4', '.ts')
+            ts_path = os.path.join(folder_path, ts_filename)
+            
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
                 '-i', stream_url,
                 '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
-                '-f', 'mp4',
-                '-movflags', 'frag_keyframe+empty_moov',
+                '-f', 'mpegts',
                 '-t', str(RECORD_DURATION),
-                final_path
+                ts_path
             ]
             
-            p = subprocess.Popen(ffmpeg_cmd)
-            active_processes[cam_id] = p
-            p.wait()
+            # Start Recording
+            process = subprocess.Popen(ffmpeg_cmd)
+            active_processes[cam_id] = process
+            process.wait()
             
-            # Proteksi: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
+            # Setelah selesai 15 menit, remux .ts menjadi .mp4 (+faststart) secara instan tanpa membebani CPU
+            if os.path.exists(ts_path):
+                remux_cmd = [
+                    'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
+                    '-i', ts_path,
+                    '-c', 'copy',
+                    '-movflags', '+faststart',
+                    final_path
+                ]
+                subprocess.run(remux_cmd)
+                os.remove(ts_path) # Hapus file .ts setelah sukses menjadi .mp4
+            
+            # Cek apakah berhasil: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
             if (datetime.now() - now).seconds < 10:
                 print(f"⚠️ [CAM {cam_id}] Rekaman terhenti terlalu cepat. Jeda 10 detik...", flush=True)
                 time.sleep(10)
