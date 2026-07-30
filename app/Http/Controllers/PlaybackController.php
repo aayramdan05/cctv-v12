@@ -127,12 +127,21 @@ class PlaybackController extends Controller
         $tempFilename = 'live_buffer_' . $cctv_id . '.mp4';
         $tempPath = storage_path('app/public/live_buffers/' . $tempFilename);
 
-        if (!File::exists(storage_path('app/public/live_buffers'))) {
-            File::makeDirectory(storage_path('app/public/live_buffers'), 0755, true);
+        if (!\Illuminate\Support\Facades\File::exists(storage_path('app/public/live_buffers'))) {
+            \Illuminate\Support\Facades\File::makeDirectory(storage_path('app/public/live_buffers'), 0755, true);
         }
 
-        // Jalankan ekstraksi instan dari URL source
-        $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', $fullSourceUrl, '-c', 'copy', $tempPath];
+        // Dapatkan semua cookie dari request browser user saat ini (untuk bypass 401 Unauthorized)
+        $cookies = request()->header('Cookie');
+        $headerArg = $cookies ? "Cookie: {$cookies}\r\n" : "";
+
+        // Jalankan ekstraksi instan dari URL source dengan menyertakan Cookie Auth
+        if ($headerArg) {
+            $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-headers', $headerArg, '-i', $fullSourceUrl, '-c', 'copy', $tempPath];
+        } else {
+            $cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', $fullSourceUrl, '-c', 'copy', $tempPath];
+        }
+        
         $process = new \Symfony\Component\Process\Process($cmd);
         $process->setTimeout(60);
         $process->run();
