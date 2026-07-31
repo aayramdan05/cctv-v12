@@ -73,9 +73,10 @@ class PlaybackController extends Controller
                 return response()->json([]);
             }
 
-            // Ambil dari database Recording berdasarkan tanggal (termasuk yang sedang berjalan: size_mb == 0)
+            // Ambil dari database Recording berdasarkan tanggal (hanya yang sudah selesai: size_mb > 0)
             $recordings = \App\Models\Recording::where('cctv_id', $targetCamId)
                 ->where('date', $date)
+                ->where('size_mb', '>', 0)
                 ->orderBy('start_time', 'asc')
                 ->get();
 

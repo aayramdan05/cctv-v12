@@ -70,9 +70,10 @@ class MonitoringController extends Controller
             return response()->json([]);
         }
 
-        // Ambil riwayat rekaman dari Database (termasuk yang sedang berjalan: size_mb == 0)
+        // Ambil riwayat rekaman dari Database (hanya yang sudah selesai: size_mb > 0)
         $recordings = \App\Models\Recording::where('cctv_id', $cctvId)
             ->where('date', $date)
+            ->where('size_mb', '>', 0)
             ->orderBy('start_time')
             ->get();
 

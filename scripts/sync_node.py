@@ -27,7 +27,7 @@ DB_PASS = os.getenv('DB_PASSWORD')
 
 NODE_IP = os.getenv('SERVER_RECORDER_IP')
 RETENTION_DAYS = int(os.getenv('RETENTION_DAYS', 2))
-RECORD_DURATION = 900  # 15 menit per chunk file mp4
+RECORD_DURATION = 600  # 10 menit per chunk file mp4
 CHECK_INTERVAL = 30    # Jeda pengecekan update dari database (detik)
 
 GO2RTC_CONFIG_PATH = os.getenv('GO2RTC_CONFIG_PATH', '/home/aay/go2rtc.yaml')
@@ -234,38 +234,23 @@ def record_worker(cam_id, stream_url):
             except Exception as e:
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
-            tmp_filename = final_filename.replace('.mp4', '.temp.mp4')
-            tmp_path = f"{folder_path}/{tmp_filename}"
-            
+            # 🎥 MULAI REKAMAN (Standard MP4)
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
                 '-i', stream_url,
                 '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
                 '-f', 'mp4',
-                '-movflags', 'frag_keyframe+empty_moov',
+                '-movflags', '+faststart',
                 '-t', str(RECORD_DURATION),
-                tmp_path
+                final_path
             ]
             
-            # Start Recording
-            process = subprocess.Popen(ffmpeg_cmd)
-            active_processes[cam_id] = process
-            process.wait()
+            p = subprocess.Popen(ffmpeg_cmd)
+            active_processes[cam_id] = p
+            p.wait()
             
-            # Setelah selesai 15 menit, remux .temp.mp4 (fragmented) menjadi .mp4 (+faststart) secara instan
-            if os.path.exists(tmp_path):
-                remux_cmd = [
-                    'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
-                    '-i', tmp_path,
-                    '-c', 'copy',
-                    '-movflags', '+faststart',
-                    final_path
-                ]
-                subprocess.run(remux_cmd)
-                os.remove(tmp_path) # Hapus file .temp.mp4 setelah sukses menjadi .mp4
-            
-            # Cek apakah berhasil: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
+            # Proteksi: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
             if (datetime.now() - now).seconds < 10:
                 print(f"⚠️ [CAM {cam_id}] Rekaman terhenti terlalu cepat. Jeda 10 detik...", flush=True)
                 time.sleep(10)
