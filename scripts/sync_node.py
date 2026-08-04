@@ -27,7 +27,7 @@ DB_PASS = os.getenv('DB_PASSWORD')
 
 NODE_IP = os.getenv('SERVER_RECORDER_IP')
 RETENTION_DAYS = int(os.getenv('RETENTION_DAYS', 2))
-RECORD_DURATION = 600  # 10 menit per chunk file mp4
+RECORD_DURATION = 900  # 15 menit per chunk file mp4
 CHECK_INTERVAL = 30    # Jeda pengecekan update dari database (detik)
 
 GO2RTC_CONFIG_PATH = os.getenv('GO2RTC_CONFIG_PATH', '/home/aay/go2rtc.yaml')
