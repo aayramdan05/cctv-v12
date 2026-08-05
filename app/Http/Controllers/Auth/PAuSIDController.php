@@ -23,18 +23,25 @@ class PAuSIDController extends Controller
     public function handleProviderCallback(Request $request)
     {
         try {
-            $startTime = microtime(true);
-            \Log::info('[SSO DEBUG] Memulai proses callback SSO...');
+            // SANGAT PENTING: Paksa cURL menggunakan IPv4 untuk menghindari delay 5 detik!
+            $guzzleOptions = [
+                'curl' => [
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                ]
+            ];
 
-            $pausUser = Socialite::driver('paus')->stateless()->user();
-            $timeAfterUser = microtime(true);
-            \Log::info('[SSO DEBUG] Socialite::user() selesai dalam: ' . round($timeAfterUser - $startTime, 2) . ' detik');
+            // Terapkan opsi IPv4 ke Socialite
+            $pausUser = Socialite::driver('paus')
+                ->stateless()
+                ->setHttpClient(new \GuzzleHttp\Client($guzzleOptions))
+                ->user();
 
             $token = $pausUser->token;
 
-            $response = Http::withToken($token)->get('https://paus.unpad.ac.id/api/accounts');
-            $timeAfterAccounts = microtime(true);
-            \Log::info('[SSO DEBUG] HTTP get(api/accounts) selesai dalam: ' . round($timeAfterAccounts - $timeAfterUser, 2) . ' detik');
+            // Terapkan opsi IPv4 ke HTTP Client
+            $response = Http::withOptions($guzzleOptions)
+                ->withToken($token)
+                ->get('https://paus.unpad.ac.id/api/accounts');
 
             if (!$response->successful()) {
                 abort($response->status(), 'Gagal akses API');
