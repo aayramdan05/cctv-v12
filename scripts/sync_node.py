@@ -189,6 +189,8 @@ def record_worker(cam_id, stream_url):
     time.sleep(random.uniform(0.5, 15.0))
     print(f"🔴 Thread auto-recording Kamera {cam_id} dimulai.", flush=True)
     
+    is_first_chunk = True
+    
     while True:
         # Update nama label setiap loop agar sinkron dengan Master
         cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
@@ -208,6 +210,12 @@ def record_worker(cam_id, stream_url):
             final_filename = f"cam_{cam_id}_{now.strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
             final_path = f"{folder_path}/{final_filename}"
             
+            # STAGGERING LOGIC: Potong durasi chunk pertama secara acak agar 300 kamera tidak selesai bersamaan
+            current_duration = RECORD_DURATION
+            if is_first_chunk:
+                current_duration = random.randint(10, RECORD_DURATION - 10)
+                is_first_chunk = False
+            
             # 🎬 DAFTARKAN AWAL KE DATABASE (Agar muncul di dashboard Playback seketika)
             # Hitung detik sejak tengah malam (Agar timeline Dashboard benar)
             start_time = (now.hour * 3600) + (now.minute * 60) + now.second
@@ -216,13 +224,13 @@ def record_worker(cam_id, stream_url):
                 conn = get_db_connection()
                 cur = conn.cursor()
                 # DEBUG SQL
-                print(f"🛠️ [SQL DEBUG] Inserting: {cam_id}, {date_folder}, {final_filename}, {start_time}", flush=True)
+                print(f"🛠️ [SQL DEBUG] Inserting: {cam_id}, {date_folder}, {final_filename}, {start_time}, {current_duration}s", flush=True)
                 
                 cur.execute("""
                     INSERT INTO recordings (cctv_id, date, filename, start_time, duration, size_mb, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT DO NOTHING
-                """, (cam_id, date_folder, final_filename, start_time, RECORD_DURATION, 0, now_str, now_str))
+                """, (cam_id, date_folder, final_filename, start_time, current_duration, 0, now_str, now_str))
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -234,15 +242,16 @@ def record_worker(cam_id, stream_url):
             except Exception as e:
                 print(f"⚠️ [{cam_label}] Gagal pendaftaran awal: {e}", flush=True)
 
-            # 🎥 MULAI REKAMAN (Standard MP4)
+            # 🎥 MULAI REKAMAN (Standard MP4 tanpa +faststart)
+            # Karena tanpa +faststart, FFmpeg akan menaruh 'moov' di akhir file, sehingga exit secara instan (0 detik gap)
+            # Ini akan menghemat 50% I/O load (NFS) karena kita tidak perlu membaca & menulis ulang file sebesar 150MB!
             ffmpeg_cmd = [
                 'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
                 '-rtsp_transport', 'tcp',
                 '-i', stream_url,
                 '-c:v', 'copy', '-c:a', 'aac', '-map', '0',
                 '-f', 'mp4',
-                '-movflags', '+faststart',
-                '-t', str(RECORD_DURATION),
+                '-t', str(current_duration),
                 final_path
             ]
             
@@ -254,8 +263,9 @@ def record_worker(cam_id, stream_url):
             if (datetime.now() - now).seconds < 10:
                 print(f"⚠️ [CAM {cam_id}] Rekaman terhenti terlalu cepat. Jeda 10 detik...", flush=True)
                 time.sleep(10)
+                continue
             
-            # Hapus dari daftar proses setelah selesai
+            # Hapus dari daftar proses aktif
             if cam_id in active_processes:
                 active_processes.pop(cam_id)
 
