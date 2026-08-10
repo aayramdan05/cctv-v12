@@ -130,7 +130,7 @@ class ProcessRecordingExport implements ShouldQueue
                     $outputPath
                 ]);
 
-                $result = Process::run($cmd);
+                $result = Process::timeout(3600)->run($cmd);
 
                 if ($result->successful() && File::exists($outputPath)) {
                     $filesToZip[] = [
@@ -180,7 +180,7 @@ class ProcessRecordingExport implements ShouldQueue
             $mergedFullPath
         ];
         
-        $mergeResult = Process::run($concatCmd);
+        $mergeResult = Process::timeout(3600)->run($concatCmd);
 
         if (!$mergeResult->successful() || !File::exists($mergedFullPath)) {
             $this->user->notifications()->where('type', ExportProcessing::class)->delete();
