@@ -25,7 +25,7 @@ class UserController extends Controller
 
         if ($currentUser->role === 'faculty_operator') {
             $query->where('faculty', $currentUser->faculty);
-        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
+        } elseif (!in_array($currentUser->role, ['superadmin', 'admin'])) {
             $query->where('role', '!=', 'admin');
         }
 
@@ -81,8 +81,6 @@ class UserController extends Controller
                 'role' => 'user',
                 'faculty' => $currentUser->faculty
             ]);
-        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
-            abort(403, 'Operator Pusat dan UPT Lingkungan tidak diizinkan menambah User.');
         }
 
         $request->validate([
@@ -149,17 +147,15 @@ class UserController extends Controller
                 'role' => 'user',
                 'faculty' => $currentUser->faculty
             ]);
-        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
-            // Cegah mengedit akun admin/operator, dan paksa data lama (hanya bisa ubah assign camera)
-            if (in_array($user->role, ['admin', 'operator', 'upt_lingkungan'])) {
-                abort(403, 'Tidak boleh mengedit akun Admin atau sesama pengelola tingkat atas.');
+        } elseif (!in_array($currentUser->role, ['superadmin', 'admin'])) {
+            // Cegah non-admin mengedit akun admin
+            if (in_array($user->role, ['admin', 'superadmin'])) {
+                abort(403, 'Tidak boleh mengedit akun Administrator tingkat atas.');
             }
-            $request->merge([
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'faculty' => $user->faculty
-            ]);
+            // Cegah non-admin mengubah role menjadi admin
+            if ($request->has('role') && in_array($request->role, ['admin', 'superadmin'])) {
+                abort(403, 'Tidak boleh mengangkat user menjadi Administrator.');
+            }
         }
 
         $request->validate([
@@ -217,8 +213,10 @@ class UserController extends Controller
             if ($user->role !== 'user' || $user->faculty !== $currentUser->faculty) {
                 abort(403, 'Anda hanya boleh menghapus User biasa di fakultas Anda.');
             }
-        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
-            abort(403, 'Operator Pusat dan UPT Lingkungan tidak diizinkan menghapus User.');
+        } elseif (!in_array($currentUser->role, ['superadmin', 'admin'])) {
+            if (in_array($user->role, ['admin', 'superadmin'])) {
+                abort(403, 'Tidak diizinkan menghapus akun Administrator.');
+            }
         }
 
         $user->delete();
