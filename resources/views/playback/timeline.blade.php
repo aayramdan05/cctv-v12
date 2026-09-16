@@ -404,6 +404,23 @@
                 const url = urls[i];
                 const filename = url.split('/').pop();
                 
+                // --- LOG ACTIVITY KE DATABASE ---
+                try {
+                    await fetch('{{ route("playback.logDownload") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            filename: filename,
+                            cctv_id: camIdParam
+                        })
+                    });
+                } catch (e) {
+                    console.error("Gagal mencatat log download:", e);
+                }
+                
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = filename;

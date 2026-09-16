@@ -224,4 +224,23 @@ class PlaybackController extends Controller
 
         return response()->download($path);
     }
+
+    public function logDownload(Request $request)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('playback_export');
+
+        $filename = $request->input('filename');
+        $cctv_id = $request->input('cctv_id');
+
+        \DB::table('activity_logs')->insert([
+            'user_id'       => auth()->id(),
+            'activity_type' => 'cctv_download',
+            'cctv_id'       => $cctv_id,
+            'details'       => json_encode(['filename' => $filename]),
+            'ip_address'    => request()->ip(),
+            'created_at'    => now(),
+        ]);
+
+        return response()->json(['status' => 'logged']);
+    }
 }
