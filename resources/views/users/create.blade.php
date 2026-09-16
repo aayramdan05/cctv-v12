@@ -92,11 +92,25 @@
                     <div id="cctv_access_section" 
                          class="bg-slate-50 p-6 rounded-2xl border border-slate-200" 
                          style="display: none;"
-                         x-data="{ search: '' }">
+                         x-data="{ 
+                            search: '',
+                            checkAll: false,
+                            toggleAll() {
+                                let checkboxes = document.querySelectorAll('input[name=\'cctv_access[]\']:not([disabled])');
+                                checkboxes.forEach(cb => {
+                                    cb.checked = this.checkAll;
+                                });
+                            }
+                         }">
                          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-slate-700">Akses Kamera Spesifik</label>
-                                <p class="text-[10px] text-slate-500">Pilih kamera yang boleh dilihat oleh user/aplikasi ini.</p>
+                                <p class="text-[10px] text-slate-500 mb-2">Pilih kamera yang boleh dilihat oleh user/aplikasi ini.</p>
+                                
+                                <label class="inline-flex items-center space-x-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-cyan-300 transition-colors">
+                                    <input type="checkbox" x-model="checkAll" @change="toggleAll()" class="rounded text-cyan-500 focus:ring-cyan-200 transition-all">
+                                    <span class="text-xs font-bold text-slate-700">Pilih Semua CCTV</span>
+                                </label>
                             </div>
                             <!-- SEARCH INPUT -->
                             <div class="relative w-full md:w-64">

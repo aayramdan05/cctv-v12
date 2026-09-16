@@ -73,6 +73,7 @@ class PAuSIDController extends Controller
                     'name' => $data['name'],
                     'paus_id' => $data['id'],
                     'paus_username' => $data['username'],
+                    'password' => bcrypt(Str::random(24)), // Acak password lokal agar tidak bisa digunakan lagi
                 ]);
             } else {
                 $user = User::create([

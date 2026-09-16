@@ -215,6 +215,9 @@ def record_worker(cam_id, stream_url):
             if is_first_chunk:
                 current_duration = random.randint(10, RECORD_DURATION - 10)
                 is_first_chunk = False
+            else:
+                # Tambahkan delay kecil acak agar tidak sinkron sempurna pada chunk berikutnya
+                time.sleep(random.uniform(0.1, 3.0))
             
             # 🎬 DAFTARKAN AWAL KE DATABASE (Agar muncul di dashboard Playback seketika)
             # Hitung detik sejak tengah malam (Agar timeline Dashboard benar)
@@ -259,10 +262,11 @@ def record_worker(cam_id, stream_url):
             active_processes[cam_id] = p
             p.wait()
             
-            # Proteksi: Jika FFmpeg mati terlalu cepat (error), beri jeda agar tidak spam DB
+            # Proteksi: Jika FFmpeg mati terlalu cepat (error), beri jeda acak agar tidak spam DB dan NFS (mencegah Thundering Herd)
             if (datetime.now() - now).seconds < 10:
-                print(f"⚠️ [CAM {cam_id}] Rekaman terhenti terlalu cepat. Jeda 10 detik...", flush=True)
-                time.sleep(10)
+                retry_delay = random.uniform(10.0, 45.0)
+                print(f"⚠️ [CAM {cam_id}] Rekaman terhenti terlalu cepat. Jeda acak {retry_delay:.1f} detik...", flush=True)
+                time.sleep(retry_delay)
                 continue
             
             # Hapus dari daftar proses aktif

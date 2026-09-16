@@ -54,7 +54,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // 2. CEK PASSWORD (Auth Attempt)
+        // 2. CEK APAKAH AKUN SSO
+        if ($user->paus_id) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun ini telah terhubung dengan SSO. Silakan gunakan tombol "Login dengan PAUS ID".',
+            ]);
+        }
+
+        // 3. CEK PASSWORD (Auth Attempt)
         // Jika sampai sini, berarti email ada. Sekarang kita coba login.
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
