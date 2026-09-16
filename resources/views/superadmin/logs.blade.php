@@ -19,12 +19,40 @@
         </div>
 
         <!-- Metric Cards -->
+        <div class="space-y-0" x-data="{
+            loading: false,
+            async updateTable() {
+                this.loading = true;
+                const form = document.getElementById('filter-form');
+                const params = new URLSearchParams(new FormData(form)).toString();
+                try {
+                    const res = await fetch(`{{ route('superadmin.logs') }}?${params}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const html = await res.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    
+                    const tableBody = doc.getElementById('log-table-body');
+                    if (tableBody) document.getElementById('log-table-body').innerHTML = tableBody.innerHTML;
+                    
+                    const pagination = doc.getElementById('pagination-container');
+                    if (pagination) document.getElementById('pagination-container').innerHTML = pagination.innerHTML;
+                    
+                    const totalCount = doc.getElementById('total-activities-count');
+                    if (totalCount) document.getElementById('total-activities-count').innerHTML = totalCount.innerHTML;
+                    
+                    window.history.pushState({}, '', `?${params}`);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Total Activities -->
             <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-300">
                 <div class="space-y-2">
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Aktivitas</span>
-                    <h3 class="text-3xl font-bold text-slate-800 font-mono">{{ $logs->total() }}</h3>
+                    <h3 id="total-activities-count" class="text-3xl font-bold text-slate-800 font-mono">{{ $logs->total() }}</h3>
                 </div>
                 <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-500 flex items-center justify-center text-lg shadow-inner">
                     <i class="fas fa-history"></i>
@@ -55,14 +83,19 @@
         </div>
 
         <!-- Filter Panel -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm mb-6">
-            <form method="GET" action="{{ route('superadmin.logs') }}" id="filter-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm mb-6 relative">
+            <!-- Loading Overlay -->
+            <div x-show="loading" class="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1px] rounded-2xl flex items-center justify-center rounded-2xl" style="display: none;">
+                <i class="fas fa-circle-notch fa-spin text-cyan-500 text-2xl"></i>
+            </div>
+            
+            <form method="GET" action="{{ route('superadmin.logs') }}" id="filter-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" @submit.prevent="updateTable()">
                 <!-- User Search -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Cari Pengguna</label>
                     <div class="relative">
                         <i class="fas fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" name="search_user" value="{{ request('search_user') }}" placeholder="Nama atau email..."
+                        <input type="text" name="search_user" value="{{ request('search_user') }}" placeholder="Nama atau email..." @input.debounce.500ms="updateTable()"
                                class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-slate-400 text-slate-700">
                     </div>
                 </div>
@@ -70,7 +103,7 @@
                 <!-- Activity Type Filter -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tipe Aktivitas</label>
-                    <select name="activity_type" class="w-full px-3 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 cursor-pointer text-slate-700">
+                    <select name="activity_type" @change="updateTable()" class="w-full px-3 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 cursor-pointer text-slate-700">
                         <option value="">Semua Tipe</option>
                         <option value="login" {{ request('activity_type') === 'login' ? 'selected' : '' }}>Login</option>
                         <option value="logout" {{ request('activity_type') === 'logout' ? 'selected' : '' }}>Logout</option>
@@ -91,7 +124,7 @@
                 <!-- Start Date -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tanggal Mulai</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}"
+                    <input type="date" name="start_date" value="{{ request('start_date') }}" @change="updateTable()"
                            class="w-full px-3 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-slate-700">
                 </div>
 
@@ -99,7 +132,7 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div class="col-span-2 flex flex-col gap-1.5">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tanggal Akhir</label>
-                        <input type="date" name="end_date" value="{{ request('end_date') }}"
+                        <input type="date" name="end_date" value="{{ request('end_date') }}" @change="updateTable()"
                                class="w-full px-3 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-slate-700">
                     </div>
                     
@@ -129,7 +162,10 @@
                             <th class="py-4 px-6">Waktu</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                    <tbody id="log-table-body" class="divide-y divide-slate-100 text-xs text-slate-700 relative">
+                        <!-- Table Loading Overlay -->
+                        <tr x-show="loading" class="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10" style="display: none;"></tr>
+                        
                         @forelse($logs as $log)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <!-- User -->
@@ -445,10 +481,13 @@
 
             <!-- Pagination block -->
             @if($logs->hasPages())
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <div id="pagination-container" class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                     {{ $logs->links() }}
                 </div>
+            @else
+                <div id="pagination-container"></div>
             @endif
+        </div>
         </div>
         
     </main>
