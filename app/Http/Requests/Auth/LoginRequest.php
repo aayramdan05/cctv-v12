@@ -63,6 +63,15 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // 3. CEK APAKAH AKUN DINONAKTIFKAN
+        if ($user->status === 'deactivated') {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda dinonaktifkan. Alasan: ' . ($user->deactivation_reason ?? 'Tidak ada alasan.'),
+            ]);
+        }
+
         // 3. CEK PASSWORD (Auth Attempt)
         // Jika sampai sini, berarti email ada. Sekarang kita coba login.
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {

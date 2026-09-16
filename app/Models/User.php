@@ -27,6 +27,7 @@ class User extends Authenticatable
         'paus_id',
         'paus_username',
         'status',
+        'deactivation_reason',
     ];
 
     /**

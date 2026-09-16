@@ -92,6 +92,12 @@ class PAuSIDController extends Controller
             //     'last_login_ip' => $request->ip(),
             // ]);
 
+            if ($user->status === 'deactivated') {
+                return redirect('/login')->withErrors([
+                    'email' => 'Akun Anda dinonaktifkan. Alasan: ' . ($user->deactivation_reason ?? 'Tidak ada alasan.'),
+                ]);
+            }
+
             Auth::login($user);
 
             return redirect()->intended(RouteServiceProvider::HOME);

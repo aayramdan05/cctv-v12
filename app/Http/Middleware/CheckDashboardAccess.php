@@ -32,6 +32,17 @@ class CheckDashboardAccess
             return redirect()->route('pending-approval');
         }
 
+        // Redirect jika status user adalah 'deactivated'
+        if ($user && $user->status === 'deactivated') {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun Anda dinonaktifkan. Alasan: ' . ($user->deactivation_reason ?? 'Tidak ada alasan.'),
+            ]);
+        }
+
         return $next($request);
     }
 }

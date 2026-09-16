@@ -189,11 +189,19 @@
                                 </td>
                                 <td class="py-4">
                                     @php
-                                        $statusClass = $user->status === 'pending' 
-                                            ? 'bg-amber-100 text-amber-700 border border-amber-200' 
-                                            : 'bg-green-100 text-green-700 border border-green-200';
-                                        $statusLabel = $user->status === 'pending' ? 'Butuh Approval' : 'Aktif';
-                                        $statusIcon = $user->status === 'pending' ? 'fa-clock animate-pulse' : 'fa-check-circle';
+                                        if ($user->status === 'pending') {
+                                            $statusClass = 'bg-amber-100 text-amber-700 border border-amber-200';
+                                            $statusLabel = 'Butuh Approval';
+                                            $statusIcon = 'fa-clock animate-pulse';
+                                        } elseif ($user->status === 'deactivated') {
+                                            $statusClass = 'bg-red-100 text-red-700 border border-red-200';
+                                            $statusLabel = 'Nonaktif';
+                                            $statusIcon = 'fa-ban';
+                                        } else {
+                                            $statusClass = 'bg-green-100 text-green-700 border border-green-200';
+                                            $statusLabel = 'Aktif';
+                                            $statusIcon = 'fa-check-circle';
+                                        }
                                     @endphp
                                     <span class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center w-fit {{ $statusClass }}">
                                         <i class="fas {{ $statusIcon }} mr-1.5"></i> {{ $statusLabel }}
@@ -201,6 +209,22 @@
                                 </td>
                                 <td class="py-4 pr-4 text-right space-x-2">
                                     @can('user_edit')
+                                        @if(auth()->id() !== $user->id)
+                                            @if($user->status !== 'deactivated')
+                                                <button type="button" onclick="openDeactivateModal({{ $user->id }}, '{{ addslashes($user->name) }}')"
+                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-orange-300 hover:text-orange-600 transition-all shadow-sm" title="Nonaktifkan User">
+                                                    <i class="fas fa-ban text-xs"></i>
+                                                </button>
+                                            @else
+                                                <form action="{{ route('users.activate', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Aktifkan kembali user ini?');">
+                                                    @csrf
+                                                    <button type="submit" 
+                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-600 transition-all shadow-sm" title="Aktifkan User">
+                                                        <i class="fas fa-check text-xs"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endif
                                     <a href="{{ route('users.edit', $user->id) }}" 
                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:border-cyan-300 hover:text-cyan-600 transition-all shadow-sm">
                                         <i class="fas fa-pencil-alt text-xs"></i>
@@ -235,5 +259,69 @@
             </div>
             <div id="pagination-container" class="mt-6">{{ $users->links() }}</div>
         </div>
+
+        <!-- Deactivate Modal -->
+        <div id="deactivateModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeDeactivateModal()"></div>
+            <div class="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl m-4 transform scale-95 opacity-0 transition-all duration-300" id="deactivateModalContent">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Nonaktifkan User</h3>
+                        <p class="text-xs text-slate-500" id="deactivateUserName"></p>
+                    </div>
+                </div>
+                
+                <form id="deactivateForm" method="POST">
+                    @csrf
+                    <div class="mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Alasan Penonaktifan</label>
+                        <textarea name="reason" rows="3" required
+                                  placeholder="Contoh: Tidak jelas izin akses cctv nya..."
+                                  class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all text-sm resize-none"></textarea>
+                        <p class="text-[10px] text-slate-400 mt-1">Alasan ini akan ditampilkan kepada user ketika mereka mencoba login.</p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeDeactivateModal()" 
+                                class="px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+                        <button type="submit" 
+                                class="px-5 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/30 transition-all">Nonaktifkan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openDeactivateModal(userId, userName) {
+                const modal = document.getElementById('deactivateModal');
+                const content = document.getElementById('deactivateModalContent');
+                const form = document.getElementById('deactivateForm');
+                const nameLabel = document.getElementById('deactivateUserName');
+                
+                form.action = `/users/${userId}/deactivate`;
+                nameLabel.textContent = `Menonaktifkan akun: ${userName}`;
+                
+                modal.classList.remove('hidden');
+                // Trigger reflow
+                void modal.offsetWidth;
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }
+
+            function closeDeactivateModal() {
+                const modal = document.getElementById('deactivateModal');
+                const content = document.getElementById('deactivateModalContent');
+                
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        </script>
     </main>
 </x-app-layout>

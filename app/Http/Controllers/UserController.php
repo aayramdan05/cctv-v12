@@ -219,4 +219,32 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
+
+    public function deactivate(Request $request, User $user)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('user_edit');
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        $user->update([
+            'status' => 'deactivated',
+            'deactivation_reason' => $request->reason,
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User berhasil dinonaktifkan.');
+    }
+
+    public function activate(User $user)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('user_edit');
+
+        $user->update([
+            'status' => 'approved',
+            'deactivation_reason' => null,
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User berhasil diaktifkan.');
+    }
 }
