@@ -137,12 +137,9 @@
                     </div>
                     
                     <!-- Action buttons -->
-                    <div class="flex items-center gap-1.5 mt-auto">
-                        <button type="submit" class="flex-1 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center" title="Terapkan Filter">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <a href="{{ route('superadmin.logs') }}" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold text-xs transition-all active:scale-95 flex items-center justify-center" title="Reset Filter">
-                            <i class="fas fa-undo"></i>
+                    <div class="flex items-center mt-auto">
+                        <a href="{{ route('superadmin.logs') }}" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm" title="Reset Filter">
+                            <i class="fas fa-undo"></i> Reset Filter
                         </a>
                     </div>
                 </div>
