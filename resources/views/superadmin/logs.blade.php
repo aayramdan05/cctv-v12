@@ -83,6 +83,8 @@
                         <option value="user_delete" {{ request('activity_type') === 'user_delete' ? 'selected' : '' }}>Hapus User</option>
                         <option value="camera_down" {{ request('activity_type') === 'camera_down' ? 'selected' : '' }}>Kamera Down</option>
                         <option value="camera_up" {{ request('activity_type') === 'camera_up' ? 'selected' : '' }}>Kamera Up</option>
+                        <option value="cctv_export" {{ request('activity_type') === 'cctv_export' ? 'selected' : '' }}>Export CCTV</option>
+                        <option value="cctv_download" {{ request('activity_type') === 'cctv_download' ? 'selected' : '' }}>Download CCTV</option>
                     </select>
                 </div>
 
@@ -210,6 +212,18 @@
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-bold text-[9px] uppercase border border-rose-200 shadow-sm">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                                                 User Delete
+                                            </span>
+                                            @break
+                                        @case('cctv_export')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 font-bold text-[9px] uppercase border border-violet-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                                                Export CCTV
+                                            </span>
+                                            @break
+                                        @case('cctv_download')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-fuchsia-50 text-fuchsia-700 font-bold text-[9px] uppercase border border-fuchsia-200 shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-500"></span>
+                                                Download CCTV
                                             </span>
                                             @break
                                         @default
@@ -370,6 +384,34 @@
                                                 </p>
                                                 <p class="text-[10px] text-slate-400 mt-0.5">
                                                     Email: {{ $details['email'] ?? '-' }}
+                                                </p>
+                                            </div>
+                                            @break
+
+                                        @case('cctv_export')
+                                            <div>
+                                                <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fas fa-file-export text-violet-500 text-[10px]"></i>
+                                                    Export Rekaman CCTV
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    Kamera ID: {{ $details['cctv_id'] ?? $log->cctv_id ?? '-' }}
+                                                </p>
+                                                <div class="text-[9px] text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100 mt-1 font-mono">
+                                                    Tanggal: {{ $details['date'] ?? '-' }}<br>
+                                                    Mulai: {{ $details['start_time'] ?? '-' }} | Akhir: {{ $details['end_time'] ?? '-' }}
+                                                </div>
+                                            </div>
+                                            @break
+                                            
+                                        @case('cctv_download')
+                                            <div>
+                                                <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fas fa-file-download text-fuchsia-500 text-[10px]"></i>
+                                                    Download Rekaman CCTV
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                                    File: <span class="font-mono text-slate-600">{{ $details['filename'] ?? '-' }}</span>
                                                 </p>
                                             </div>
                                             @break
