@@ -138,8 +138,8 @@
                     
                     <!-- Action buttons -->
                     <div class="flex items-center mt-auto">
-                        <a href="{{ route('superadmin.logs') }}" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm" title="Reset Filter">
-                            <i class="fas fa-undo"></i> Reset Filter
+                        <a href="{{ route('superadmin.logs') }}" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold text-xs transition-all active:scale-95 flex items-center justify-center shadow-sm" title="Reset Filter">
+                            <i class="fas fa-undo"></i>
                         </a>
                     </div>
                 </div>
