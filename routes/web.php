@@ -98,6 +98,16 @@ Route::get('/pending-approval', function () {
     return view('auth.pending-approval');
 })->name('pending-approval')->middleware(['auth']);
 
+Route::get('/deactivated', function () {
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+    if (auth()->user()->status !== 'deactivated') {
+        return redirect()->route('monitoring.index');
+    }
+    return view('auth.deactivated');
+})->name('deactivated')->middleware(['auth']);
+
 Route::get('/auth-stream-verify', [StreamAuthController::class, 'verify'])->name('stream.verify');
 
 // --- GROUP 1: USER, OPERATOR, ADMIN (Akses Umum) ---
