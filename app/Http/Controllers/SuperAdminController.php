@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
+use App\Services\RoleService;
 
 class SuperAdminController extends Controller
 {
@@ -50,7 +51,7 @@ class SuperAdminController extends Controller
     /**
      * Display dynamic RBAC page.
      */
-    public function rbacIndex()
+    public function rbacIndex(RoleService $roleService)
     {
         $rolePermissions = [];
         try {
@@ -59,19 +60,21 @@ class SuperAdminController extends Controller
             })->toArray();
         } catch (\Exception $e) {}
 
-        return view('superadmin.rbac', compact('rolePermissions'));
+        $rolesList = $roleService->getAllRoles();
+
+        return view('superadmin.rbac', compact('rolePermissions', 'rolesList'));
     }
 
     /**
      * Update dynamic RBAC permissions.
      */
-    public function updateRbac(Request $request)
+    public function updateRbac(Request $request, RoleService $roleService)
     {
         $request->validate([
             'permissions' => 'required|array',
         ]);
 
-        $roles = ['admin', 'operator', 'faculty_operator', 'user', 'api_viewer'];
+        $roles = array_keys($roleService->getAllRoles());
 
         try {
             DB::transaction(function() use ($request, $roles) {
@@ -95,6 +98,60 @@ class SuperAdminController extends Controller
             return redirect()->route('superadmin.rbac.index')->with('success', 'Konfigurasi hak akses role (RBAC) berhasil diperbarui!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui hak akses: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display Role Management page.
+     */
+    public function rolesIndex(RoleService $roleService)
+    {
+        $roles = $roleService->getAllRoles();
+        return view('superadmin.roles', compact('roles'));
+    }
+
+    /**
+     * Store a new custom role.
+     */
+    public function roleStore(Request $request, RoleService $roleService)
+    {
+        $request->validate([
+            'slug' => 'required|string|regex:/^[a-z0-9_]+$/|max:50',
+            'title' => 'required|string|max:100',
+            'desc' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:50',
+        ]);
+
+        try {
+            $icon = $request->icon ?: 'fa-user';
+            $color = $request->color ?: 'from-slate-500 to-slate-700';
+
+            $roleService->createRole($request->slug, $request->title, $request->desc, $icon, $color);
+
+            return redirect()->route('superadmin.roles.index')->with('success', 'Role berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menambah role: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Delete a custom role.
+     */
+    public function roleDestroy($slug, RoleService $roleService)
+    {
+        try {
+            // Cek apakah ada user yg menggunakan role ini
+            $usersCount = \App\Models\User::where('role', $slug)->count();
+            if ($usersCount > 0) {
+                return back()->with('error', "Role tidak bisa dihapus karena masih digunakan oleh {$usersCount} pengguna.");
+            }
+
+            $roleService->deleteRole($slug);
+
+            return redirect()->route('superadmin.roles.index')->with('success', 'Role berhasil dihapus!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus role: ' . $e->getMessage());
         }
     }
 }

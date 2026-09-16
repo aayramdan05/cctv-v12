@@ -135,6 +135,10 @@
                     <i class="fas fa-user-shield w-5 {{ request()->routeIs('superadmin.rbac.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Hak Akses (RBAC)</span>
                 </a>
+                <a href="{{ route('superadmin.roles.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('superadmin.roles.*') ? 'active' : '' }}">
+                    <i class="fas fa-user-tag w-5 {{ request()->routeIs('superadmin.roles.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
+                    <span class="font-medium text-sm">Manajemen Role</span>
+                </a>
             </div>
         @endif
 

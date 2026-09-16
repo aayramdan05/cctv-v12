@@ -85,38 +85,7 @@
                     </div>
 
                     @php
-                        $rolesList = [
-                            'admin' => [
-                                'title' => 'Administrator',
-                                'desc' => 'Mengelola CRUD cctv, peta, & data master',
-                                'icon' => 'fa-user-tie',
-                                'color' => 'from-cyan-500 to-blue-500'
-                            ],
-                            'operator' => [
-                                'title' => 'Operator Pusat',
-                                'desc' => 'Memantau live stream, playback, dan koordinat peta',
-                                'icon' => 'fa-users-cog',
-                                'color' => 'from-emerald-500 to-teal-500'
-                            ],
-                            'faculty_operator' => [
-                                'title' => 'Operator Fakultas',
-                                'desc' => 'Memantau & mengelola cctv terbatas pada fakultasnya',
-                                'icon' => 'fa-university',
-                                'color' => 'from-purple-500 to-indigo-500'
-                            ],
-                            'user' => [
-                                'title' => 'User Biasa',
-                                'desc' => 'Hak akses pemantauan standar (view only)',
-                                'icon' => 'fa-user',
-                                'color' => 'from-amber-500 to-orange-500'
-                            ],
-                            'api_viewer' => [
-                                'title' => 'API Viewer / Client',
-                                'desc' => 'Koneksi integrasi data pihak ketiga',
-                                'icon' => 'fa-robot',
-                                'color' => 'from-slate-600 to-slate-800'
-                            ]
-                        ];
+                        // $rolesList dikirim dari SuperAdminController
                     @endphp
 
                     @foreach($rolesList as $roleKey => $meta)
@@ -217,7 +186,7 @@
                         ];
                     @endphp
 
-                    @foreach(['admin', 'operator', 'faculty_operator', 'user', 'api_viewer'] as $roleKey)
+                    @foreach(array_keys($rolesList) as $roleKey)
                         <!-- Tab Content for roleKey -->
                         <div x-show="activeRole === '{{ $roleKey }}'" x-cloak class="space-y-6">
                             

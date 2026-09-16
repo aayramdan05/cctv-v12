@@ -189,7 +189,7 @@ class Cctv extends Model
         }
 
         // 1. Superadmin, Admin & Operator Pusat: LIHAT SEMUA
-        if (in_array($user->role, ['superadmin', 'admin', 'operator'])) {
+        if (in_array($user->role, ['superadmin', 'admin', 'operator', 'upt_lingkungan'])) {
             return $query; 
         }
 

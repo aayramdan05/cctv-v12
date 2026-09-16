@@ -370,6 +370,11 @@ Route::middleware(['auth', 'permission:event_view'])->group(function () {
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::get('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'rbacIndex'])->name('superadmin.rbac.index');
     Route::post('/superadmin/rbac', [App\Http\Controllers\SuperAdminController::class, 'updateRbac'])->name('superadmin.rbac.update');
+
+    // Role Management
+    Route::get('/superadmin/roles', [App\Http\Controllers\SuperAdminController::class, 'rolesIndex'])->name('superadmin.roles.index');
+    Route::post('/superadmin/roles', [App\Http\Controllers\SuperAdminController::class, 'roleStore'])->name('superadmin.roles.store');
+    Route::delete('/superadmin/roles/{slug}', [App\Http\Controllers\SuperAdminController::class, 'roleDestroy'])->name('superadmin.roles.destroy');
 });
 
 // Halaman Aktivitas Log - Dinamis Berbasis Permission

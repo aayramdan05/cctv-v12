@@ -8,10 +8,12 @@ use App\Models\Building;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use App\Services\RoleService;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, RoleService $roleService)
     {
         $currentUser = auth()->user();
         $query = User::query();
@@ -23,7 +25,7 @@ class UserController extends Controller
 
         if ($currentUser->role === 'faculty_operator') {
             $query->where('faculty', $currentUser->faculty);
-        } elseif ($currentUser->role === 'operator') {
+        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
             $query->where('role', '!=', 'admin');
         }
 
@@ -50,21 +52,23 @@ class UserController extends Controller
         $sortDir = $request->get('sort_dir', 'desc');
 
         $users = $query->orderBy($sortField, $sortDir)->paginate(15)->withQueryString();
-        return view('users.index', compact('users'));
+        $rolesList = $roleService->getAllRoles();
+        return view('users.index', compact('users', 'rolesList'));
     }
 
-    public function create()
+    public function create(RoleService $roleService)
     {
         \Illuminate\Support\Facades\Gate::authorize('user_create');
 
         // Pastikan variabel ini dikirim ke View
         $cctvs = Cctv::orderBy('nama_cctv')->get();
         $faculties = \App\Models\Faculty::orderBy('name')->pluck('name');
+        $rolesList = $roleService->getAllRoles();
         
-        return view('users.create', compact('cctvs', 'faculties'));
+        return view('users.create', compact('cctvs', 'faculties', 'rolesList'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, RoleService $roleService)
     {
         \Illuminate\Support\Facades\Gate::authorize('user_create');
 
@@ -77,15 +81,15 @@ class UserController extends Controller
                 'role' => 'user',
                 'faculty' => $currentUser->faculty
             ]);
-        } elseif ($currentUser->role === 'operator') {
-            abort(403, 'Operator Pusat tidak diizinkan menambah User.');
+        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
+            abort(403, 'Operator Pusat dan UPT Lingkungan tidak diizinkan menambah User.');
         }
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:superadmin,admin,operator,faculty_operator,user,api_viewer'],
+            'role' => ['required', 'string', Rule::in(array_keys($roleService->getAllRoles()))],
             'faculty' => ['nullable', 'string'],
             'cctv_access' => ['nullable', 'array'], // Validasi array checkbox
             'cctv_access.*' => ['exists:cctvs,id'],
@@ -109,7 +113,7 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
-    public function edit(User $user)
+    public function edit(User $user, RoleService $roleService)
     {
         \Illuminate\Support\Facades\Gate::authorize('user_edit');
 
@@ -120,12 +124,13 @@ class UserController extends Controller
         
         // --- FIX: KIRIM DATA CCTV YANG SUDAH DIPILIH ---
         $assignedCctvs = $user->cctvs->pluck('id')->toArray();
+        $rolesList = $roleService->getAllRoles();
         // -----------------------------------------------
 
-        return view('users.edit', compact('user', 'cctvs', 'faculties', 'assignedCctvs'));
+        return view('users.edit', compact('user', 'cctvs', 'faculties', 'assignedCctvs', 'rolesList'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user, RoleService $roleService)
     {
         \Illuminate\Support\Facades\Gate::authorize('user_edit');
 
@@ -144,10 +149,10 @@ class UserController extends Controller
                 'role' => 'user',
                 'faculty' => $currentUser->faculty
             ]);
-        } elseif ($currentUser->role === 'operator') {
+        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
             // Cegah mengedit akun admin/operator, dan paksa data lama (hanya bisa ubah assign camera)
-            if (in_array($user->role, ['admin', 'operator'])) {
-                abort(403, 'Operator Pusat tidak boleh mengedit akun Admin atau sesama Operator.');
+            if (in_array($user->role, ['admin', 'operator', 'upt_lingkungan'])) {
+                abort(403, 'Tidak boleh mengedit akun Admin atau sesama pengelola tingkat atas.');
             }
             $request->merge([
                 'name' => $user->name,
@@ -160,7 +165,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'string', 'in:superadmin,admin,operator,faculty_operator,user,api_viewer'],
+            'role' => ['required', 'string', Rule::in(array_keys($roleService->getAllRoles()))],
             'faculty' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:approved,pending'],
             'cctv_access' => ['nullable', 'array'],
@@ -191,7 +196,7 @@ class UserController extends Controller
         if (in_array($request->role, ['user', 'api_viewer'])) {
             $user->cctvs()->sync($request->cctv_access ?? []);
         } else {
-            // Jika role berubah jadi admin/operator, hapus relasi cctv karena mereka akses semua
+            // Jika role berubah jadi admin/operator/upt_lingkungan, hapus relasi cctv karena mereka akses semua
             $user->cctvs()->detach();
         }
         // -------------------------------
@@ -212,8 +217,8 @@ class UserController extends Controller
             if ($user->role !== 'user' || $user->faculty !== $currentUser->faculty) {
                 abort(403, 'Anda hanya boleh menghapus User biasa di fakultas Anda.');
             }
-        } elseif ($currentUser->role === 'operator') {
-            abort(403, 'Operator Pusat tidak diizinkan menghapus User.');
+        } elseif (in_array($currentUser->role, ['operator', 'upt_lingkungan'])) {
+            abort(403, 'Operator Pusat dan UPT Lingkungan tidak diizinkan menghapus User.');
         }
 
         $user->delete();

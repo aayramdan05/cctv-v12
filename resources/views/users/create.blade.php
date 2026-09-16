@@ -51,23 +51,19 @@
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-2">Role (Hak Akses)</label>
                         <select name="role" id="role_select" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-200" onchange="toggleSections()">
-                            <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User Biasa (View Only)</option>
-                            
-                            <!-- OPSI BARU: API VIEWER -->
-                            <option value="api_viewer" {{ old('role') == 'api_viewer' ? 'selected' : '' }} class="font-bold text-indigo-600">API Client / 3rd Party App</option>
-                            
-                            @if(in_array(auth()->user()->role, ['admin', 'superadmin', 'operator']))
-                                <option value="faculty_operator" {{ old('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
-                                <option value="operator" {{ old('role') == 'operator' ? 'selected' : '' }}>Operator Pusat</option>
-                            @endif
-                            
-                            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
-                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
-                            @endif
-
-                            @if(auth()->user()->role === 'superadmin')
-                                <option value="superadmin" {{ old('role') == 'superadmin' ? 'selected' : '' }}>Super Administrator</option>
-                            @endif
+                            @foreach($rolesList as $slug => $meta)
+                                @if($slug === 'superadmin' && auth()->user()->role !== 'superadmin')
+                                    @continue
+                                @endif
+                                
+                                @if(in_array($slug, ['admin', 'operator', 'upt_lingkungan', 'faculty_operator']) && !in_array(auth()->user()->role, ['admin', 'superadmin', 'operator', 'upt_lingkungan']))
+                                    @continue
+                                @endif
+                                
+                                <option value="{{ $slug }}" {{ old('role') == $slug ? 'selected' : '' }} class="{{ $slug === 'api_viewer' ? 'font-bold text-indigo-600' : '' }}">
+                                    {{ $meta['title'] }}
+                                </option>
+                            @endforeach
                         </select>
                         @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>

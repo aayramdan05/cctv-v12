@@ -79,11 +79,9 @@
                     <select name="role" @change="updateTable()" 
                             class="w-48 pl-4 pr-10 py-2 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-100 focus:border-cyan-400 transition-all text-sm bg-white/50 cursor-pointer shadow-sm appearance-none">
                         <option value="">Semua Role</option>
-                        <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
-                        <option value="faculty_operator" {{ request('role') == 'faculty_operator' ? 'selected' : '' }}>Operator Fakultas</option>
-                        <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User (Restricted)</option>
-                        <option value="api_viewer" {{ request('role') == 'api_viewer' ? 'selected' : '' }}>API Viewer</option>
+                        @foreach($rolesList as $slug => $meta)
+                            <option value="{{ $slug }}" {{ request('role') == $slug ? 'selected' : '' }}>{{ $meta['title'] }}</option>
+                        @endforeach
                     </select>
                     <i class="fas fa-chevron-down absolute right-4 top-3 text-[10px] text-slate-400 pointer-events-none"></i>
                 </div>
@@ -143,25 +141,21 @@
                                 </td>
                                 <td class="py-4">
                                     @php
-                                        $badgeClass = match($user->role) {
-                                            'superadmin' => 'bg-red-100 text-red-700 border border-red-200',
-                                            'admin' => 'bg-purple-100 text-purple-700 border border-purple-200',
-                                            'operator' => 'bg-blue-100 text-blue-700 border border-blue-200',
-                                            'faculty_operator' => 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-                                            'api_viewer' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
-                                            default => 'bg-slate-100 text-slate-600 border border-slate-200',
-                                        };
-                                        $iconClass = match($user->role) {
-                                            'superadmin' => 'fa-crown',
-                                            'admin' => 'fa-shield-alt',
-                                            'operator' => 'fa-user-cog',
-                                            'faculty_operator' => 'fa-user-shield',
-                                            'api_viewer' => 'fa-key',
-                                            default => 'fa-user',
-                                        };
+                                        $roleMeta = $rolesList[$user->role] ?? [
+                                            'title' => $user->role,
+                                            'icon' => 'fa-user',
+                                            'color' => 'from-slate-500 to-slate-700'
+                                        ];
+                                        // Extrak warna dasar dari class gradient
+                                        $baseColor = str_replace(['from-', '-500', 'to-', '-700'], '', explode(' ', $roleMeta['color'])[0]);
+                                        if (!in_array($baseColor, ['red', 'purple', 'blue', 'teal', 'emerald', 'indigo', 'cyan', 'amber', 'slate'])) {
+                                            $baseColor = 'slate';
+                                        }
+                                        $badgeClass = "bg-{$baseColor}-100 text-{$baseColor}-700 border border-{$baseColor}-200";
+                                        $iconClass = $roleMeta['icon'];
                                     @endphp
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center w-fit {{ $badgeClass }}">
-                                        <i class="fas {{ $iconClass }} mr-2"></i> {{ $user->role }}
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center w-fit {{ $badgeClass }}" title="{{ $roleMeta['title'] }}">
+                                        <i class="fas {{ $iconClass }} mr-2"></i> {{ $roleMeta['title'] }}
                                     </span>
                                 </td>
                                 <td class="py-4">
@@ -175,7 +169,7 @@
                                     @endif
                                 </td>
                                 <td class="py-4">
-                                    @if($user->role === 'superadmin' || $user->role === 'admin' || $user->role === 'operator')
+                                    @if(isset($rolesList[$user->role]) && in_array($user->role, ['superadmin', 'admin', 'operator', 'upt_lingkungan']))
                                         <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 uppercase tracking-wider">
                                             Global (Semua Kamera)
                                         </span>
