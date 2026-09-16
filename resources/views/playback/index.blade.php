@@ -25,7 +25,7 @@
                     </div>
                     
                     <div class="mt-3 text-right">
-                        <a href="{{ $rec['url'] }}" download class="text-xs text-cyan-600 hover:underline">
+                        <a href="{{ $rec['url'] }}" download class="text-xs text-cyan-600 hover:underline" onclick="logDownload('{{ basename($rec['url']) }}')">
                             <i class="fas fa-download mr-1"></i> Download
                         </a>
                     </div>
@@ -37,4 +37,24 @@
             @endforelse
         </div>
     </main>
+
+    <script>
+        function logDownload(filename) {
+            try {
+                fetch('{{ route("playback.logDownload") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        filename: filename,
+                        cctv_id: null
+                    })
+                });
+            } catch (e) {
+                console.error("Gagal mencatat log download:", e);
+            }
+        }
+    </script>
 </x-app-layout>

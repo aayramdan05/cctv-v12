@@ -231,6 +231,9 @@ class PlaybackController extends Controller
 
         $filename = $request->input('filename');
         $cctv_id = $request->input('cctv_id');
+        if (empty($cctv_id)) {
+            $cctv_id = null;
+        }
 
         \DB::table('activity_logs')->insert([
             'user_id'       => auth()->id(),
