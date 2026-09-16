@@ -414,7 +414,7 @@
                         },
                         body: JSON.stringify({
                             filename: filename,
-                            cctv_id: camIdParam
+                            cctv_id: '{{ $selectedCctvId }}'
                         })
                     });
                 } catch (e) {
