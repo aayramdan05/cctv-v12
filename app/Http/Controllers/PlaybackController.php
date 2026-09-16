@@ -185,6 +185,19 @@ class PlaybackController extends Controller
             $request->input('end_time')
         );
 
+        \DB::table('activity_logs')->insert([
+            'user_id'       => auth()->id(),
+            'activity_type' => 'cctv_export',
+            'cctv_id'       => $request->input('cctv_id'),
+            'details'       => json_encode([
+                'date' => $request->input('date'),
+                'start_time' => $request->input('start_time'),
+                'end_time' => $request->input('end_time'),
+            ]),
+            'ip_address'    => request()->ip(),
+            'created_at'    => now(),
+        ]);
+
         // 3. Kembali ke halaman dengan pesan sukses
         return back()->with('success', 'Permintaan Export sedang diproses di latar belakang. Silakan cek notifikasi nanti.');
     }
@@ -199,6 +212,15 @@ class PlaybackController extends Controller
         if (!File::exists($path)) {
             return back()->with('error', 'File belum siap atau sudah dihapus.');
         }
+
+        \DB::table('activity_logs')->insert([
+            'user_id'       => auth()->id(),
+            'activity_type' => 'cctv_download',
+            'cctv_id'       => null,
+            'details'       => json_encode(['filename' => $filename]),
+            'ip_address'    => request()->ip(),
+            'created_at'    => now(),
+        ]);
 
         return response()->download($path);
     }
