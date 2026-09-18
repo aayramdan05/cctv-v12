@@ -195,7 +195,7 @@
 
                 <div id="timeline-container-wrapper" class="h-auto min-h-[6rem] bg-white border border-slate-200 lg:border-slate-300 p-2.5 lg:p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-md lg:shadow-lg relative"
                      x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
-                     :class="isFullscreen ? '!fixed !bottom-4 !left-4 !right-4 !w-auto !z-[1000] !shadow-2xl' : ''"
+                     :class="isFullscreen ? '!fixed !bottom-4 !left-4 !right-4 !w-auto !z-[6000] !shadow-2xl' : ''"
                      x-transition>
                     
                     <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 md:gap-0 relative z-40 w-full">
