@@ -3,8 +3,8 @@
 
     <main id="main-content" 
           x-data="hybridMonitoring()"
-          class="flex flex-col h-screen pt-20 p-4 gap-4 bg-slate-100 transition-all duration-300"
-          :class="isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-0 pt-0' : ''">
+          class="flex flex-col h-[calc(100vh-4rem)] p-4 gap-4 bg-slate-100 transition-all duration-300"
+          :class="isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-0 pt-0 h-screen' : ''">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 gap-3 md:h-12 min-h-[3rem]" x-show="!isFullscreen" x-transition>
             <div class="flex items-center gap-4 min-w-0 shrink w-full md:w-auto">
