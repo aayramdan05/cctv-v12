@@ -89,7 +89,7 @@
         </div>
 
         <!-- Kiosk Floating Controls -->
-        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[100] flex gap-2 bg-slate-900/50 hover:bg-slate-900/80 backdrop-blur px-3 py-2 rounded-full transition-all duration-300 shadow-lg" x-show="isFullscreen" x-cloak>
+        <div id="kiosk-floating-controls" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[100] flex gap-2 bg-slate-900/50 hover:bg-slate-900/80 backdrop-blur px-3 py-2 rounded-full transition-all duration-300 shadow-lg" x-show="isFullscreen" x-cloak>
             <button @click="showTimeline = !showTimeline" 
                     class="w-8 h-8 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition flex items-center justify-center"
                     :class="{'text-cyan-400': showTimeline}" title="Toggle Timeline">
@@ -101,10 +101,9 @@
             </button>
         </div>
 
-
         <div class="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0 relative">
             
-            <div class="flex flex-col min-w-0 gap-3 lg:gap-4 z-10 min-h-0"
+            <div id="timeline-original-parent" class="flex flex-col min-w-0 gap-3 lg:gap-4 z-10 min-h-0"
                  :class="isFullscreen ? 'flex-1 h-full' : 'flex-none lg:flex-1'">
                 
                 <div class="w-full lg:w-auto bg-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-md lg:shadow-lg border border-slate-700 relative transition-all duration-300"
@@ -190,8 +189,9 @@
                     </div>
                 </div>
 
-                <div class="h-auto min-h-[6rem] bg-white border border-slate-200 lg:border-slate-300 p-2.5 lg:p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-md lg:shadow-lg relative"
+                <div id="timeline-container-wrapper" class="h-auto min-h-[6rem] bg-white border border-slate-200 lg:border-slate-300 p-2.5 lg:p-3 flex flex-col shrink-0 z-30 transition-all rounded-xl shadow-md lg:shadow-lg relative"
                      x-show="selectedSlot && activeSlots[selectedSlot] && showTimeline"
+                     :class="isFullscreen ? '!fixed !bottom-4 !left-4 !right-4 !w-auto !z-[1000] !shadow-2xl' : ''"
                      x-transition>
                     
                     <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 md:gap-0 relative z-40 w-full">
@@ -592,8 +592,22 @@
                 init() {
                     document.addEventListener('fullscreenchange', () => { 
                         this.isFullscreen = !!document.fullscreenElement; 
-                        if(!this.isFullscreen) { this.showSidebar = true; this.showTimeline = true; }
-                        else { this.showTimeline = false; }
+                        
+                        const timeline = document.getElementById('timeline-container-wrapper');
+                        const controls = document.getElementById('kiosk-floating-controls');
+                        const mainContent = document.getElementById('main-content');
+                        const originalParent = document.getElementById('timeline-original-parent');
+
+                        if (document.fullscreenElement) {
+                            if (timeline) document.fullscreenElement.appendChild(timeline);
+                            if (controls) document.fullscreenElement.appendChild(controls);
+                            this.showTimeline = false;
+                        } else {
+                            if (timeline && originalParent) originalParent.appendChild(timeline);
+                            if (controls && mainContent) mainContent.appendChild(controls);
+                            this.showSidebar = true; 
+                            this.showTimeline = true; 
+                        }
                     });
                     
                     let lastSystemDate = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
