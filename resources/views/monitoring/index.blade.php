@@ -114,7 +114,11 @@
                         <template x-for="i in gridSize">
                             <div class="relative border border-slate-800 bg-black group overflow-hidden cursor-pointer"
                                  :id="'slot-container-' + i"
-                                 :class="{'ring-2 ring-cyan-400 z-20': selectedSlot === i}"
+                                 :class="{
+                                     'ring-2 ring-cyan-400 z-20': selectedSlot === i && maximizedSlot !== i,
+                                     '!fixed !inset-0 !z-[5000] !w-full !h-full': maximizedSlot === i,
+                                     '!hidden': maximizedSlot !== null && maximizedSlot !== i
+                                 }"
                                  @click="selectSlot(i)"
                                  @dblclick="activeSlots[i] ? toggleSlotFullscreen(i) : null"
                                  @dragover.prevent @drop="handleDrop($event, i)"
@@ -560,25 +564,26 @@
 
                 // Preset & Auto-save state
                 presets: [],
+                maximizedSlot: null,
 
                 toggleSlotFullscreen(i) {
-                    const el = document.getElementById('slot-container-' + i);
-                    if (!el) return;
-                    if (!document.fullscreenElement) {
-                        if (el.requestFullscreen) {
-                            el.requestFullscreen();
-                        } else if (el.webkitRequestFullscreen) {
-                            el.webkitRequestFullscreen();
-                        } else if (el.msRequestFullscreen) {
-                            el.msRequestFullscreen();
+                    if (this.maximizedSlot === i) {
+                        this.maximizedSlot = null;
+                        if (document.fullscreenElement && document.exitFullscreen) {
+                            document.exitFullscreen();
                         }
                     } else {
-                        if (document.exitFullscreen) {
-                            document.exitFullscreen();
-                        } else if (document.webkitExitFullscreen) {
-                            document.webkitExitFullscreen();
-                        } else if (document.msExitFullscreen) {
-                            document.msExitFullscreen();
+                        this.maximizedSlot = i;
+                        this.selectedSlot = i;
+                        const main = document.getElementById('main-content');
+                        if (!document.fullscreenElement) {
+                            if (main.requestFullscreen) {
+                                main.requestFullscreen();
+                            } else if (main.webkitRequestFullscreen) {
+                                main.webkitRequestFullscreen();
+                            } else if (main.msRequestFullscreen) {
+                                main.msRequestFullscreen();
+                            }
                         }
                     }
                 },
@@ -593,20 +598,12 @@
                     document.addEventListener('fullscreenchange', () => { 
                         this.isFullscreen = !!document.fullscreenElement; 
                         
-                        const timeline = document.getElementById('timeline-container-wrapper');
-                        const controls = document.getElementById('kiosk-floating-controls');
-                        const mainContent = document.getElementById('main-content');
-                        const originalParent = document.getElementById('timeline-original-parent');
-
-                        if (document.fullscreenElement) {
-                            if (timeline) document.fullscreenElement.appendChild(timeline);
-                            if (controls) document.fullscreenElement.appendChild(controls);
-                            this.showTimeline = false;
-                        } else {
-                            if (timeline && originalParent) originalParent.appendChild(timeline);
-                            if (controls && mainContent) mainContent.appendChild(controls);
+                        if (!this.isFullscreen) {
+                            this.maximizedSlot = null;
                             this.showSidebar = true; 
                             this.showTimeline = true; 
+                        } else {
+                            this.showTimeline = false;
                         }
                     });
                     
