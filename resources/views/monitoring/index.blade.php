@@ -155,7 +155,7 @@
                                             <div class="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 backdrop-blur flex items-center gap-2 z-20 pointer-events-auto">
                                                 <div class="w-2 h-2 rounded-full" :class="activeSlots[i].mode === 'live' ? 'bg-red-500 animate-pulse' : 'bg-green-500'"></div>
                                                 <span class="text-[10px] font-bold text-white uppercase" x-text="activeSlots[i].mode === 'live' ? 'LIVE' : 'REC'"></span>
-                                                <span class="text-[10px] text-gray-300 border-l border-gray-600 pl-2 ml-1 truncate max-w-[100px]" x-text="activeSlots[i].name"></span>
+                                                <span class="text-[10px] text-gray-300 border-l border-gray-600 pl-2 ml-1 truncate max-w-[250px]" x-text="activeSlots[i].name"></span>
                                                 
                                                 <button @click.stop="playLive(i)" 
                                                         x-show="activeSlots[i].mode === 'live'"
@@ -258,7 +258,7 @@
                         </div>
                     </div>
 
-                    <div class="relative h-12 w-full select-none cursor-pointer group bg-slate-800 rounded border border-slate-600 z-10"
+                    <div class="relative h-12 w-full select-none cursor-pointer group bg-slate-800 rounded border border-slate-600 z-50"
                             id="global-timeline"
                             @mousemove="handleTimelineHover($event)"
                             @mouseleave="hoverPercent = -100"
