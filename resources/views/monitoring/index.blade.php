@@ -88,6 +88,20 @@
             </div>
         </div>
 
+        <!-- Kiosk Floating Controls -->
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[100] flex gap-2 bg-slate-900/50 hover:bg-slate-900/80 backdrop-blur px-3 py-2 rounded-full transition-all duration-300 shadow-lg" x-show="isFullscreen" x-cloak>
+            <button @click="showTimeline = !showTimeline" 
+                    class="w-8 h-8 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition flex items-center justify-center"
+                    :class="{'text-cyan-400': showTimeline}" title="Toggle Timeline">
+                <i class="fas fa-chart-bar"></i>
+            </button>
+            <button @click="toggleFullscreen()" 
+                    class="w-8 h-8 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition flex items-center justify-center" title="Exit Kiosk">
+                <i class="fas fa-compress"></i>
+            </button>
+        </div>
+
+
         <div class="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0 relative">
             
             <div class="flex flex-col min-w-0 gap-3 lg:gap-4 z-10 min-h-0"
