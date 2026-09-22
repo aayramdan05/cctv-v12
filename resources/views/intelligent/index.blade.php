@@ -34,6 +34,7 @@
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Password</label>
                                 <input type="password" x-model="config.password" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm" placeholder="***" required :disabled="isPolling">
+                            </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">API Endpoint Path</label>
                                 <input type="text" x-model="config.endpoint" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm font-mono text-[11px]" placeholder="/LAPI/V1.0/..." required :disabled="isPolling">
