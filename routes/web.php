@@ -17,6 +17,7 @@ use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\ServerController;     
 use App\Http\Controllers\PlaybackController;   
+use App\Http\Controllers\IntelligentController;
 use App\Http\Controllers\FfmpegStatusController;
 use App\Http\Controllers\Api\TestCameraController;
 use App\Models\Cctv; 
@@ -129,6 +130,11 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     Route::get('/playback/download/{filename}', [PlaybackController::class, 'downloadExport'])->name('playback.download');
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
     Route::post('/log/cctv-view/{cctv}', [MonitoringController::class, 'logCctvView'])->name('monitoring.logView');
+    
+    // Intelligent (People Counting Testing)
+    Route::get('/intelligent', [IntelligentController::class, 'index'])->name('intelligent.index');
+    Route::get('/intelligent/data', [IntelligentController::class, 'getRealtimeData'])->name('intelligent.data');
+    
     // Tools Streaming
     Route::get('/stream/{cctv}', [StreamController::class, 'play'])->name('stream.play');
     Route::post('/cctv/test-connection', [TestCameraController::class, 'test'])->name('cctv.test');
