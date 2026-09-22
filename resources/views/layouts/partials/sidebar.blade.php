@@ -37,12 +37,6 @@
         </a>
         @endcan
 
-        <!-- Intelligent Dashboard (Testing) -->
-        <a href="{{ route('intelligent.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('intelligent.index') ? 'active' : '' }}">
-            <i class="fas fa-brain w-5 {{ request()->routeIs('intelligent.index') ? 'text-purple-500' : 'text-slate-400' }}"></i>
-            <span class="font-medium text-sm">Intelligent (AI)</span>
-        </a>
-
         @canany(['building_manage', 'user_view', 'cctv_view', 'server_manage', 'api_key_manage', 'report_view'])
             <div class="pt-4 mt-4 border-t border-cyan-100">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase mb-2">Manajemen</p>
@@ -144,6 +138,12 @@
                 <a href="{{ route('superadmin.roles.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('superadmin.roles.*') ? 'active' : '' }}">
                     <i class="fas fa-user-tag w-5 {{ request()->routeIs('superadmin.roles.*') ? 'text-cyan-500' : 'text-slate-400' }}"></i>
                     <span class="font-medium text-sm">Manajemen Role</span>
+                </a>
+                
+                <!-- Intelligent Dashboard (Testing) -->
+                <a href="{{ route('intelligent.index') }}" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 {{ request()->routeIs('intelligent.index') ? 'active' : '' }}">
+                    <i class="fas fa-brain w-5 {{ request()->routeIs('intelligent.index') ? 'text-purple-500' : 'text-slate-400' }}"></i>
+                    <span class="font-medium text-sm">Intelligent (AI)</span>
                 </a>
             </div>
         @endif

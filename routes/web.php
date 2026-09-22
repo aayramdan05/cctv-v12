@@ -131,10 +131,6 @@ Route::middleware(['auth', 'verified', 'dashboard.access'])->group(function () {
     Route::get('/monitoring/timeline/{cctv}', [MonitoringController::class, 'getTimelineJson'])->name('monitoring.timeline');
     Route::post('/log/cctv-view/{cctv}', [MonitoringController::class, 'logCctvView'])->name('monitoring.logView');
     
-    // Intelligent (People Counting Testing)
-    Route::get('/intelligent', [IntelligentController::class, 'index'])->name('intelligent.index');
-    Route::get('/intelligent/data', [IntelligentController::class, 'getRealtimeData'])->name('intelligent.data');
-    
     // Tools Streaming
     Route::get('/stream/{cctv}', [StreamController::class, 'play'])->name('stream.play');
     Route::post('/cctv/test-connection', [TestCameraController::class, 'test'])->name('cctv.test');
@@ -381,6 +377,10 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::get('/superadmin/roles', [App\Http\Controllers\SuperAdminController::class, 'rolesIndex'])->name('superadmin.roles.index');
     Route::post('/superadmin/roles', [App\Http\Controllers\SuperAdminController::class, 'roleStore'])->name('superadmin.roles.store');
     Route::delete('/superadmin/roles/{slug}', [App\Http\Controllers\SuperAdminController::class, 'roleDestroy'])->name('superadmin.roles.destroy');
+
+    // Intelligent (People Counting Testing)
+    Route::get('/intelligent', [IntelligentController::class, 'index'])->name('intelligent.index');
+    Route::get('/intelligent/data', [IntelligentController::class, 'getRealtimeData'])->name('intelligent.data');
 });
 
 // Halaman Aktivitas Log - Dinamis Berbasis Permission
