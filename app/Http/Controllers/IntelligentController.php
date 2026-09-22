@@ -60,6 +60,8 @@ class IntelligentController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
     public function checkOnvif(Request $request)
     {
         $ip = $request->input('ip');
