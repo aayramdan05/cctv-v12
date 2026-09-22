@@ -34,9 +34,13 @@
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Password</label>
                                 <input type="password" x-model="config.password" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm" placeholder="***" required :disabled="isPolling">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">API Endpoint Path</label>
+                                <input type="text" x-model="config.endpoint" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm font-mono text-[11px]" placeholder="/LAPI/V1.0/..." required :disabled="isPolling">
+                                <p class="text-[10px] text-slate-500 mt-1">Ubah path ini jika tipe kamera Anda berbeda.</p>
                             </div>
 
-                            <button type="submit" 
+                            <button type="submit"  
                                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
                                 :class="isPolling ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500' : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'">
                                 <i class="fas mr-2 mt-0.5" :class="isPolling ? 'fa-stop-circle' : 'fa-play-circle'"></i>
@@ -157,7 +161,8 @@
                 config: {
                     ip: '',
                     username: 'admin',
-                    password: ''
+                    password: '',
+                    endpoint: '/LAPI/V1.0/Intelligent/PeopleCounting/Report'
                 },
                 isPolling: false,
                 pollingTimer: null,
@@ -199,7 +204,7 @@
 
                 async fetchData() {
                     try {
-                        const response = await fetch(`{{ route('intelligent.data') }}?ip=${this.config.ip}&username=${this.config.username}&password=${encodeURIComponent(this.config.password)}`);
+                        const response = await fetch(`{{ route('intelligent.data') }}?ip=${this.config.ip}&username=${this.config.username}&password=${encodeURIComponent(this.config.password)}&endpoint=${encodeURIComponent(this.config.endpoint)}`);
                         const data = await response.json();
 
                         if (!response.ok) {

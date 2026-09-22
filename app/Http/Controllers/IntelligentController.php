@@ -24,6 +24,7 @@ class IntelligentController extends Controller
         $ip = $request->input('ip');
         $username = $request->input('username', 'admin');
         $password = $request->input('password');
+        $customEndpoint = $request->input('endpoint', '/LAPI/V1.0/Intelligent/PeopleCounting/Report');
 
         if (!$ip || !$username || !$password) {
             return response()->json([
@@ -32,8 +33,8 @@ class IntelligentController extends Controller
         }
 
         try {
-            // UNV LAPI Endpoint for People Counting Report
-            $url = "http://{$ip}/LAPI/V1.0/Intelligent/PeopleCounting/Report";
+            // Menggunakan Endpoint Dinamis
+            $url = "http://{$ip}" . $customEndpoint;
 
             // Uniview cameras usually require Digest Authentication
             $response = Http::timeout(3)
