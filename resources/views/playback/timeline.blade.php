@@ -2,15 +2,14 @@
     <!-- Tambahkan SweetAlert2 untuk Popup Keren -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <main id="main-content" class="pt-20 p-6 md:p-8 h-screen flex flex-col relative bg-slate-50">
+    <div x-data="playbackApp()" x-init="initApp()">
+        <main id="main-content" class="pt-20 p-6 md:p-8 h-screen flex flex-col relative bg-slate-50">
         
         <!-- Header Playback -->
         <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 gap-4 shrink-0">
             <div class="flex items-center gap-3">
                 <h2 class="text-2xl font-bold text-slate-800">Playback</h2>
-                <span class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-600 hidden sm:inline-block shadow-sm">
-                    {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d M Y') }}
-                </span>
+                <span class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-600 hidden sm:inline-block shadow-sm" x-text="date"></span>
 
                 <!-- TOMBOL EXPORT (ADMIN ONLY) -->
                 @can('playback_export')
@@ -22,24 +21,14 @@
             </div>
             
             <!-- FORM FILTER MODERN (Alpine.js) -->
-            <form method="GET" id="filter-form" class="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-1 w-full xl:w-auto"
-                  x-data="{ 
-                      showBuilding: false, 
-                      showCctv: false,
-                      searchBuilding: '',
-                      searchCctv: '',
-                      selectedBuildingName: '{{ $buildings->firstWhere('id', $selectedBuildingId)->nama_gedung ?? 'Semua Gedung' }}',
-                      selectedCctvName: '{{ $cctvs->firstWhere('id', $selectedCctvId)->nama_cctv ?? 'Pilih Kamera' }}',
-                      buildings: {{ $buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung])->toJson() }},
-                      cctvs: {{ $cctvs->map(fn($c) => ['id' => $c->id, 'name' => $c->nama_cctv])->toJson() }}
-                  }">
+            <div class="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-1 w-full xl:w-auto">
                 
                 @if(auth()->user()->role !== 'faculty_operator')
                     <div class="flex items-center px-3 py-2 border-r border-slate-100">
-                        <select name="faculty" class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-24 truncate" onchange="this.form.submit()">
+                        <select x-model="selectedFaculty" @change="selectFaculty($event.target.value)" class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer p-0 w-24 truncate">
                             <option value="">-- Fakultas --</option>
                             @foreach($faculties as $fac)
-                                <option value="{{ $fac }}" {{ $selectedFaculty == $fac ? 'selected' : '' }}>{{ $fac }}</option>
+                                <option value="{{ $fac }}">{{ $fac }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -51,17 +40,16 @@
                         <span class="text-xs font-bold text-slate-700 truncate" x-text="selectedBuildingName"></span>
                         <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-2"></i>
                     </button>
-                    <input type="hidden" name="building_id" :value="{{ $selectedBuildingId ?: 'null' }}" id="building_id_input">
                     
-                    <div x-show="showBuilding" x-transition class="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] p-2">
+                    <div x-show="showBuilding" x-transition class="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] p-2" x-cloak>
                         <input type="text" x-model="searchBuilding" placeholder="Cari Gedung..." 
                                class="w-full text-xs border-slate-200 rounded-lg mb-2 focus:ring-cyan-500 focus:border-cyan-500">
                         <div class="max-h-48 overflow-y-auto custom-scrollbar">
-                            <button type="button" @click="document.getElementById('building_id_input').value=''; document.getElementById('filter-form').submit()" 
+                            <button type="button" @click="selectBuilding(null)" 
                                     class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-lg font-medium text-slate-600">-- Semua Gedung --</button>
-                            <template x-for="b in buildings.filter(i => i.name.toLowerCase().includes(searchBuilding.toLowerCase()))" :key="b.id">
+                            <template x-for="b in filteredBuildings" :key="b.id">
                                 <button type="button" 
-                                        @click="document.getElementById('building_id_input').value=b.id; document.getElementById('filter-form').submit()"
+                                        @click="selectBuilding(b.id)"
                                         class="w-full text-left px-3 py-2 text-xs hover:bg-cyan-50 hover:text-cyan-700 rounded-lg transition-colors font-medium text-slate-700"
                                         x-text="b.name"></button>
                             </template>
@@ -78,17 +66,16 @@
                         </div>
                         <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-2"></i>
                     </button>
-                    <input type="hidden" name="cctv_id" value="{{ $selectedCctvId }}" id="cctv_id_input">
 
-                    <div x-show="showCctv" x-transition class="absolute top-full left-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] p-2">
+                    <div x-show="showCctv" x-transition class="absolute top-full left-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] p-2" x-cloak>
                         <input type="text" x-model="searchCctv" placeholder="Cari Kamera..." 
                                class="w-full text-xs border-slate-200 rounded-lg mb-2 focus:ring-cyan-500 focus:border-cyan-500">
                         <div class="max-h-60 overflow-y-auto custom-scrollbar">
-                            <template x-for="c in cctvs.filter(i => i.name.toLowerCase().includes(searchCctv.toLowerCase()))" :key="c.id">
+                            <template x-for="c in filteredCctvs" :key="c.id">
                                 <button type="button" 
-                                        @click="document.getElementById('cctv_id_input').value=c.id; document.getElementById('filter-form').submit()"
+                                        @click="selectCctv(c.id)"
                                         class="w-full text-left px-3 py-2 text-xs hover:bg-cyan-50 hover:text-cyan-700 rounded-lg transition-colors font-medium"
-                                        :class="c.id == {{ $selectedCctvId ?: 0 }} ? 'bg-cyan-50 text-cyan-700 font-bold' : 'text-slate-700'"
+                                        :class="c.id == selectedCctvId ? 'bg-cyan-50 text-cyan-700 font-bold' : 'text-slate-700'"
                                         x-text="c.name"></button>
                             </template>
                         </div>
@@ -96,20 +83,14 @@
                 </div>
 
                 <div class="flex items-center px-4 py-2">
-                    <input type="date" name="date" id="date_selector" value="{{ $date }}" 
-                           class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer p-0" 
-                           onchange="this.form.submit()">
+                    <input type="date" x-model="date" @change="changeDate($event.target.value)"
+                           class="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer p-0">
                 </div>
-            </form>
+            </div>
         </div>
 
         <!-- Main Content Grid -->
-        <div class="flex flex-1 gap-4 overflow-hidden min-h-0 flex-col lg:flex-row" 
-             x-data="{ 
-                camSearch: '',
-                selectedCam: {{ $selectedCctvId ?: 'null' }},
-                cameras: {{ $cctvs->map(fn($c) => ['id' => $c->id, 'name' => $c->nama_cctv, 'building' => $c->building->nama_gedung ?? 'N/A'])->toJson() }}
-             }">
+        <div class="flex flex-1 gap-4 overflow-hidden min-h-0 flex-col lg:flex-row">
             
             <!-- LEFT SIDEBAR: CAMERA LIST (SEAMLESS SEARCH) -->
             <div class="w-full lg:w-64 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden shrink-0">
@@ -125,13 +106,13 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    <template x-for="cam in cameras.filter(i => i.name.toLowerCase().includes(camSearch.toLowerCase()) || i.building.toLowerCase().includes(camSearch.toLowerCase()))" :key="cam.id">
+                    <template x-for="cam in sidebarCctvs" :key="cam.id">
                         <button type="button" 
-                                @click="window.location.href = `{{ route('playback.index') }}?date={{ $date }}&cctv_id=${cam.id}`"
+                                @click="selectCctv(cam.id)"
                                 class="w-full text-left px-3 py-2.5 rounded-xl transition-all group flex flex-col gap-0.5"
-                                :class="cam.id == selectedCam ? 'bg-cyan-600 shadow-lg shadow-cyan-600/20' : 'hover:bg-slate-50 border border-transparent hover:border-slate-100'">
-                            <span class="text-xs font-bold truncate" :class="cam.id == selectedCam ? 'text-white' : 'text-slate-700'" x-text="cam.name"></span>
-                            <span class="text-[10px] truncate" :class="cam.id == selectedCam ? 'text-cyan-100' : 'text-slate-400'" x-text="cam.building"></span>
+                                :class="cam.id == selectedCctvId ? 'bg-cyan-600 shadow-lg shadow-cyan-600/20' : 'hover:bg-slate-50 border border-transparent hover:border-slate-100'">
+                            <span class="text-xs font-bold truncate" :class="cam.id == selectedCctvId ? 'text-white' : 'text-slate-700'" x-text="cam.name"></span>
+                            <span class="text-[10px] truncate" :class="cam.id == selectedCctvId ? 'text-cyan-100' : 'text-slate-400'" x-text="cam.building_name"></span>
                         </button>
                     </template>
                 </div>
@@ -230,8 +211,8 @@
                     
                     <form action="{{ route('playback.export') }}" method="POST">
                         @csrf
-                        <input type="hidden" name="cctv_id" value="{{ $selectedCctvId }}">
-                        <input type="hidden" name="date" value="{{ $date }}">
+                        <input type="hidden" name="cctv_id" :value="selectedCctvId">
+                        <input type="hidden" name="date" :value="date">
 
                         <!-- Modal Header -->
                         <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 flex items-center justify-between">
@@ -252,10 +233,8 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-slate-500 uppercase font-bold tracking-wide">Kamera & Tanggal</p>
-                                    <p class="text-sm font-bold text-slate-800">
-                                        {{ $cctvs->firstWhere('id', $selectedCctvId)->nama_cctv ?? 'Camera' }}
-                                    </p>
-                                    <p class="text-xs text-slate-600">{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</p>
+                                    <p class="text-sm font-bold text-slate-800" x-text="selectedCctvName"></p>
+                                    <p class="text-xs text-slate-600" x-text="date"></p>
                                 </div>
                             </div>
 
@@ -435,9 +414,6 @@
 
         // --- EXISTING PLAYER LOGIC ---
         document.addEventListener("DOMContentLoaded", function() {
-            const dateParam = "{{ $date }}";
-            const camIdParam = "{{ $selectedCctvId }}";
-            
             const player = document.getElementById('main-player');
             const container = document.getElementById('playlist-container');
             const timelineBlocks = document.getElementById('timeline-blocks');
@@ -450,23 +426,35 @@
             let recordings = [];
             let currentIndex = -1;
 
-            if (!camIdParam) {
-                container.innerHTML = '<div class="p-10 text-center text-xs text-slate-400">Silakan pilih kamera terlebih dahulu.</div>';
-                return;
-            }
+            // Listen to Alpine component events
+            window.addEventListener('load-recordings', function(e) {
+                const camIdParam = e.detail.cctvId;
+                const dateParam = e.detail.date;
 
-            // FETCH DATA
-            fetch(`{{ route('playback.data') }}?date=${dateParam}&cctv_id=${camIdParam}`)
-                .then(res => res.json())
-                .then(data => {
-                    recordings = data;
-                    if (totalFilesLabel) totalFilesLabel.innerText = recordings.length;
-                    renderAll();
-                })
-                .catch(err => {
-                    console.error(err);
-                    container.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Gagal memuat data.</div>';
-                });
+                if (!camIdParam) {
+                    container.innerHTML = '<div class="p-10 text-center text-xs text-slate-400">Silakan pilih kamera terlebih dahulu.</div>';
+                    return;
+                }
+
+                // Tampilkan loading saat fetch
+                container.innerHTML = '<div class="p-10 text-center text-xs text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data...</div>';
+
+                // FETCH DATA
+                fetch(`{{ route('playback.data') }}?date=${dateParam}&cctv_id=${camIdParam}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        recordings = data;
+                        if (totalFilesLabel) totalFilesLabel.innerText = recordings.length;
+                        // Auto-select first video if available
+                        currentIndex = recordings.length > 0 ? 0 : -1;
+                        renderAll();
+                        if (currentIndex === 0) playVideo(0);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        container.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Gagal memuat data.</div>';
+                    });
+            });
 
             function renderAll() {
                 container.innerHTML = '';
@@ -589,6 +577,123 @@
                 }
             });
         });
+
+        // --- ALPINE.JS COMPONENT ---
+        function playbackApp() {
+            return {
+                date: '{{ $date }}',
+                selectedFaculty: '{{ $selectedFaculty ?? '' }}',
+                selectedBuildingId: {{ $selectedBuildingId ?: 'null' }},
+                selectedCctvId: {{ $selectedCctvId ?: 'null' }},
+                
+                allBuildings: @json($buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung, 'faculty' => $b->fakultas])),
+                allCctvs: @json($cctvs->map(fn($c) => ['id' => $c->id, 'name' => $c->nama_cctv, 'building_id' => $c->building_id, 'building_name' => $c->building->nama_gedung ?? 'N/A'])),
+                
+                showBuilding: false,
+                showCctv: false,
+                searchBuilding: '',
+                searchCctv: '',
+                camSearch: '',
+
+                get filteredBuildings() {
+                    let b = this.allBuildings;
+                    if (this.selectedFaculty) {
+                        b = b.filter(i => i.faculty === this.selectedFaculty);
+                    }
+                    if (this.searchBuilding) {
+                        b = b.filter(i => i.name.toLowerCase().includes(this.searchBuilding.toLowerCase()));
+                    }
+                    return b;
+                },
+
+                get filteredCctvs() {
+                    let c = this.allCctvs;
+                    if (this.selectedBuildingId) {
+                        c = c.filter(i => i.building_id == this.selectedBuildingId);
+                    } else if (this.selectedFaculty) {
+                        let validBuildingIds = this.allBuildings.filter(b => b.faculty === this.selectedFaculty).map(b => b.id);
+                        c = c.filter(i => validBuildingIds.includes(i.building_id));
+                    }
+                    if (this.searchCctv) {
+                        c = c.filter(i => i.name.toLowerCase().includes(this.searchCctv.toLowerCase()));
+                    }
+                    return c;
+                },
+                
+                get sidebarCctvs() {
+                    let c = this.filteredCctvs;
+                    if (this.camSearch) {
+                        c = c.filter(i => i.name.toLowerCase().includes(this.camSearch.toLowerCase()) || i.building_name.toLowerCase().includes(this.camSearch.toLowerCase()));
+                    }
+                    return c;
+                },
+
+                get selectedBuildingName() {
+                    if (!this.selectedBuildingId) return '-- Semua Gedung --';
+                    let b = this.allBuildings.find(i => i.id == this.selectedBuildingId);
+                    return b ? b.name : '-- Semua Gedung --';
+                },
+
+                get selectedCctvName() {
+                    if (!this.selectedCctvId) return '-- Pilih Kamera --';
+                    let c = this.allCctvs.find(i => i.id == this.selectedCctvId);
+                    return c ? c.name : '-- Pilih Kamera --';
+                },
+
+                selectFaculty(fac) {
+                    this.selectedFaculty = fac;
+                    this.selectedBuildingId = null;
+                    this.updateUrl();
+                },
+
+                selectBuilding(id) {
+                    this.selectedBuildingId = id;
+                    this.showBuilding = false;
+                    this.updateUrl();
+                },
+
+                selectCctv(id) {
+                    this.selectedCctvId = id;
+                    this.showCctv = false;
+                    this.fetchRecordings();
+                    this.updateUrl();
+                },
+                
+                changeDate(newDate) {
+                    this.date = newDate;
+                    this.fetchRecordings();
+                    this.updateUrl();
+                },
+                
+                updateUrl() {
+                    const url = new URL(window.location);
+                    if (this.selectedFaculty) url.searchParams.set('faculty', this.selectedFaculty);
+                    else url.searchParams.delete('faculty');
+                    
+                    if (this.selectedBuildingId) url.searchParams.set('building_id', this.selectedBuildingId);
+                    else url.searchParams.delete('building_id');
+                    
+                    if (this.selectedCctvId) url.searchParams.set('cctv_id', this.selectedCctvId);
+                    else url.searchParams.delete('cctv_id');
+                    
+                    url.searchParams.set('date', this.date);
+                    window.history.pushState({}, '', url);
+                },
+
+                initApp() {
+                    if (this.selectedCctvId) {
+                        this.fetchRecordings();
+                    }
+                },
+
+                fetchRecordings() {
+                    if (!this.selectedCctvId) return;
+                    window.dispatchEvent(new CustomEvent('load-recordings', { 
+                        detail: { cctvId: this.selectedCctvId, date: this.date } 
+                    }));
+                }
+            }
+        }
     </script>
 
     <style>
@@ -597,4 +702,5 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+    </div> <!-- END ALPINE WRAPPER -->
 </x-app-layout>

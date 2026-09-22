@@ -18,40 +18,20 @@ class PlaybackController extends Controller
         $user = auth()->user();
         $date = $request->input('date', now()->format('Y-m-d'));
         
-        // --- 1. FILTER FAKULTAS ---
         $faculties = Building::distinct()->pluck('fakultas')->filter();
-        $selectedFaculty = $request->input('faculty');
         
-        // Jika Operator Fakultas login, kunci filter ke fakultas dia
+        // Always load all buildings so the frontend can filter them dynamically
+        $buildings = Building::orderBy('nama_gedung')->get();
+        
+        // Always load all accessible CCTVs so frontend can filter them dynamically
+        $cctvs = Cctv::accessibleByAuth()->with('building')->orderBy('nama_cctv')->get();
+        
+        $selectedFaculty = $request->input('faculty');
         if ($user->role === 'faculty_operator') {
             $selectedFaculty = $user->faculty;
         }
 
-        // --- 2. FILTER GEDUNG ---
-        $buildingsQuery = Building::query();
-        if ($selectedFaculty) {
-            $buildingsQuery->where('fakultas', $selectedFaculty);
-        }
-        $buildings = $buildingsQuery->get();
         $selectedBuildingId = $request->input('building_id');
-
-        // --- 3. FILTER KAMERA ---
-        // Ambil CCTV berdasarkan gedung yang dipilih (atau semua jika belum pilih gedung)
-        // Gunakan accessibleByAuth() agar tetap aman sesuai role
-        $cctvsQuery = Cctv::accessibleByAuth()->orderBy('nama_cctv');
-
-        if ($selectedBuildingId) {
-            $cctvsQuery->where('building_id', $selectedBuildingId);
-        } elseif ($selectedFaculty) {
-            // Jika cuma pilih fakultas tapi belum pilih gedung, tampilkan semua cctv di fakultas itu
-            $cctvsQuery->whereHas('building', function($q) use ($selectedFaculty) {
-                $q->where('fakultas', $selectedFaculty);
-            });
-        }
-
-        $cctvs = $cctvsQuery->get();
-        
-        // Default pilih kamera pertama di list jika belum ada yang dipilih
         $selectedCctvId = $request->input('cctv_id', $cctvs->first()->id ?? null);
 
         return view('playback.timeline', compact(
