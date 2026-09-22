@@ -586,8 +586,8 @@
                 selectedBuildingId: {{ $selectedBuildingId ?: 'null' }},
                 selectedCctvId: {{ $selectedCctvId ?: 'null' }},
                 
-                allBuildings: @json($buildings->map(fn($b) => ['id' => $b->id, 'name' => $b->nama_gedung, 'faculty' => $b->fakultas])),
-                allCctvs: @json($cctvs->map(fn($c) => ['id' => $c->id, 'name' => $c->nama_cctv, 'building_id' => $c->building_id, 'building_name' => $c->building->nama_gedung ?? 'N/A'])),
+                allBuildings: @json($buildings),
+                allCctvs: @json($cctvs),
                 
                 showBuilding: false,
                 showCctv: false,

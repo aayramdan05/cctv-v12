@@ -21,10 +21,24 @@ class PlaybackController extends Controller
         $faculties = Building::distinct()->pluck('fakultas')->filter();
         
         // Always load all buildings so the frontend can filter them dynamically
-        $buildings = Building::orderBy('nama_gedung')->get();
+        $buildings = Building::orderBy('nama_gedung')->get()->map(function($b) {
+            return [
+                'id' => $b->id,
+                'name' => $b->nama_gedung,
+                'faculty' => $b->fakultas
+            ];
+        });
         
         // Always load all accessible CCTVs so frontend can filter them dynamically
-        $cctvs = Cctv::accessibleByAuth()->with('building')->orderBy('nama_cctv')->get();
+        $cctvsRaw = Cctv::accessibleByAuth()->with('building')->orderBy('nama_cctv')->get();
+        $cctvs = $cctvsRaw->map(function($c) {
+            return [
+                'id' => $c->id,
+                'name' => $c->nama_cctv,
+                'building_id' => $c->building_id,
+                'building_name' => $c->building->nama_gedung ?? 'N/A'
+            ];
+        });
         
         $selectedFaculty = $request->input('faculty');
         if ($user->role === 'faculty_operator') {
@@ -32,7 +46,7 @@ class PlaybackController extends Controller
         }
 
         $selectedBuildingId = $request->input('building_id');
-        $selectedCctvId = $request->input('cctv_id', $cctvs->first()->id ?? null);
+        $selectedCctvId = $request->input('cctv_id', $cctvsRaw->first()->id ?? null);
 
         return view('playback.timeline', compact(
             'date', 'faculties', 'selectedFaculty', 
