@@ -381,6 +381,7 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     // Intelligent (People Counting Testing)
     Route::get('/intelligent', [IntelligentController::class, 'index'])->name('intelligent.index');
     Route::get('/intelligent/data', [IntelligentController::class, 'getRealtimeData'])->name('intelligent.data');
+    Route::get('/intelligent/onvif', [IntelligentController::class, 'checkOnvif'])->name('intelligent.onvif');
 });
 
 // Halaman Aktivitas Log - Dinamis Berbasis Permission

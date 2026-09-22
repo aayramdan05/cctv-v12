@@ -40,12 +40,20 @@
                                 <p class="text-[10px] text-slate-500 mt-1">Ubah path ini jika tipe kamera Anda berbeda.</p>
                             </div>
 
-                            <button type="submit"  
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                :class="isPolling ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500' : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'">
-                                <i class="fas mr-2 mt-0.5" :class="isPolling ? 'fa-stop-circle' : 'fa-play-circle'"></i>
-                                <span x-text="isPolling ? 'Stop Polling' : 'Start Polling'"></span>
-                            </button>
+                            <div class="flex gap-2">
+                                <button type="submit"  
+                                    class="w-2/3 flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :class="isPolling ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500' : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'">
+                                    <i class="fas mr-2 mt-0.5" :class="isPolling ? 'fa-stop-circle' : 'fa-play-circle'"></i>
+                                    <span x-text="isPolling ? 'Stop Polling' : 'Start API Polling'"></span>
+                                </button>
+                                
+                                <button type="button" @click="checkOnvif()"
+                                    class="w-1/3 flex justify-center py-3 px-4 border border-slate-300 rounded-xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 transition-all duration-200"
+                                    :disabled="isPolling">
+                                    <i class="fas fa-satellite-dish mr-1 mt-0.5 text-blue-500"></i> ONVIF
+                                </button>
+                            </div>
                         </form>
                     </div>
 
@@ -200,6 +208,29 @@
                 stopPolling() {
                     this.isPolling = false;
                     clearInterval(this.pollingTimer);
+                },
+
+                async checkOnvif() {
+                    if(!this.config.ip || !this.config.password) return;
+                    
+                    this.errorMsg = null;
+                    this.hasData = false;
+                    this.rawData = 'Checking ONVIF Capabilities... Please wait...';
+                    this.hasData = true; // Show raw data box
+                    
+                    try {
+                        const response = await fetch(`{{ route('intelligent.onvif') }}?ip=${this.config.ip}&username=${this.config.username}&password=${encodeURIComponent(this.config.password)}`);
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.error || 'Terjadi kesalahan saat mengecek ONVIF');
+                        }
+
+                        this.rawData = data.xml_response;
+                    } catch (error) {
+                        this.errorMsg = error.message;
+                        this.rawData = 'Failed to connect to ONVIF.';
+                    }
                 },
 
                 async fetchData() {
