@@ -73,55 +73,29 @@ class IntelligentController extends Controller
         }
 
         try {
-            // Generate WS-UsernameToken profile for authentication
-            $nonce = random_bytes(16);
-            $timestamp = gmdate('Y-m-d\TH:i:s\Z');
-            $passwordDigest = base64_encode(sha1($nonce . $timestamp . $password, true));
-            $nonceBase64 = base64_encode($nonce);
+            // LAPI Discovery
+            $url = "http://{$ip}/LAPI/V1.0/System/Capabilities";
 
-            // SOAP Request for GetEventProperties (To see what Events this camera supports)
-            $soapEnvelope = <<<XML
-<?xml version="1.0" encoding="utf-8"?>
-<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
-            xmlns:tev="http://www.onvif.org/ver10/events/wsdl">
-  <s:Header>
-    <Security s:mustUnderstand="1" xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-      <UsernameToken>
-        <Username>{$username}</Username>
-        <Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">{$passwordDigest}</Password>
-        <Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">{$nonceBase64}</Nonce>
-        <Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">{$timestamp}</Created>
-      </UsernameToken>
-    </Security>
-  </s:Header>
-  <s:Body>
-    <tev:GetEventProperties/>
-  </s:Body>
-</s:Envelope>
-XML;
+            $response = Http::timeout(5)
+                ->withDigestAuth($username, $password)
+                ->get($url);
 
-            // Typically UNV ONVIF Events service is at /onvif/device_service or /onvif/Events
-            // We'll try /onvif/Events first (Standard ONVIF)
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/soap+xml; charset=utf-8',
-            ])->timeout(5)->post("http://{$ip}/onvif/Events", $soapEnvelope);
-
-            if (!$response->successful()) {
-                // Fallback to device service
-                $response = Http::withHeaders([
-                    'Content-Type' => 'application/soap+xml; charset=utf-8',
-                ])->timeout(5)->post("http://{$ip}/onvif/device_service", $soapEnvelope);
+            if ($response->successful()) {
+                return response()->json([
+                    'status' => 'success',
+                    'xml_response' => $response->body()
+                ]);
             }
 
             return response()->json([
-                'status' => 'success',
+                'error' => 'Gagal mengambil data Capabilities. Status Code: ' . $response->status(),
                 'xml_response' => $response->body()
-            ]);
+            ], $response->status());
 
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'ONVIF Connection Failed',
-                'message' => $e->getMessage()
+                'error' => 'Connection Failed',
+                'xml_response' => $e->getMessage()
             ], 500);
         }
     }
