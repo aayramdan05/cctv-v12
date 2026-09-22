@@ -141,14 +141,19 @@
                             <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase tracking-wider">
                                 <i class="fas fa-code text-cyan-400"></i> Raw API Response (UNV LAPI)
                             </h3>
-                            <div class="flex gap-1.5">
-                                <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                            <div class="flex items-center gap-3">
+                                <button type="button" @click="copyRawData()" class="text-xs text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1 bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-md">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <div class="flex gap-1.5 border-l border-slate-600 pl-3">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="p-4 overflow-auto max-h-96 custom-scrollbar">
-                            <pre class="text-xs font-mono text-cyan-300 leading-relaxed" x-text="JSON.stringify(rawData, null, 2)"></pre>
+                        <div class="p-4 overflow-y-auto overflow-x-hidden max-h-96 custom-scrollbar">
+                            <pre class="text-xs font-mono text-cyan-300 leading-relaxed whitespace-pre-wrap break-all" x-text="typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2)"></pre>
                         </div>
                     </div>
                     
@@ -232,6 +237,15 @@
                         this.errorMsg = error.message;
                         this.rawData = 'Failed to connect to ONVIF.';
                     }
+                },
+
+                copyRawData() {
+                    const textToCopy = typeof this.rawData === 'string' ? this.rawData : JSON.stringify(this.rawData, null, 2);
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        alert('Raw Response disalin ke clipboard!');
+                    }).catch(err => {
+                        alert('Gagal menyalin text: ' + err);
+                    });
                 },
 
                 async fetchData() {
