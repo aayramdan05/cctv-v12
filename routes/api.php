@@ -3,6 +3,12 @@
 use Illuminate\Http\Request;
 use App\Models\Cctv;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\IntelligentController;
+
+// Webhook Catcher untuk UNV Camera (LAPI Push)
+// Kita tangkap semua method POST ke /api/webhook/unv-push atau URL apapun yang diakhiri wildcard
+Route::post('/webhook/unv-push', [IntelligentController::class, 'receiveWebhook']);
+Route::post('/LAPI/{any}', [IntelligentController::class, 'receiveWebhook'])->where('any', '.*');
 
 // Endpoint untuk Node mengambil config
 // Contoh akses: http://ip-master/api/node-config?ip=192.168.1.1&token=secret_unpad_cctv_2026

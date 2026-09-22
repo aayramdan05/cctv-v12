@@ -19,51 +19,30 @@
                 <div class="lg:col-span-1 space-y-6">
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                         <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <i class="fas fa-network-wired text-slate-400"></i> Camera Connection
+                            <i class="fas fa-satellite-dish text-slate-400"></i> Server Receiver Status
                         </h2>
                         
-                        <form @submit.prevent="toggleConnection" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">IP Address Kamera</label>
-                                <input type="text" x-model="config.ip" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm font-mono" placeholder="192.168.1.100" required :disabled="isPolling">
+                        <div class="space-y-4">
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wide">Status Polling</p>
+                                <p class="text-lg font-black text-purple-600 mt-1" x-text="isPolling ? 'Aktif Menunggu Data' : 'Berhenti'"></p>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Username</label>
-                                <input type="text" x-model="config.username" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm" placeholder="admin" required :disabled="isPolling">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Password</label>
-                                <input type="password" x-model="config.password" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm" placeholder="***" required :disabled="isPolling">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">API Endpoint Path</label>
-                                <input type="text" x-model="config.endpoint" class="block w-full rounded-xl border-slate-300 bg-slate-50 focus:ring-purple-500 focus:border-purple-500 sm:text-sm font-mono text-[11px]" placeholder="/LAPI/V1.0/..." required :disabled="isPolling">
-                                <p class="text-[10px] text-slate-500 mt-1">Ubah path ini jika tipe kamera Anda berbeda.</p>
-                            </div>
-
-                            <div class="flex gap-2">
-                                <button type="submit"  
-                                    class="w-2/3 flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                    :class="isPolling ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500' : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'">
-                                    <i class="fas mr-2 mt-0.5" :class="isPolling ? 'fa-stop-circle' : 'fa-play-circle'"></i>
-                                    <span x-text="isPolling ? 'Stop Polling' : 'Start API Polling'"></span>
-                                </button>
-                                
-                                <button type="button" @click="checkOnvif()"
-                                    class="w-1/3 flex justify-center py-3 px-4 border border-slate-300 rounded-xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 transition-all duration-200"
-                                    :disabled="isPolling">
-                                    <i class="fas fa-satellite-dish mr-1 mt-0.5 text-blue-500"></i> ONVIF
-                                </button>
-                            </div>
-                        </form>
+                            
+                            <button type="button" @click="toggleConnection()" 
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all duration-200"
+                                :class="isPolling ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-600 hover:bg-purple-700'">
+                                <i class="fas mr-2 mt-0.5" :class="isPolling ? 'fa-stop-circle' : 'fa-play-circle'"></i>
+                                <span x-text="isPolling ? 'Stop Menunggu' : 'Mulai Menunggu Data'"></span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
                         <div class="flex items-start gap-3">
                             <i class="fas fa-info-circle text-indigo-500 mt-0.5"></i>
                             <div class="text-sm text-indigo-800">
-                                <p class="font-bold mb-1">Cara Kerja</p>
-                                <p class="text-xs leading-relaxed">Sistem akan melakukan koneksi LAPI (REST) ke IP Kamera setiap 5 detik. Pastikan server web satu jaringan (bisa ping) ke IP kamera tersebut.</p>
+                                <p class="font-bold mb-1">Cara Kerja (Push Webhook)</p>
+                                <p class="text-xs leading-relaxed">Kamera UNV yang sudah dikonfigurasi akan secara otomatis mengirimkan data JSON/LAPI ke server kita setiap kali mendeteksi orang. Server akan menampung datanya dan halaman ini akan menampilkannya.</p>
                             </div>
                         </div>
                     </div>
@@ -172,12 +151,6 @@
     <script>
         function intelligentApp() {
             return {
-                config: {
-                    ip: '',
-                    username: 'admin',
-                    password: '',
-                    endpoint: '/LAPI/V1.0/Intelligent/PeopleCounting/Report'
-                },
                 isPolling: false,
                 pollingTimer: null,
                 errorMsg: null,
@@ -195,7 +168,6 @@
                     if (this.isPolling) {
                         this.stopPolling();
                     } else {
-                        if(!this.config.ip || !this.config.password) return;
                         this.startPolling();
                     }
                 },
@@ -205,38 +177,15 @@
                     this.errorMsg = null;
                     this.fetchData(); // Fetch immediately
                     
-                    // Then interval every 5 seconds
+                    // Then interval every 3 seconds
                     this.pollingTimer = setInterval(() => {
                         this.fetchData();
-                    }, 5000);
+                    }, 3000);
                 },
 
                 stopPolling() {
                     this.isPolling = false;
                     clearInterval(this.pollingTimer);
-                },
-
-                async checkOnvif() {
-                    if(!this.config.ip || !this.config.password) return;
-                    
-                    this.errorMsg = null;
-                    this.hasData = false;
-                    this.rawData = 'Checking ONVIF Capabilities... Please wait...';
-                    this.hasData = true; // Show raw data box
-                    
-                    try {
-                        const response = await fetch(`{{ route('intelligent.onvif') }}?ip=${this.config.ip}&username=${this.config.username}&password=${encodeURIComponent(this.config.password)}`);
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            throw new Error(data.error || 'Terjadi kesalahan saat mengecek ONVIF');
-                        }
-
-                        this.rawData = data.xml_response;
-                    } catch (error) {
-                        this.errorMsg = error.message;
-                        this.rawData = 'Failed to connect to ONVIF.';
-                    }
                 },
 
                 copyRawData() {
@@ -250,20 +199,22 @@
 
                 async fetchData() {
                     try {
-                        const response = await fetch(`{{ route('intelligent.data') }}?ip=${this.config.ip}&username=${this.config.username}&password=${encodeURIComponent(this.config.password)}&endpoint=${encodeURIComponent(this.config.endpoint)}`);
+                        const response = await fetch(`{{ route('intelligent.data') }}`);
                         const data = await response.json();
 
+                        if (response.status === 202) {
+                            // Menunggu data dari kamera (masih kosong)
+                            return;
+                        }
+
                         if (!response.ok) {
-                            throw new Error(data.error || 'Terjadi kesalahan saat fetch');
+                            throw new Error(data.error || 'Terjadi kesalahan saat mengecek cache');
                         }
 
                         this.errorMsg = null;
                         this.hasData = true;
                         this.rawData = data.raw_data;
                         
-                        // Parse UNV Data Structure 
-                        // Note: UNV usually returns a deeply nested JSON for intelligent events
-                        // We will try to extract if we know the structure, otherwise user sees raw JSON.
                         this.parseUnvData(data.raw_data);
                         
                         const now = new Date();

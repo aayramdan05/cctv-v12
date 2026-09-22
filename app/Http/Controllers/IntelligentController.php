@@ -17,49 +17,59 @@ class IntelligentController extends Controller
     }
 
     /**
-     * Poll data from UNV Camera API (LAPI)
+     * Poll data from Cache (populated by webhook)
      */
     public function getRealtimeData(Request $request)
     {
-        $ip = $request->input('ip');
-        $username = $request->input('username', 'admin');
-        $password = $request->input('password');
-        $customEndpoint = $request->input('endpoint', '/LAPI/V1.0/Intelligent/PeopleCounting/Report');
-
-        if (!$ip || !$username || !$password) {
+        // Baca data terbaru dari cache (disimpan oleh Webhook)
+        $latestData = cache()->get('unv_intelligent_data');
+        
+        if ($latestData) {
             return response()->json([
-                'error' => 'IP, Username, dan Password kamera harus diisi.'
-            ], 400);
+                'status' => 'success',
+                'raw_data' => $latestData,
+                'message' => 'Data from webhook cache'
+            ]);
         }
 
-        try {
-            // Menggunakan Endpoint Dinamis
-            $url = "http://{$ip}" . $customEndpoint;
+        return response()->json([
+            'status' => 'waiting',
+            'error' => 'Menunggu pengiriman data (Push) dari kamera UNV...',
+        ], 202);
+    }
 
-            // Uniview cameras usually require Digest Authentication
-            $response = Http::timeout(3)
-                ->withDigestAuth($username, $password)
-                ->get($url);
+    /**
+     * Endpoint untuk menerima Push Event (Webhook) dari kamera UNV
+     */
+    public function receiveWebhook(Request $request)
+    {
+        // 1. Ambil semua data (Headers & Body)
+        $headers = $request->headers->all();
+        $body = $request->all();
+        $rawBody = $request->getContent(); // In case it's XML or raw string
 
-            if ($response->successful()) {
-                return response()->json([
-                    'status' => 'success',
-                    'raw_data' => $response->json() // Sending raw data back to frontend to inspect
-                ]);
-            }
+        $dataToCache = [
+            'timestamp' => now()->toDateTimeString(),
+            'ip' => $request->ip(),
+            'path' => $request->path(),
+            'headers' => $headers,
+            'body_json' => $body,
+            'body_raw' => $rawBody
+        ];
 
-            return response()->json([
-                'error' => 'Gagal mengambil data. Status Code: ' . $response->status(),
-                'raw_response' => $response->body()
-            ], $response->status());
+        // 2. Simpan di Cache selama 5 menit
+        cache()->put('unv_intelligent_data', $dataToCache, 300);
 
-        } catch (\Exception $e) {
-            Log::error("UNV LAPI Error: " . $e->getMessage());
-            return response()->json([
-                'error' => 'Koneksi gagal atau kamera tidak merespons.',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        // 3. Catat di Log (agar bisa dianalisis jika ada masalah)
+        Log::info('UNV Webhook Received:', $dataToCache);
+
+        // 4. Balas dengan Response Code 200 (Success) agar kamera tahu data berhasil dikirim
+        return response()->json([
+            'Response' => [
+                'ResponseCode' => 0,
+                'ResponseString' => 'Succeed'
+            ]
+        ]);
     }
 
     public function checkOnvif(Request $request)
