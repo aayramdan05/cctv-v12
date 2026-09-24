@@ -211,16 +211,16 @@
                         </div>
 
                         <!-- Floating Orbiting Icons -->
-                        <div class="absolute top-[25%] left-[10%] hidden md:block">
+                        <div class="absolute top-[15%] left-[10%] hidden md:block">
                             <div class="orbit-container"><div class="orbit-ring"><div class="orbit-dot"></div></div><div class="slide-2-icon"><i class="fas fa-video text-blue-500"></i></div></div>
                         </div>
-                        <div class="absolute top-[55%] left-[5%] hidden lg:block">
+                        <div class="absolute top-[70%] left-[8%] hidden lg:block">
                             <div class="orbit-container" style="animation-delay: -2s;"><div class="orbit-ring" style="animation-duration: 10s;"><div class="orbit-dot bg-red-500"></div></div><div class="slide-2-icon"><i class="fas fa-exclamation-triangle text-red-500"></i></div></div>
                         </div>
-                        <div class="absolute top-[30%] right-[10%] hidden md:block">
+                        <div class="absolute top-[20%] right-[10%] hidden md:block">
                             <div class="orbit-container" style="animation-delay: -1s;"><div class="orbit-ring" style="animation-duration: 9s; animation-direction: reverse;"><div class="orbit-dot bg-purple-500"></div></div><div class="slide-2-icon"><i class="fas fa-desktop text-purple-500"></i></div></div>
                         </div>
-                        <div class="absolute top-[60%] right-[5%] hidden lg:block">
+                        <div class="absolute top-[75%] right-[8%] hidden lg:block">
                             <div class="orbit-container" style="animation-delay: -3s;"><div class="orbit-ring" style="animation-duration: 11s;"><div class="orbit-dot bg-yellow-500"></div></div><div class="slide-2-icon"><i class="fas fa-users text-yellow-500"></i></div></div>
                         </div>
                     </div>
@@ -287,16 +287,16 @@
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Solusi Keamanan <br> Terpusat</h1>
                             <p class="text-gray-300 text-sm md:text-base">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
-                        <div class="absolute top-[25%] left-[10%] hidden md:block">
+                        <div class="absolute top-[15%] left-[10%] hidden md:block">
                             <div class="orbit-container"><div class="orbit-ring"><div class="orbit-dot"></div></div><div class="slide-2-icon"><i class="fas fa-video text-blue-500"></i></div></div>
                         </div>
-                        <div class="absolute top-[55%] left-[5%] hidden lg:block">
+                        <div class="absolute top-[70%] left-[8%] hidden lg:block">
                             <div class="orbit-container" style="animation-delay: -2s;"><div class="orbit-ring" style="animation-duration: 10s;"><div class="orbit-dot bg-red-500"></div></div><div class="slide-2-icon"><i class="fas fa-exclamation-triangle text-red-500"></i></div></div>
                         </div>
-                        <div class="absolute top-[30%] right-[10%] hidden md:block">
+                        <div class="absolute top-[20%] right-[10%] hidden md:block">
                             <div class="orbit-container" style="animation-delay: -1s;"><div class="orbit-ring" style="animation-duration: 9s; animation-direction: reverse;"><div class="orbit-dot bg-purple-500"></div></div><div class="slide-2-icon"><i class="fas fa-desktop text-purple-500"></i></div></div>
                         </div>
-                        <div class="absolute top-[60%] right-[5%] hidden lg:block">
+                        <div class="absolute top-[75%] right-[8%] hidden lg:block">
                             <div class="orbit-container" style="animation-delay: -3s;"><div class="orbit-ring" style="animation-duration: 11s;"><div class="orbit-dot bg-yellow-500"></div></div><div class="slide-2-icon"><i class="fas fa-users text-yellow-500"></i></div></div>
                         </div>
                     </div>
