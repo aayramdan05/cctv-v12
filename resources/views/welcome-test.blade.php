@@ -125,12 +125,12 @@
 
         /* Slide 3 Feature Cards */
         .feature-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(5px);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(8px);
             border-radius: 30px;
             padding: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -157,7 +157,7 @@
 
     <main>
         <!-- 3D Carousel Section -->
-        <section class="h-screen w-full relative bg-gray-100" style="background-image: url('{{ asset('bg.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+        <section class="h-screen w-full relative bg-gray-900" style="background-image: linear-gradient(to bottom, rgba(15,23,42,0.8), rgba(15,23,42,0.9)), url('{{ asset('bg.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
             
             <div class="swiper mySwiper">
                 <div class="swiper-wrapper">
@@ -181,10 +181,10 @@
                         </div>
 
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-gray-900">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">
                                 Sistem Pemantauan <br> Kampus Pintar
                             </h1>
-                            <p class="text-gray-500 text-sm md:text-base mb-8">
+                            <p class="text-gray-300 text-sm md:text-base mb-8">
                                 CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.
                             </p>
                             @auth
@@ -202,8 +202,8 @@
                         </div>
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-gray-900">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-gray-500 text-sm md:text-base">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Solusi Keamanan <br> Terpusat</h1>
+                            <p class="text-gray-300 text-sm md:text-base">
                                 Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.
                             </p>
                         </div>
@@ -226,28 +226,28 @@
                     <!-- SLIDE 3: Fitur -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="mt-3 text-slate-500 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <p class="mt-3 text-gray-300 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <!-- Feature 1 -->
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
-                                <h3 class="text-lg font-bold text-slate-800 mb-2">Streaming Cepat</h3>
-                                <p class="text-slate-500 text-xs leading-relaxed">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <div class="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
+                                <h3 class="text-lg font-bold text-white mb-2">Streaming Cepat</h3>
+                                <p class="text-gray-300 text-xs leading-relaxed">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <!-- Feature 2 -->
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-cyan-50 text-cyan-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
-                                <h3 class="text-lg font-bold text-slate-800 mb-2">Cek Otomatis</h3>
-                                <p class="text-slate-500 text-xs leading-relaxed">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <div class="w-14 h-14 bg-cyan-500/20 text-cyan-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
+                                <h3 class="text-lg font-bold text-white mb-2">Cek Otomatis</h3>
+                                <p class="text-gray-300 text-xs leading-relaxed">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <!-- Feature 3 -->
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
-                                <h3 class="text-lg font-bold text-slate-800 mb-2">Akses Fleksibel</h3>
-                                <p class="text-slate-500 text-xs leading-relaxed">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <div class="w-14 h-14 bg-purple-500/20 text-purple-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
+                                <h3 class="text-lg font-bold text-white mb-2">Akses Fleksibel</h3>
+                                <p class="text-gray-300 text-xs leading-relaxed">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
