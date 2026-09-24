@@ -36,10 +36,8 @@
             width: 85%;
             max-width: 1200px;
             height: 100%;
-            border-radius: 60px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            background-color: #fff;
-            overflow: hidden;
+            /* Removed solid background, border-radius, and shadow for a transparent floating effect */
+            background-color: transparent;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -120,10 +118,11 @@
 
         /* Slide 3 Feature Cards */
         .feature-card {
-            background: #fafafa;
+            background: #ffffff;
             border-radius: 30px;
             padding: 1.5rem;
             border: 1px solid #f1f5f9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
         }
     </style>
 </head>
@@ -189,7 +188,7 @@
                     </div>
 
                     <!-- SLIDE 2: Solusi Keamanan -->
-                    <div class="swiper-slide bg-blue-50/30 p-6">
+                    <div class="swiper-slide p-6">
                         <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));">
                             <i class="fas fa-shield-alt text-6xl text-purple-600"></i>
                         </div>
@@ -217,7 +216,7 @@
                     </div>
 
                     <!-- SLIDE 3: Fitur -->
-                    <div class="swiper-slide p-8 md:p-12 overflow-y-auto bg-gray-50/50">
+                    <div class="swiper-slide p-8 md:p-12 overflow-y-auto">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
                             <p class="mt-3 text-slate-500 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
