@@ -58,7 +58,7 @@
             </span>
             
             <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-6">
-                Smart Campus <br>
+                Campus <br>
                 <span class="text-gradient">Monitoring System</span>
             </h1>
             
