@@ -194,8 +194,10 @@
 
     <!-- Fixed Header with Center Logo -->
     <header class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-transparent">
-        <!-- Spacer Kiri agar logo bisa persis di tengah -->
-        <div class="flex-1"></div>
+        <!-- Logo Kiri agar seimbang -->
+        <div class="flex-1 flex justify-start items-center">
+            <img src="{{ asset('logo.png') }}" alt="Logo Kiri" class="h-10">
+        </div>
         
         <!-- Logo di Tengah -->
         <div class="flex flex-col items-center flex-1">
