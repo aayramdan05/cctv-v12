@@ -153,6 +153,55 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+
+        /* Laser Sphere Background */
+        .laser-sphere-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 700px; height: 700px;
+            transform: translate(-50%, -50%);
+            perspective: 1200px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+        @media (min-width: 768px) {
+            .laser-sphere-container {
+                width: 1100px; height: 1100px;
+            }
+        }
+        .laser-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            border-top: 3px solid rgba(56, 189, 248, 0.8);
+            border-bottom: 3px solid rgba(139, 92, 246, 0.8);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), inset 0 0 30px rgba(139, 92, 246, 0.4);
+            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+        }
+        .laser-ring-1 {
+            animation: ring-spin-1 25s linear infinite;
+        }
+        .laser-ring-2 {
+            animation: ring-spin-2 30s linear infinite;
+        }
+        .laser-ring-3 {
+            animation: ring-spin-3 28s linear infinite;
+        }
+
+        @keyframes ring-spin-1 {
+            0% { transform: rotateX(65deg) rotateY(0deg) rotateZ(0deg); }
+            100% { transform: rotateX(65deg) rotateY(0deg) rotateZ(360deg); }
+        }
+        @keyframes ring-spin-2 {
+            0% { transform: rotateX(65deg) rotateY(60deg) rotateZ(0deg); }
+            100% { transform: rotateX(65deg) rotateY(60deg) rotateZ(360deg); }
+        }
+        @keyframes ring-spin-3 {
+            0% { transform: rotateX(65deg) rotateY(120deg) rotateZ(0deg); }
+            100% { transform: rotateX(65deg) rotateY(120deg) rotateZ(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -180,9 +229,16 @@
 
     <main>
         <!-- 3D Carousel Section -->
-        <section class="h-screen w-full relative bg-gray-900" style="background-image: linear-gradient(to bottom, rgba(15,23,42,0.8), rgba(15,23,42,0.9)), url('{{ asset('bg.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+        <section class="h-screen w-full relative bg-gray-900 overflow-hidden" style="background-image: linear-gradient(to bottom, rgba(15,23,42,0.8), rgba(15,23,42,0.9)), url('{{ asset('bg.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
             
-            <div class="swiper mySwiper">
+            <!-- Global Laser Sphere Background -->
+            <div class="laser-sphere-container">
+                <div class="laser-ring laser-ring-1"></div>
+                <div class="laser-ring laser-ring-2"></div>
+                <div class="laser-ring laser-ring-3"></div>
+            </div>
+
+            <div class="swiper mySwiper relative z-10">
                 <div class="swiper-wrapper">
                     
                     <!-- SLIDE 1: Sistem Pemantauan -->
