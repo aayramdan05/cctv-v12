@@ -36,7 +36,6 @@
             width: 85%;
             max-width: 1200px;
             height: 100%;
-            /* Bikin bentuknya sangat bulat ("jangan rectangle kaku") */
             border-radius: 60px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             background-color: #fff;
@@ -61,23 +60,22 @@
             z-index: 10;
         }
         .line { position: absolute; background-color: #e5e7eb; z-index: 0; }
+        
         .floating-node {
             position: absolute;
             width: 60px;
             height: 60px;
-            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            background: white;
+            font-size: 32px;
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
             z-index: 10;
             animation: float 4s ease-in-out infinite;
         }
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-12px); }
         }
 
         /* Slide 2 Elements */
@@ -112,14 +110,11 @@
         .slide-2-icon {
             width: 75px;
             height: 75px;
-            background: white;
-            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
-            color: #475569;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            font-size: 38px;
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
             z-index: 5;
         }
 
@@ -169,12 +164,12 @@
                             <div class="line hidden md:block" style="width: 220px; height: 2px; top: 50%; left: 10%;"></div>
                             <div class="line hidden md:block" style="width: 220px; height: 2px; top: 50%; right: 10%;"></div>
                             <!-- Left Nodes -->
-                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; background: #fef08a; color: #a16207; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #eab308; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
                             <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #3b82f6; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; background: #38bdf8; color: white; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #0ea5e9; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
                             <!-- Right Nodes -->
-                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; background: #ef4444; color: white; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #0f172a; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #ef4444; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #334155; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
                             <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #10b981; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
 
@@ -195,8 +190,8 @@
 
                     <!-- SLIDE 2: Solusi Keamanan -->
                     <div class="swiper-slide bg-blue-50/30 p-6">
-                        <div class="w-20 h-20 bg-white rounded-[24px] shadow-xl flex items-center justify-center mb-6 relative z-20 mx-auto mt-4">
-                            <i class="fas fa-shield-alt text-4xl text-purple-600"></i>
+                        <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));">
+                            <i class="fas fa-shield-alt text-6xl text-purple-600"></i>
                         </div>
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
@@ -288,20 +283,21 @@
     <!-- Initialize Swiper -->
     <script>
         var swiper = new Swiper(".mySwiper", {
+            speed: 1500, // Make the transition slow and buttery smooth (1.5s)
             effect: "coverflow",
             grabCursor: true,
             centeredSlides: true,
             slidesPerView: "auto",
             loop: true,
             autoplay: {
-                delay: 5000,
-                disableOnInteraction: true, // Will pause if user drags/swipes it
+                delay: 4500, // Stay on slide for 4.5s
+                disableOnInteraction: true,
             },
             coverflowEffect: {
-                rotate: 20,       // Slide rotation angle
-                stretch: 0,       // Space between slides
-                depth: 350,       // Depth (push back effect - makes it shrink)
-                modifier: 1,      // Effect multiplier
+                rotate: 20,       
+                stretch: 0,       
+                depth: 350,       
+                modifier: 1,      
                 slideShadows: false, 
             },
             pagination: {
