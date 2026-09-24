@@ -181,26 +181,12 @@
             filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
         }
         .laser-ring-1 {
-            animation: ring-spin-1 25s linear infinite;
-        }
-        .laser-ring-2 {
-            animation: ring-spin-2 30s linear infinite;
-        }
-        .laser-ring-3 {
-            animation: ring-spin-3 28s linear infinite;
+            animation: ring-spin-1 30s linear infinite;
         }
 
         @keyframes ring-spin-1 {
-            0% { transform: rotateX(65deg) rotateY(0deg) rotateZ(0deg); }
-            100% { transform: rotateX(65deg) rotateY(0deg) rotateZ(360deg); }
-        }
-        @keyframes ring-spin-2 {
-            0% { transform: rotateX(65deg) rotateY(60deg) rotateZ(0deg); }
-            100% { transform: rotateX(65deg) rotateY(60deg) rotateZ(360deg); }
-        }
-        @keyframes ring-spin-3 {
-            0% { transform: rotateX(65deg) rotateY(120deg) rotateZ(0deg); }
-            100% { transform: rotateX(65deg) rotateY(120deg) rotateZ(360deg); }
+            0% { transform: rotateX(75deg) rotateY(0deg) rotateZ(0deg); }
+            100% { transform: rotateX(75deg) rotateY(0deg) rotateZ(360deg); }
         }
     </style>
 </head>
@@ -234,8 +220,6 @@
             <!-- Global Laser Sphere Background -->
             <div class="laser-sphere-container">
                 <div class="laser-ring laser-ring-1"></div>
-                <div class="laser-ring laser-ring-2"></div>
-                <div class="laser-ring laser-ring-3"></div>
             </div>
 
             <div class="swiper mySwiper relative z-10">
