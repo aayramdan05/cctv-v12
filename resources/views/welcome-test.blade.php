@@ -143,8 +143,8 @@
         
         <!-- Logo di Tengah -->
         <div class="flex flex-col items-center flex-1">
-            <div class="bg-white/95 backdrop-blur-md px-6 py-2 rounded-full shadow-xl shadow-black/20 flex flex-col items-center">
-                <span class="text-[9px] font-extrabold tracking-[0.2em] text-slate-500 mb-0.5 uppercase leading-none">CCTV</span>
+            <span class="text-[10px] font-extrabold tracking-[0.2em] text-gray-300 mb-1 uppercase leading-none" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">CCTV</span>
+            <div class="bg-white p-2 rounded-xl shadow-lg">
                 <img src="{{ asset('logo-unpad-secondary.png') }}" alt="CCTV UNPAD" class="h-6">
             </div>
         </div>
@@ -254,6 +254,78 @@
                         </div>
                     </div>
 
+                    <!-- DUPLICATE SLIDE 1 (Untuk memastikan loop berjalan mulus tanpa bug) -->
+                    <div class="swiper-slide p-6">
+                        <div class="relative w-full max-w-3xl h-[250px] flex items-center justify-center mb-8 mt-4">
+                            <div class="center-app"><i class="fas fa-video text-white text-4xl"></i></div>
+                            <div class="line hidden md:block" style="width: 220px; height: 2px; top: 50%; left: 10%;"></div>
+                            <div class="line hidden md:block" style="width: 220px; height: 2px; top: 50%; right: 10%;"></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #eab308; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #3b82f6; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #0ea5e9; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #ef4444; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #334155; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #10b981; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
+                        </div>
+                        <div class="text-center px-4 max-w-2xl mx-auto">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Sistem Pemantauan <br> Kampus Pintar</h1>
+                            <p class="text-gray-300 text-sm md:text-base mb-8">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
+                            @auth
+                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
+                            @else
+                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
+                            @endauth
+                        </div>
+                    </div>
+
+                    <!-- DUPLICATE SLIDE 2 -->
+                    <div class="swiper-slide p-6">
+                        <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));">
+                            <i class="fas fa-shield-alt text-6xl text-purple-600"></i>
+                        </div>
+                        <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Solusi Keamanan <br> Terpusat</h1>
+                            <p class="text-gray-300 text-sm md:text-base">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
+                        </div>
+                        <div class="absolute top-[25%] left-[10%] hidden md:block">
+                            <div class="orbit-container"><div class="orbit-ring"><div class="orbit-dot"></div></div><div class="slide-2-icon"><i class="fas fa-video text-blue-500"></i></div></div>
+                        </div>
+                        <div class="absolute top-[55%] left-[5%] hidden lg:block">
+                            <div class="orbit-container" style="animation-delay: -2s;"><div class="orbit-ring" style="animation-duration: 10s;"><div class="orbit-dot bg-red-500"></div></div><div class="slide-2-icon"><i class="fas fa-exclamation-triangle text-red-500"></i></div></div>
+                        </div>
+                        <div class="absolute top-[30%] right-[10%] hidden md:block">
+                            <div class="orbit-container" style="animation-delay: -1s;"><div class="orbit-ring" style="animation-duration: 9s; animation-direction: reverse;"><div class="orbit-dot bg-purple-500"></div></div><div class="slide-2-icon"><i class="fas fa-desktop text-purple-500"></i></div></div>
+                        </div>
+                        <div class="absolute top-[60%] right-[5%] hidden lg:block">
+                            <div class="orbit-container" style="animation-delay: -3s;"><div class="orbit-ring" style="animation-duration: 11s;"><div class="orbit-dot bg-yellow-500"></div></div><div class="slide-2-icon"><i class="fas fa-users text-yellow-500"></i></div></div>
+                        </div>
+                    </div>
+
+                    <!-- DUPLICATE SLIDE 3 -->
+                    <div class="swiper-slide p-8 md:p-12">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <p class="mt-3 text-gray-300 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                            <div class="feature-card flex flex-col items-center text-center">
+                                <div class="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
+                                <h3 class="text-lg font-bold text-white mb-2">Streaming Cepat</h3>
+                                <p class="text-gray-300 text-xs leading-relaxed">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                            </div>
+                            <div class="feature-card flex flex-col items-center text-center">
+                                <div class="w-14 h-14 bg-cyan-500/20 text-cyan-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
+                                <h3 class="text-lg font-bold text-white mb-2">Cek Otomatis</h3>
+                                <p class="text-gray-300 text-xs leading-relaxed">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                            </div>
+                            <div class="feature-card flex flex-col items-center text-center">
+                                <div class="w-14 h-14 bg-purple-500/20 text-purple-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
+                                <h3 class="text-lg font-bold text-white mb-2">Akses Fleksibel</h3>
+                                <p class="text-gray-300 text-xs leading-relaxed">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <!-- Add Pagination -->
                 <div class="swiper-pagination"></div>
@@ -299,7 +371,6 @@
             centeredSlides: true,
             slidesPerView: "auto",
             loop: true,
-            loopedSlides: 3,
             autoplay: {
                 delay: 4500, // Stay on slide for 4.5s
                 disableOnInteraction: false, // JANGAN MATIKAN autoplay saat user menggeser manual
