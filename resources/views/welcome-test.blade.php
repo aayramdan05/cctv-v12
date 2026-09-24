@@ -157,7 +157,7 @@
 
     <main>
         <!-- 3D Carousel Section -->
-        <section class="h-screen w-full relative bg-gradient-to-br from-gray-50 to-gray-200">
+        <section class="h-screen w-full relative bg-gray-100" style="background-image: url('{{ asset('bg.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
             
             <div class="swiper mySwiper">
                 <div class="swiper-wrapper">
@@ -224,7 +224,7 @@
                     </div>
 
                     <!-- SLIDE 3: Fitur -->
-                    <div class="swiper-slide p-8 md:p-12 overflow-y-auto">
+                    <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
                             <p class="mt-3 text-slate-500 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
@@ -290,13 +290,13 @@
     <!-- Initialize Swiper -->
     <script>
         var swiper = new Swiper(".mySwiper", {
+            initialSlide: 0,
             speed: 1500, // Make the transition slow and buttery smooth (1.5s)
             effect: "coverflow",
             grabCursor: true,
             centeredSlides: true,
             slidesPerView: "auto",
             loop: true,
-            loopedSlides: 3,
             autoplay: {
                 delay: 4500, // Stay on slide for 4.5s
                 disableOnInteraction: false, // JANGAN MATIKAN autoplay saat user menggeser manual
