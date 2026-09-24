@@ -36,20 +36,14 @@
             width: 90%;
             max-width: 1100px;
             
-            /* Glassmorphism effect to make the slide visible as a "curved" pane but still floating/transparent */
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.1));
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 50px; /* "agak curved kiri kanan nya" */
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+            /* Dibuat 100% transparan kembali */
+            background-color: transparent;
 
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             position: relative;
-            overflow: hidden;
         }
 
         @media (min-width: 768px) {
