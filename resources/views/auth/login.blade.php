@@ -21,7 +21,7 @@
     <div class="flex h-full w-full">
         
         <div class="hidden lg:flex w-1/2 relative items-center justify-center bg-slate-900 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=2026&auto=format&fit=crop" 
+            <img src="{{ asset('unpad-full.jpg') }}" 
                  class="absolute inset-0 w-full h-full object-cover opacity-60" 
                  alt="Background">
             
