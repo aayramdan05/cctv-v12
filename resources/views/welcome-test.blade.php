@@ -35,13 +35,21 @@
             background-size: cover;
             width: 90%;
             max-width: 1100px;
-            /* Removed solid background, border-radius, and shadow for a transparent floating effect */
-            background-color: transparent;
+            
+            /* Glassmorphism effect to make the slide visible as a "curved" pane but still floating/transparent */
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 50px; /* "agak curved kiri kanan nya" */
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             position: relative;
+            overflow: hidden;
         }
 
         @media (min-width: 768px) {
@@ -123,10 +131,11 @@
 
         /* Slide 3 Feature Cards */
         .feature-card {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
             border-radius: 30px;
             padding: 1.5rem;
-            border: 1px solid #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 10px 30px rgba(0,0,0,0.02);
         }
     </style>
@@ -154,7 +163,7 @@
 
     <main>
         <!-- 3D Carousel Section -->
-        <section class="h-screen w-full relative">
+        <section class="h-screen w-full relative bg-gradient-to-br from-gray-50 to-gray-200">
             
             <div class="swiper mySwiper">
                 <div class="swiper-wrapper">
@@ -296,12 +305,12 @@
             loopedSlides: 3,
             autoplay: {
                 delay: 4500, // Stay on slide for 4.5s
-                disableOnInteraction: true,
+                disableOnInteraction: false, // JANGAN MATIKAN autoplay saat user menggeser manual
             },
             coverflowEffect: {
-                rotate: 50,       // Meningkatkan kemiringan (curve)
-                stretch: -30,     // Menarik slide samping agar lebih terlihat sebagai preview
-                depth: 500,       // Menambah kedalaman 3D
+                rotate: -45,      // Negatif agar melengkung ke dalam (melihat dari luar)
+                stretch: -10,     
+                depth: 500,       
                 modifier: 1,      
                 slideShadows: false, 
             },
