@@ -137,19 +137,21 @@
 <body>
 
     <!-- Fixed Header with Center Logo -->
-    <header class="fixed top-0 left-0 w-full z-50 px-6 py-3 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
+    <header class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-transparent">
         <!-- Spacer Kiri agar logo bisa persis di tengah -->
         <div class="flex-1"></div>
         
         <!-- Logo di Tengah -->
-        <div class="flex flex-col items-center pt-1 flex-1">
-            <span class="text-[10px] font-extrabold tracking-[0.2em] text-slate-500 mb-0.5 uppercase leading-none">CCTV</span>
-            <img src="{{ asset('logo-unpad-secondary.png') }}" alt="CCTV UNPAD" class="h-8">
+        <div class="flex flex-col items-center flex-1">
+            <div class="bg-white/95 backdrop-blur-md px-6 py-2 rounded-full shadow-xl shadow-black/20 flex flex-col items-center">
+                <span class="text-[9px] font-extrabold tracking-[0.2em] text-slate-500 mb-0.5 uppercase leading-none">CCTV</span>
+                <img src="{{ asset('logo-unpad-secondary.png') }}" alt="CCTV UNPAD" class="h-6">
+            </div>
         </div>
         
         <!-- Tombol Login Kanan -->
         <div class="flex-1 flex justify-end">
-            <a href="{{ route('login') }}" class="px-5 py-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors shadow-lg shadow-black/20">
+            <a href="{{ route('login') }}" class="px-6 py-2 bg-blue-600 text-white rounded-full text-sm font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/50">
                 Log In
             </a>
         </div>
@@ -297,6 +299,7 @@
             centeredSlides: true,
             slidesPerView: "auto",
             loop: true,
+            loopedSlides: 3,
             autoplay: {
                 delay: 4500, // Stay on slide for 4.5s
                 disableOnInteraction: false, // JANGAN MATIKAN autoplay saat user menggeser manual
