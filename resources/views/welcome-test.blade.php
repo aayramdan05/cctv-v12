@@ -83,44 +83,61 @@
             50% { transform: translateY(-12px); }
         }
 
-        /* Slide 2 Elements */
-        .orbit-container {
+        /* Slide 2 Elements (Orbital Icons) */
+        :root {
+            --orbit-radius: 160px;
+        }
+        @media (min-width: 768px) {
+            :root { --orbit-radius: 360px; }
+        }
+        
+        .orbit-system-intro {
             position: absolute;
-            width: 120px;
-            height: 120px;
+            top: 50%; left: 50%;
+            width: 1px; height: 1px;
+            z-index: 10;
+            pointer-events: none;
+            animation: pop-out 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        .orbit-icon {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 60px; height: 60px;
+            margin-top: -30px; margin-left: -30px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 40px;
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.3));
         }
-        .orbit-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px dashed #cbd5e1;
-            animation: spin 8s linear infinite;
+
+        .orbit-1 { animation: orbit1 20s linear infinite; }
+        .orbit-2 { animation: orbit2 20s linear infinite; }
+        .orbit-3 { animation: orbit3 20s linear infinite; }
+        .orbit-4 { animation: orbit4 20s linear infinite; }
+
+        @keyframes pop-out {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
-        .orbit-dot {
-            position: absolute;
-            top: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 10px;
-            height: 10px;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #3b82f6;
+        @keyframes orbit1 {
+            from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
+            to   { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
         }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .slide-2-icon {
-            width: 75px;
-            height: 75px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 38px;
-            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
-            z-index: 5;
+        @keyframes orbit2 {
+            from { transform: rotate(90deg) translateX(var(--orbit-radius)) rotate(-90deg); }
+            to   { transform: rotate(450deg) translateX(var(--orbit-radius)) rotate(-450deg); }
+        }
+        @keyframes orbit3 {
+            from { transform: rotate(180deg) translateX(var(--orbit-radius)) rotate(-180deg); }
+            to   { transform: rotate(540deg) translateX(var(--orbit-radius)) rotate(-540deg); }
+        }
+        @keyframes orbit4 {
+            from { transform: rotate(270deg) translateX(var(--orbit-radius)) rotate(-270deg); }
+            to   { transform: rotate(630deg) translateX(var(--orbit-radius)) rotate(-630deg); }
         }
 
         /* Slide 3 Feature Cards */
@@ -211,17 +228,11 @@
                         </div>
 
                         <!-- Floating Orbiting Icons -->
-                        <div class="absolute top-[15%] left-[10%] hidden md:block">
-                            <div class="orbit-container"><div class="orbit-ring"><div class="orbit-dot"></div></div><div class="slide-2-icon"><i class="fas fa-video text-blue-500"></i></div></div>
-                        </div>
-                        <div class="absolute top-[70%] left-[8%] hidden lg:block">
-                            <div class="orbit-container" style="animation-delay: -2s;"><div class="orbit-ring" style="animation-duration: 10s;"><div class="orbit-dot bg-red-500"></div></div><div class="slide-2-icon"><i class="fas fa-exclamation-triangle text-red-500"></i></div></div>
-                        </div>
-                        <div class="absolute top-[20%] right-[10%] hidden md:block">
-                            <div class="orbit-container" style="animation-delay: -1s;"><div class="orbit-ring" style="animation-duration: 9s; animation-direction: reverse;"><div class="orbit-dot bg-purple-500"></div></div><div class="slide-2-icon"><i class="fas fa-desktop text-purple-500"></i></div></div>
-                        </div>
-                        <div class="absolute top-[75%] right-[8%] hidden lg:block">
-                            <div class="orbit-container" style="animation-delay: -3s;"><div class="orbit-ring" style="animation-duration: 11s;"><div class="orbit-dot bg-yellow-500"></div></div><div class="slide-2-icon"><i class="fas fa-users text-yellow-500"></i></div></div>
+                        <div class="orbit-system-intro hidden sm:block">
+                            <div class="orbit-icon orbit-1 text-blue-500"><i class="fas fa-video"></i></div>
+                            <div class="orbit-icon orbit-2 text-red-500"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="orbit-icon orbit-3 text-purple-500"><i class="fas fa-desktop"></i></div>
+                            <div class="orbit-icon orbit-4 text-yellow-500"><i class="fas fa-users"></i></div>
                         </div>
                     </div>
 
@@ -287,17 +298,11 @@
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Solusi Keamanan <br> Terpusat</h1>
                             <p class="text-gray-300 text-sm md:text-base">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
-                        <div class="absolute top-[15%] left-[10%] hidden md:block">
-                            <div class="orbit-container"><div class="orbit-ring"><div class="orbit-dot"></div></div><div class="slide-2-icon"><i class="fas fa-video text-blue-500"></i></div></div>
-                        </div>
-                        <div class="absolute top-[70%] left-[8%] hidden lg:block">
-                            <div class="orbit-container" style="animation-delay: -2s;"><div class="orbit-ring" style="animation-duration: 10s;"><div class="orbit-dot bg-red-500"></div></div><div class="slide-2-icon"><i class="fas fa-exclamation-triangle text-red-500"></i></div></div>
-                        </div>
-                        <div class="absolute top-[20%] right-[10%] hidden md:block">
-                            <div class="orbit-container" style="animation-delay: -1s;"><div class="orbit-ring" style="animation-duration: 9s; animation-direction: reverse;"><div class="orbit-dot bg-purple-500"></div></div><div class="slide-2-icon"><i class="fas fa-desktop text-purple-500"></i></div></div>
-                        </div>
-                        <div class="absolute top-[75%] right-[8%] hidden lg:block">
-                            <div class="orbit-container" style="animation-delay: -3s;"><div class="orbit-ring" style="animation-duration: 11s;"><div class="orbit-dot bg-yellow-500"></div></div><div class="slide-2-icon"><i class="fas fa-users text-yellow-500"></i></div></div>
+                        <div class="orbit-system-intro hidden sm:block">
+                            <div class="orbit-icon orbit-1 text-blue-500"><i class="fas fa-video"></i></div>
+                            <div class="orbit-icon orbit-2 text-red-500"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="orbit-icon orbit-3 text-purple-500"><i class="fas fa-desktop"></i></div>
+                            <div class="orbit-icon orbit-4 text-yellow-500"><i class="fas fa-users"></i></div>
                         </div>
                     </div>
 
