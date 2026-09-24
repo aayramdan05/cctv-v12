@@ -85,10 +85,10 @@
 
         /* Slide 2 Elements (Orbital Icons) */
         :root {
-            --orbit-radius: 160px;
+            --orbit-radius: 140px;
         }
         @media (min-width: 768px) {
-            :root { --orbit-radius: 360px; }
+            :root { --orbit-radius: 260px; } /* Diperkecil agar lebih dekat dengan text */
         }
         
         .orbit-system-intro {
@@ -97,9 +97,13 @@
             width: 1px; height: 1px;
             z-index: 10;
             pointer-events: none;
-            animation: pop-out 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             opacity: 0;
             transform: scale(0);
+        }
+
+        /* Hanya jalankan animasi pop-out ketika slide sedang aktif / di tengah layar */
+        .swiper-slide-active .orbit-system-intro {
+            animation: pop-out 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         .orbit-icon {
