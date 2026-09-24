@@ -9,16 +9,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
     <style>
-        html {
-            scroll-behavior: smooth;
-        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #fafafa;
             margin: 0;
             padding: 0;
             overflow-x: hidden; 
-            scroll-snap-type: y mandatory;
         }
 
         .scroll-container {
@@ -26,14 +22,13 @@
         }
 
         .slide {
-            height: 100vh;
+            min-height: 100vh;
             width: 100vw;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            scroll-snap-align: start;
         }
 
         /* Connecting lines for Slide 1 */
@@ -142,9 +137,10 @@
 <body>
 
     <!-- Fixed Header with Login Button -->
-    <header class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div class="flex items-center">
-            <img src="{{ asset('logo-unpad-secondary.png') }}" alt="CCTV UNPAD" class="h-10">
+    <header class="fixed top-0 left-0 w-full z-50 px-6 py-3 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div class="flex flex-col items-center pt-1">
+            <span class="text-[10px] font-extrabold tracking-[0.2em] text-slate-400 mb-0.5 uppercase leading-none">CCTV</span>
+            <img src="{{ asset('logo-unpad-secondary.png') }}" alt="CCTV UNPAD" class="h-7">
         </div>
         <div class="flex space-x-6 items-center">
             <a href="{{ route('login') }}" class="px-5 py-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors shadow-lg shadow-black/20">
@@ -270,7 +266,7 @@
         </div>
 
         <!-- SLIDE 3: Features Grid (New Slide) -->
-        <div class="slide w-full px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="slide w-full px-4 sm:px-6 lg:px-8 bg-white py-16">
             <div class="max-w-6xl w-full mx-auto">
                 <div class="text-center mb-12">
                     <h2 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
@@ -318,7 +314,10 @@
         <div class="slide bg-gray-50 text-gray-800 pb-10">
             <div class="max-w-4xl mx-auto text-center w-full px-6 flex flex-col h-full justify-center">
                 <div class="mb-8 mt-auto">
-                    <img src="{{ asset('logo-unpad-secondary.png') }}" alt="Logo" class="h-16 mx-auto mb-5">
+                    <div class="flex flex-col items-center mb-6">
+                        <span class="text-xs font-extrabold tracking-[0.2em] text-slate-400 mb-1 uppercase">CCTV</span>
+                        <img src="{{ asset('logo-unpad-secondary.png') }}" alt="Logo" class="h-12 mx-auto">
+                    </div>
                     <h2 class="text-3xl font-bold mb-3 tracking-tight">Siap memantau area kampus?</h2>
                     <p class="text-slate-500 mb-8 text-sm">Akses dashboard terpusat sekarang juga.</p>
                     <a href="{{ route('login') }}" class="px-8 py-3 bg-black text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform inline-block">
@@ -344,16 +343,52 @@
             let currentSlide = 0;
             let isAutoScrolling = true;
             let autoScrollInterval;
+            let isAnimating = false;
+
+            // Custom Easing Function (Ease In Out Cubic)
+            function easeInOutCubic(t, b, c, d) {
+                t /= d/2;
+                if (t < 1) return c/2*t*t*t + b;
+                t -= 2;
+                return c/2*(t*t*t + 2) + b;
+            }
+
+            // Custom Smooth Scroll Function
+            function smoothScrollTo(targetPosition, duration) {
+                const startPosition = window.pageYOffset;
+                const distance = targetPosition - startPosition;
+                let startTime = null;
+                isAnimating = true;
+
+                function animation(currentTime) {
+                    if (startTime === null) startTime = currentTime;
+                    const timeElapsed = currentTime - startTime;
+                    const run = easeInOutCubic(timeElapsed, startPosition, distance, duration);
+                    window.scrollTo(0, run);
+                    
+                    if (timeElapsed < duration) {
+                        requestAnimationFrame(animation);
+                    } else {
+                        window.scrollTo(0, targetPosition);
+                        isAnimating = false;
+                    }
+                }
+                requestAnimationFrame(animation);
+            }
 
             function scrollToNext() {
-                if (!isAutoScrolling) return;
+                if (!isAutoScrolling || isAnimating) return;
                 
                 currentSlide++;
                 if (currentSlide >= slides.length) {
-                    currentSlide = 0; // Loop back to start
+                    currentSlide = 0; 
                 }
                 
-                slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+                // Get the exact Y position of the target slide
+                const targetPosition = slides[currentSlide].getBoundingClientRect().top + window.pageYOffset;
+                
+                // Smoothly scroll to it over 1500ms (1.5 seconds) for a buttery feel
+                smoothScrollTo(targetPosition, 1500);
             }
 
             // Start auto scroll every 5 seconds
@@ -369,8 +404,9 @@
             }
 
             // Listen for any manual scroll attempts (wheel, touch, arrow keys)
-            window.addEventListener('wheel', stopAutoScroll, { passive: true });
-            window.addEventListener('touchstart', stopAutoScroll, { passive: true });
+            // We use passive: true to ensure we don't block the scroll performance
+            window.addEventListener('wheel', function() { if (!isAnimating) stopAutoScroll(); }, { passive: true });
+            window.addEventListener('touchstart', function() { if (!isAnimating) stopAutoScroll(); }, { passive: true });
             window.addEventListener('keydown', function(e) {
                 if (['ArrowDown', 'ArrowUp', 'Space', 'PageDown', 'PageUp'].includes(e.code)) {
                     stopAutoScroll();
