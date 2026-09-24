@@ -33,9 +33,8 @@
         .swiper-slide {
             background-position: center;
             background-size: cover;
-            width: 85%;
-            max-width: 1200px;
-            height: 100%;
+            width: 90%;
+            max-width: 1100px;
             /* Removed solid background, border-radius, and shadow for a transparent floating effect */
             background-color: transparent;
             display: flex;
@@ -43,6 +42,12 @@
             justify-content: center;
             align-items: center;
             position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .swiper-slide {
+                width: 65%; /* Agar slide kiri & kanan bisa mengintip masuk ke layar */
+            }
         }
 
         /* Slide 1 Elements */
@@ -288,14 +293,15 @@
             centeredSlides: true,
             slidesPerView: "auto",
             loop: true,
+            loopedSlides: 3,
             autoplay: {
                 delay: 4500, // Stay on slide for 4.5s
                 disableOnInteraction: true,
             },
             coverflowEffect: {
-                rotate: 20,       
-                stretch: 0,       
-                depth: 350,       
+                rotate: 50,       // Meningkatkan kemiringan (curve)
+                stretch: -30,     // Menarik slide samping agar lebih terlihat sebagai preview
+                depth: 500,       // Menambah kedalaman 3D
                 modifier: 1,      
                 slideShadows: false, 
             },
