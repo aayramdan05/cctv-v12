@@ -89,6 +89,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/welcome-test', function () {
+    return view('welcome-test');
+});
+
 Route::get('/pending-approval', function () {
     if (!auth()->check()) {
         return redirect()->route('login');
