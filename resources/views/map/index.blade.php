@@ -306,13 +306,15 @@
         }).setView(campusCoords.jatinangor, 15);
 
         const baseLayers = {
-            light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 22,
-                maxNativeZoom: 19
+                maxNativeZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
             }),
-            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            dark: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 22,
-                maxNativeZoom: 19
+                maxNativeZoom: 16,
+                attribution: '&copy; Esri'
             }),
             satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 22,
