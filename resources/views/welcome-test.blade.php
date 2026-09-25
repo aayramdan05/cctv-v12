@@ -163,11 +163,11 @@
             position: absolute;
             width: 100%; height: 100%;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-top: 5px solid rgba(234, 88, 12, 1);
-            border-bottom: 5px solid rgba(14, 165, 233, 1);
-            box-shadow: 0 0 50px rgba(234, 88, 12, 0.8), inset 0 0 50px rgba(14, 165, 233, 0.6);
-            filter: drop-shadow(0 0 20px rgba(234, 88, 12, 1));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid rgba(255, 255, 255, 1);
+            border-bottom: 4px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.7), inset 0 0 40px rgba(255, 255, 255, 0.4);
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
         }
         .laser-ring-1 {
             animation: ring-spin-1 30s linear infinite;
@@ -271,7 +271,7 @@
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">
                                 Sistem Pemantauan <br> Kampus Pintar
                             </h1>
-                            <p class="text-orange-700 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
+                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.
                             </p>
                             @auth
@@ -290,7 +290,7 @@
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-orange-700 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
+                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.
                             </p>
                         </div>
@@ -308,27 +308,27 @@
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="text-orange-700 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <!-- Feature 1 -->
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/40 rounded-[20px] border border-white/50 flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
-                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Streaming Cepat</h3>
-                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400 mb-2">Streaming Cepat</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <!-- Feature 2 -->
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-blue-500/40 rounded-[20px] border border-white/50 flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
-                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Cek Otomatis</h3>
-                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400 mb-2">Cek Otomatis</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <!-- Feature 3 -->
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/40 rounded-[20px] border border-white/50 flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
-                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Akses Fleksibel</h3>
-                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400 mb-2">Akses Fleksibel</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
@@ -337,16 +337,16 @@
                     <div class="swiper-slide p-6">
                         <div class="relative w-full max-w-3xl h-[250px] flex items-center justify-center mb-8 mt-4">
                             <div class="center-app"><i class="fas fa-video text-white text-4xl"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #ea580c; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #1e3a8a; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #ea580c; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #1e3a8a; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #ea580c; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #1e3a8a; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
+                            <div class="floating-node hidden md:flex bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/40 rounded-full border border-white/50" style="top: 15%; left: 15%; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
+                            <div class="floating-node hidden sm:flex bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-lg shadow-teal-500/40 rounded-full border border-white/50" style="top: 40%; left: 5%; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
+                            <div class="floating-node hidden md:flex bg-gradient-to-br from-purple-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/40 rounded-full border border-white/50" style="top: 65%; left: 20%; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
+                            <div class="floating-node hidden md:flex bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-blue-500/40 rounded-full border border-white/50" style="top: 15%; right: 20%; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
+                            <div class="floating-node hidden sm:flex bg-gradient-to-br from-rose-400 to-red-500 text-white shadow-lg shadow-red-500/40 rounded-full border border-white/50" style="top: 40%; right: 5%; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
+                            <div class="floating-node hidden md:flex bg-gradient-to-br from-teal-400 to-sky-500 text-white shadow-lg shadow-sky-500/40 rounded-full border border-white/50" style="top: 65%; right: 15%; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
                         <div class="text-center px-4 max-w-2xl mx-auto">
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus Pintar</h1>
-                            <p class="text-orange-700 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
+                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
                             @auth
                                 <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
                             @else
@@ -362,12 +362,12 @@
                         </div>
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-orange-700 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
+                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
                         <div class="orbit-system-intro hidden sm:block">
-                            <div class="orbit-icon orbit-1 text-orange-600"><i class="fas fa-video"></i></div>
+                            <div class="orbit-icon orbit-1 text-slate-600"><i class="fas fa-video"></i></div>
                             <div class="orbit-icon orbit-2 text-blue-800"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="orbit-icon orbit-3 text-orange-600"><i class="fas fa-desktop"></i></div>
+                            <div class="orbit-icon orbit-3 text-slate-600"><i class="fas fa-desktop"></i></div>
                             <div class="orbit-icon orbit-4 text-blue-800"><i class="fas fa-users"></i></div>
                         </div>
                     </div>
@@ -376,23 +376,23 @@
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="text-orange-700 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
-                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Streaming Cepat</h3>
-                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <div class="w-14 h-14 bg-orange-100 text-slate-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
+                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400 mb-2">Streaming Cepat</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-blue-100 text-blue-800 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
-                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Cek Otomatis</h3>
-                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400 mb-2">Cek Otomatis</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
-                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Akses Fleksibel</h3>
-                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <div class="w-14 h-14 bg-orange-100 text-slate-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
+                                <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400 mb-2">Akses Fleksibel</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
