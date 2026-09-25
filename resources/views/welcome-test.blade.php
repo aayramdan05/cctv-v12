@@ -257,10 +257,10 @@
                         </div>
 
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9)); -webkit-text-stroke: 1px #ffffff;">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">
                                 Sistem Pemantauan <br> Kampus Pintar
                             </h1>
-                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 2px 4px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,0.8); -webkit-text-stroke: 0.5px #ffffff;">
+                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.
                             </p>
                             @auth
@@ -278,8 +278,8 @@
                         </div>
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9)); -webkit-text-stroke: 1px #ffffff;">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 2px 4px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,0.8); -webkit-text-stroke: 0.5px #ffffff;">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
+                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.
                             </p>
                         </div>
@@ -296,8 +296,8 @@
                     <!-- SLIDE 3: Fitur -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9)); -webkit-text-stroke: 1px #ffffff;">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 2px 4px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,0.8); -webkit-text-stroke: 0.5px #ffffff;">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -334,8 +334,8 @@
                             <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #1e3a8a; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9)); -webkit-text-stroke: 1px #ffffff;">Sistem Pemantauan <br> Kampus Pintar</h1>
-                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 2px 4px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,0.8); -webkit-text-stroke: 0.5px #ffffff;">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus Pintar</h1>
+                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
                             @auth
                                 <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
                             @else
@@ -350,8 +350,8 @@
                             <i class="fas fa-shield-alt text-6xl text-blue-800"></i>
                         </div>
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9)); -webkit-text-stroke: 1px #ffffff;">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 2px 4px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,0.8); -webkit-text-stroke: 0.5px #ffffff;">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
+                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
                         <div class="orbit-system-intro hidden sm:block">
                             <div class="orbit-icon orbit-1 text-orange-600"><i class="fas fa-video"></i></div>
@@ -364,8 +364,8 @@
                     <!-- DUPLICATE SLIDE 3 -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9)); -webkit-text-stroke: 1px #ffffff;">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 2px 4px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,0.8); -webkit-text-stroke: 0.5px #ffffff;">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <div class="feature-card flex flex-col items-center text-center">
