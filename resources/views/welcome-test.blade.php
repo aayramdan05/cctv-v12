@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CCTV Unpad - Welcome</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     
     <!-- Swiper CSS for 3D Carousel -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
     <style>
+        .font-roboto { font-family: 'Roboto', sans-serif; }
         html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', sans-serif;
@@ -268,7 +269,7 @@
                         </div>
 
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="-webkit-text-stroke: 1.5px white; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">
+                            <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">
                                 Sistem Pemantauan <br> Kampus Pintar
                             </h1>
                             <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
@@ -289,7 +290,7 @@
                         </div>
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="-webkit-text-stroke: 1.5px white; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
+                            <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
                             <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.
                             </p>
@@ -307,7 +308,7 @@
                     <!-- SLIDE 3: Fitur -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="-webkit-text-stroke: 1.5px white; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <h2 class="text-3xl md:text-4xl font-roboto font-black tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
                             <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
 
@@ -345,7 +346,7 @@
                             <div class="floating-node hidden md:flex bg-gradient-to-br from-teal-400 to-sky-500 text-white shadow-lg shadow-sky-500/40 rounded-full border border-white/50" style="top: 65%; right: 15%; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="-webkit-text-stroke: 1.5px white; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus Pintar</h1>
+                            <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus Pintar</h1>
                             <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
                             @auth
                                 <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
@@ -361,7 +362,7 @@
                             <i class="fas fa-shield-alt text-4xl text-white"></i>
                         </div>
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="-webkit-text-stroke: 1.5px white; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
+                            <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
                             <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
                         <div class="orbit-system-intro hidden sm:block">
@@ -375,7 +376,7 @@
                     <!-- DUPLICATE SLIDE 3 -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="-webkit-text-stroke: 1.5px white; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <h2 class="text-3xl md:text-4xl font-roboto font-black tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
                             <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
