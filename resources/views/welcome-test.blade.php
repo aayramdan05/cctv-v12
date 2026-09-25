@@ -270,7 +270,7 @@
 
                         <div class="text-center px-4 max-w-2xl mx-auto">
                             <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">
-                                Sistem Pemantauan <br> Kampus Pintar
+                                Sistem Pemantauan <br> Kampus
                             </h1>
                             <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.
