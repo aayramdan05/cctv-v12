@@ -96,13 +96,6 @@
             width: 1px; height: 1px;
             z-index: 10;
             pointer-events: none;
-            opacity: 0;
-            transform: scale(0);
-        }
-
-        /* Hanya jalankan animasi pop-out ketika slide sedang aktif / di tengah layar */
-        .swiper-slide-active .orbit-system-intro {
-            animation: pop-out 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         .orbit-icon {
@@ -121,10 +114,7 @@
         .orbit-3 { animation: orbit3 20s linear infinite; }
         .orbit-4 { animation: orbit4 20s linear infinite; }
 
-        @keyframes pop-out {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        /* Pop-out keyframes removed */
         @keyframes orbit1 {
             from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
             to   { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
@@ -241,7 +231,7 @@
         
         <!-- Tombol Login Kanan -->
         <div class="flex-1 flex justify-end">
-            <a href="{{ route('login') }}" class="px-6 py-2 bg-orange-600 text-white rounded-full text-sm font-bold hover:bg-orange-500 transition-colors shadow-lg shadow-orange-900/30">
+            <a href="{{ route('login') }}" class="px-6 py-2 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-full text-sm font-bold hover:shadow-xl transition-colors shadow-lg shadow-blue-500/30">
                 Log In
             </a>
         </div>
@@ -281,13 +271,13 @@
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">
                                 Sistem Pemantauan <br> Kampus Pintar
                             </h1>
-                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
+                            <p class="text-orange-700 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.
                             </p>
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
+                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
                             @else
-                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
+                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
                             @endauth
                         </div>
                     </div>
@@ -300,7 +290,7 @@
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
+                            <p class="text-orange-700 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">
                                 Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.
                             </p>
                         </div>
@@ -318,7 +308,7 @@
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <p class="text-orange-700 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -326,19 +316,19 @@
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/40 rounded-[20px] border border-white/50 flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
                                 <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Streaming Cepat</h3>
-                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <!-- Feature 2 -->
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-blue-500/40 rounded-[20px] border border-white/50 flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
                                 <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Cek Otomatis</h3>
-                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <!-- Feature 3 -->
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/40 rounded-[20px] border border-white/50 flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
                                 <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Akses Fleksibel</h3>
-                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
@@ -356,11 +346,11 @@
                         </div>
                         <div class="text-center px-4 max-w-2xl mx-auto">
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus Pintar</h1>
-                            <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
+                            <p class="text-orange-700 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
+                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
                             @else
-                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
+                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
                             @endauth
                         </div>
                     </div>
@@ -372,7 +362,7 @@
                         </div>
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
                             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-slate-800 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
+                            <p class="text-orange-700 text-sm md:text-base font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
                         <div class="orbit-system-intro hidden sm:block">
                             <div class="orbit-icon orbit-1 text-orange-600"><i class="fas fa-video"></i></div>
@@ -386,23 +376,23 @@
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="text-slate-800 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <p class="text-orange-700 text-sm md:text-base max-w-xl mx-auto font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
                                 <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Streaming Cepat</h3>
-                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-blue-100 text-blue-800 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
                                 <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Cek Otomatis</h3>
-                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <div class="feature-card flex flex-col items-center text-center">
                                 <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
                                 <h3 class="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 mb-2">Akses Fleksibel</h3>
-                                <p class="text-slate-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <p class="text-orange-600 text-xs leading-relaxed font-semibold">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
@@ -424,7 +414,7 @@
                 </div>
                 <h2 class="text-3xl font-bold mb-4 tracking-tight text-blue-900">Siap memantau area kampus?</h2>
                 <p class="text-slate-600 mb-10 text-sm max-w-lg mx-auto leading-relaxed">Geser kembali carousel ke atas untuk melihat fitur, atau langsung akses sistem jika Anda sudah siap.</p>
-                <a href="{{ route('login') }}" class="px-8 py-3 bg-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-600/30 hover:scale-105 transition-transform inline-block">
+                <a href="{{ route('login') }}" class="px-8 py-3 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:scale-105 transition-transform inline-block">
                     Mulai Sekarang
                 </a>
                 
