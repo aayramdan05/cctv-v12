@@ -202,6 +202,26 @@
                 background-image: url('{{ asset('bg.png') }}');
             }
         }
+
+        /* Center White Glow */
+        .center-highlight {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+            filter: blur(20px);
+        }
+        @media (max-width: 768px) {
+            .center-highlight {
+                width: 500px;
+                height: 500px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -237,6 +257,9 @@
             <div class="laser-sphere-container">
                 <div class="laser-ring laser-ring-1"></div>
             </div>
+
+            <!-- Center Highlight Overlay -->
+            <div class="center-highlight"></div>
 
             <div class="swiper mySwiper relative z-10">
                 <div class="swiper-wrapper">
