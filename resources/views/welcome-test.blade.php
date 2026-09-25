@@ -151,8 +151,8 @@
             transform: translate(-50%, -50%);
             perspective: 1200px;
             pointer-events: none;
-            z-index: 0;
-            opacity: 0.6;
+            z-index: 1; /* Show above the white center highlight overlay */
+            opacity: 1;
         }
         @media (min-width: 768px) {
             .laser-sphere-container {
@@ -163,11 +163,11 @@
             position: absolute;
             width: 100%; height: 100%;
             border-radius: 50%;
-            border: 1px solid rgba(30, 58, 138, 0.05);
-            border-top: 3px solid rgba(234, 88, 12, 0.7); /* Orange Tua */
-            border-bottom: 3px solid rgba(30, 58, 138, 0.7); /* Biru Tua */
-            box-shadow: 0 0 30px rgba(234, 88, 12, 0.2), inset 0 0 30px rgba(30, 58, 138, 0.2);
-            filter: drop-shadow(0 0 10px rgba(234, 88, 12, 0.3));
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top: 5px solid rgba(234, 88, 12, 1);
+            border-bottom: 5px solid rgba(14, 165, 233, 1);
+            box-shadow: 0 0 50px rgba(234, 88, 12, 0.8), inset 0 0 50px rgba(14, 165, 233, 0.6);
+            filter: drop-shadow(0 0 20px rgba(234, 88, 12, 1));
         }
         .laser-ring-1 {
             animation: ring-spin-1 30s linear infinite;
