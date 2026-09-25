@@ -346,7 +346,7 @@
                             <div class="floating-node hidden md:flex bg-gradient-to-br from-teal-400 to-sky-500 text-white shadow-lg shadow-sky-500/40 rounded-full border border-white/50" style="top: 65%; right: 15%; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus Pintar</h1>
+                            <h1 class="text-4xl md:text-5xl font-roboto font-black tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600" style="filter: drop-shadow(0 2px 8px rgba(255,255,255,0.9));">Sistem Pemantauan <br> Kampus</h1>
                             <p class="text-slate-800 text-sm md:text-base mb-8 font-semibold" style="text-shadow: 0 1px 4px rgba(255,255,255,1);">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
                             @auth
                                 <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
