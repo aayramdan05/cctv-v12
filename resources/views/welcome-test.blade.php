@@ -208,18 +208,18 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0) 70%);
+            width: 1500px;
+            height: 1500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0) 70%);
             border-radius: 50%;
             pointer-events: none;
-            z-index: 5;
-            filter: blur(20px);
+            z-index: 0;
+            filter: blur(40px);
         }
         @media (max-width: 768px) {
             .center-highlight {
-                width: 500px;
-                height: 500px;
+                width: 800px;
+                height: 800px;
             }
         }
     </style>
