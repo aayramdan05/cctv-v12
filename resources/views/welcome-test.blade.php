@@ -145,13 +145,14 @@
         }
 
         /* Slide 3 Feature Cards */
+        /* Slide 3 Feature Cards */
         .feature-card {
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
             border-radius: 30px;
             padding: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
 
         /* Laser Sphere Background */
@@ -163,7 +164,7 @@
             perspective: 1200px;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.4;
+            opacity: 0.6;
         }
         @media (min-width: 768px) {
             .laser-sphere-container {
@@ -174,11 +175,11 @@
             position: absolute;
             width: 100%; height: 100%;
             border-radius: 50%;
-            border: 1px solid rgba(56, 189, 248, 0.1);
-            border-top: 3px solid rgba(56, 189, 248, 0.8);
-            border-bottom: 3px solid rgba(139, 92, 246, 0.8);
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), inset 0 0 30px rgba(139, 92, 246, 0.4);
-            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+            border: 1px solid rgba(30, 58, 138, 0.05);
+            border-top: 3px solid rgba(234, 88, 12, 0.7); /* Orange Tua */
+            border-bottom: 3px solid rgba(30, 58, 138, 0.7); /* Biru Tua */
+            box-shadow: 0 0 30px rgba(234, 88, 12, 0.2), inset 0 0 30px rgba(30, 58, 138, 0.2);
+            filter: drop-shadow(0 0 10px rgba(234, 88, 12, 0.3));
         }
         .laser-ring-1 {
             animation: ring-spin-1 30s linear infinite;
@@ -187,6 +188,19 @@
         @keyframes ring-spin-1 {
             0% { transform: rotateX(75deg) rotateY(0deg) rotateZ(0deg); }
             100% { transform: rotateX(75deg) rotateY(0deg) rotateZ(360deg); }
+        }
+
+        /* Responsive Background */
+        .hero-bg {
+            background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.9)), url('{{ asset('bg-mobile.png') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        @media (min-width: 768px) {
+            .hero-bg {
+                background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.85)), url('{{ asset('bg.png') }}');
+            }
         }
     </style>
 </head>
@@ -201,15 +215,15 @@
         
         <!-- Logo di Tengah -->
         <div class="flex flex-col items-center flex-1">
-            <span class="text-[10px] font-extrabold tracking-[0.2em] text-gray-300 mb-1 uppercase leading-none" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">CCTV</span>
-            <div class="bg-white p-2 rounded-xl shadow-lg">
+            <span class="text-[10px] font-extrabold tracking-[0.2em] text-blue-900 mb-1 uppercase leading-none" style="text-shadow: 0 2px 4px rgba(255,255,255,0.8);">CCTV</span>
+            <div class="bg-white p-2 rounded-xl shadow-md border border-gray-100">
                 <img src="{{ asset('logo-unpad-secondary.png') }}" alt="CCTV UNPAD" class="h-6">
             </div>
         </div>
         
         <!-- Tombol Login Kanan -->
         <div class="flex-1 flex justify-end">
-            <a href="{{ route('login') }}" class="px-6 py-2 bg-blue-600 text-white rounded-full text-sm font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/50">
+            <a href="{{ route('login') }}" class="px-6 py-2 bg-orange-600 text-white rounded-full text-sm font-bold hover:bg-orange-500 transition-colors shadow-lg shadow-orange-900/30">
                 Log In
             </a>
         </div>
@@ -217,7 +231,7 @@
 
     <main>
         <!-- 3D Carousel Section -->
-        <section class="h-screen w-full relative bg-gray-900 overflow-hidden" style="background-image: linear-gradient(to bottom, rgba(15,23,42,0.8), rgba(15,23,42,0.9)), url('{{ asset('bg.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+        <section class="h-screen w-full relative overflow-hidden hero-bg">
             
             <!-- Global Laser Sphere Background -->
             <div class="laser-sphere-container">
@@ -233,77 +247,77 @@
                             <!-- Center Main Icon -->
                             <div class="center-app"><i class="fas fa-video text-white text-4xl"></i></div>
                             <!-- Left Nodes -->
-                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #eab308; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #3b82f6; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #0ea5e9; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #ea580c; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #1e3a8a; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #ea580c; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
                             <!-- Right Nodes -->
-                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #ef4444; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #334155; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #10b981; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #1e3a8a; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #ea580c; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #1e3a8a; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
 
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-blue-900">
                                 Sistem Pemantauan <br> Kampus Pintar
                             </h1>
-                            <p class="text-gray-300 text-sm md:text-base mb-8">
+                            <p class="text-slate-700 text-sm md:text-base mb-8 font-medium">
                                 CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.
                             </p>
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
+                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
                             @else
-                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
+                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
                             @endauth
                         </div>
                     </div>
 
                     <!-- SLIDE 2: Solusi Keamanan -->
                     <div class="swiper-slide p-6">
-                        <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));">
-                            <i class="fas fa-shield-alt text-6xl text-purple-600"></i>
+                        <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(30,58,138,0.2));">
+                            <i class="fas fa-shield-alt text-6xl text-blue-800"></i>
                         </div>
                         
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-gray-300 text-sm md:text-base">
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-blue-900">Solusi Keamanan <br> Terpusat</h1>
+                            <p class="text-slate-700 text-sm md:text-base font-medium">
                                 Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.
                             </p>
                         </div>
 
                         <!-- Floating Orbiting Icons -->
                         <div class="orbit-system-intro hidden sm:block">
-                            <div class="orbit-icon orbit-1 text-blue-500"><i class="fas fa-video"></i></div>
-                            <div class="orbit-icon orbit-2 text-red-500"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="orbit-icon orbit-3 text-purple-500"><i class="fas fa-desktop"></i></div>
-                            <div class="orbit-icon orbit-4 text-yellow-500"><i class="fas fa-users"></i></div>
+                            <div class="orbit-icon orbit-1 text-orange-600"><i class="fas fa-video"></i></div>
+                            <div class="orbit-icon orbit-2 text-blue-800"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="orbit-icon orbit-3 text-orange-600"><i class="fas fa-desktop"></i></div>
+                            <div class="orbit-icon orbit-4 text-blue-800"><i class="fas fa-users"></i></div>
                         </div>
                     </div>
 
                     <!-- SLIDE 3: Fitur -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="mt-3 text-gray-300 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <p class="mt-3 text-slate-700 text-sm md:text-base max-w-xl mx-auto font-medium">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <!-- Feature 1 -->
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
-                                <h3 class="text-lg font-bold text-white mb-2">Streaming Cepat</h3>
-                                <p class="text-gray-300 text-xs leading-relaxed">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
+                                <h3 class="text-lg font-bold text-blue-900 mb-2">Streaming Cepat</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-medium">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <!-- Feature 2 -->
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-cyan-500/20 text-cyan-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
-                                <h3 class="text-lg font-bold text-white mb-2">Cek Otomatis</h3>
-                                <p class="text-gray-300 text-xs leading-relaxed">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <div class="w-14 h-14 bg-blue-100 text-blue-800 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
+                                <h3 class="text-lg font-bold text-blue-900 mb-2">Cek Otomatis</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-medium">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <!-- Feature 3 -->
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-purple-500/20 text-purple-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
-                                <h3 class="text-lg font-bold text-white mb-2">Akses Fleksibel</h3>
-                                <p class="text-gray-300 text-xs leading-relaxed">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
+                                <h3 class="text-lg font-bold text-blue-900 mb-2">Akses Fleksibel</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-medium">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
@@ -312,62 +326,62 @@
                     <div class="swiper-slide p-6">
                         <div class="relative w-full max-w-3xl h-[250px] flex items-center justify-center mb-8 mt-4">
                             <div class="center-app"><i class="fas fa-video text-white text-4xl"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #eab308; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #3b82f6; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #0ea5e9; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #ef4444; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
-                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #334155; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
-                            <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #10b981; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; left: 15%; color: #ea580c; animation-delay: 0s;"><i class="fas fa-lightbulb"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; left: 5%; color: #1e3a8a; animation-delay: 0.5s;"><i class="fas fa-server"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; left: 20%; color: #ea580c; animation-delay: 1s;"><i class="fas fa-shield-halved"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 15%; right: 20%; color: #1e3a8a; animation-delay: 0.2s;"><i class="fas fa-bolt"></i></div>
+                            <div class="floating-node hidden sm:flex" style="top: 40%; right: 5%; color: #ea580c; animation-delay: 0.7s;"><i class="fas fa-eye"></i></div>
+                            <div class="floating-node hidden md:flex" style="top: 65%; right: 15%; color: #1e3a8a; animation-delay: 1.2s;"><i class="fas fa-network-wired"></i></div>
                         </div>
                         <div class="text-center px-4 max-w-2xl mx-auto">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Sistem Pemantauan <br> Kampus Pintar</h1>
-                            <p class="text-gray-300 text-sm md:text-base mb-8">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-blue-900">Sistem Pemantauan <br> Kampus Pintar</h1>
+                            <p class="text-slate-700 text-sm md:text-base mb-8 font-medium">CCTV Unpad adalah platform pemantauan modern dan terpusat yang dirancang khusus untuk memastikan keamanan seluruh lingkungan akademik Anda.</p>
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
+                                <a href="{{ url('/dashboard') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Buka Dashboard</a>
                             @else
-                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
+                                <a href="{{ route('login') }}" class="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 hover:shadow-xl transition-transform hover:-translate-y-1 inline-block">Masuk ke Sistem</a>
                             @endauth
                         </div>
                     </div>
 
                     <!-- DUPLICATE SLIDE 2 -->
                     <div class="swiper-slide p-6">
-                        <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));">
-                            <i class="fas fa-shield-alt text-6xl text-purple-600"></i>
+                        <div class="w-20 h-20 flex items-center justify-center mb-6 relative z-20 mx-auto mt-4" style="filter: drop-shadow(0 15px 15px rgba(30,58,138,0.2));">
+                            <i class="fas fa-shield-alt text-6xl text-blue-800"></i>
                         </div>
                         <div class="text-center px-4 relative z-20 max-w-2xl mx-auto mb-10">
-                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">Solusi Keamanan <br> Terpusat</h1>
-                            <p class="text-gray-300 text-sm md:text-base">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
+                            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-blue-900">Solusi Keamanan <br> Terpusat</h1>
+                            <p class="text-slate-700 text-sm md:text-base font-medium">Sederhanakan proses pemantauan CCTV dalam satu platform terpusat untuk meningkatkan kewaspadaan dan transparansi keamanan kampus.</p>
                         </div>
                         <div class="orbit-system-intro hidden sm:block">
-                            <div class="orbit-icon orbit-1 text-blue-500"><i class="fas fa-video"></i></div>
-                            <div class="orbit-icon orbit-2 text-red-500"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="orbit-icon orbit-3 text-purple-500"><i class="fas fa-desktop"></i></div>
-                            <div class="orbit-icon orbit-4 text-yellow-500"><i class="fas fa-users"></i></div>
+                            <div class="orbit-icon orbit-1 text-orange-600"><i class="fas fa-video"></i></div>
+                            <div class="orbit-icon orbit-2 text-blue-800"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="orbit-icon orbit-3 text-orange-600"><i class="fas fa-desktop"></i></div>
+                            <div class="orbit-icon orbit-4 text-blue-800"><i class="fas fa-users"></i></div>
                         </div>
                     </div>
 
                     <!-- DUPLICATE SLIDE 3 -->
                     <div class="swiper-slide p-8 md:p-12">
                         <div class="text-center mb-8">
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
-                            <p class="mt-3 text-gray-300 text-sm md:text-base max-w-xl mx-auto">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight">Diciptakan untuk semua <br>kebutuhan keamanan</h2>
+                            <p class="mt-3 text-slate-700 text-sm md:text-base max-w-xl mx-auto font-medium">Platform multifungsi yang dapat diandalkan oleh seluruh pimpinan dan operator kampus.</p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
-                                <h3 class="text-lg font-bold text-white mb-2">Streaming Cepat</h3>
-                                <p class="text-gray-300 text-xs leading-relaxed">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
+                                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-bolt"></i></div>
+                                <h3 class="text-lg font-bold text-blue-900 mb-2">Streaming Cepat</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-medium">Nikmati video langsung dengan jeda minimal berkat teknologi WebRTC.</p>
                             </div>
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-cyan-500/20 text-cyan-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
-                                <h3 class="text-lg font-bold text-white mb-2">Cek Otomatis</h3>
-                                <p class="text-gray-300 text-xs leading-relaxed">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
+                                <div class="w-14 h-14 bg-blue-100 text-blue-800 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-heartbeat"></i></div>
+                                <h3 class="text-lg font-bold text-blue-900 mb-2">Cek Otomatis</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-medium">Sistem rutin memonitor koneksi kamera dan mengirim notifikasi jika offline.</p>
                             </div>
                             <div class="feature-card flex flex-col items-center text-center">
-                                <div class="w-14 h-14 bg-purple-500/20 text-purple-400 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
-                                <h3 class="text-lg font-bold text-white mb-2">Akses Fleksibel</h3>
-                                <p class="text-gray-300 text-xs leading-relaxed">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
+                                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-[20px] flex items-center justify-center text-xl mb-4"><i class="fas fa-lock"></i></div>
+                                <h3 class="text-lg font-bold text-blue-900 mb-2">Akses Fleksibel</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed font-medium">Manajemen peran memastikan hanya personel berwenang yang dapat mengakses.</p>
                             </div>
                         </div>
                     </div>
@@ -379,26 +393,47 @@
         </section>
 
         <!-- FOOTER SECTION (Normal Manual Scroll) -->
-        <section class="bg-slate-800 text-white py-20 flex flex-col items-center">
+        <section class="bg-slate-50 text-slate-900 py-20 flex flex-col items-center">
             <div class="max-w-4xl w-full px-6 text-center">
                 <div class="flex flex-col items-center mb-6">
-                    <span class="text-xs font-extrabold tracking-[0.2em] text-slate-400 mb-1 uppercase">CCTV</span>
-                    <div class="bg-white p-4 rounded-2xl inline-block shadow-lg">
+                    <span class="text-xs font-extrabold tracking-[0.2em] text-slate-500 mb-1 uppercase">CCTV</span>
+                    <div class="bg-white p-4 rounded-2xl inline-block shadow-md border border-gray-100">
                         <img src="{{ asset('logo-unpad-secondary.png') }}" alt="Logo" class="h-10">
                     </div>
                 </div>
-                <h2 class="text-3xl font-bold mb-4 tracking-tight">Siap memantau area kampus?</h2>
-                <p class="text-slate-400 mb-10 text-sm max-w-lg mx-auto leading-relaxed">Geser kembali carousel ke atas untuk melihat fitur, atau langsung akses sistem jika Anda sudah siap.</p>
-                <a href="{{ route('login') }}" class="px-8 py-3 bg-white text-slate-900 font-bold rounded-full shadow-lg hover:scale-105 transition-transform inline-block">
+                <h2 class="text-3xl font-bold mb-4 tracking-tight text-blue-900">Siap memantau area kampus?</h2>
+                <p class="text-slate-600 mb-10 text-sm max-w-lg mx-auto leading-relaxed">Geser kembali carousel ke atas untuk melihat fitur, atau langsung akses sistem jika Anda sudah siap.</p>
+                <a href="{{ route('login') }}" class="px-8 py-3 bg-orange-600 text-white font-bold rounded-full shadow-lg shadow-orange-600/30 hover:scale-105 transition-transform inline-block">
                     Mulai Sekarang
                 </a>
                 
-                <div class="border-t border-slate-700 pt-8 mt-16 text-slate-500 text-xs flex justify-between items-center flex-col sm:flex-row gap-4 w-full">
-                    <span>&copy; {{ date('Y') }} Universitas Padjadjaran.</span>
-                    <span class="flex space-x-4">
-                        <a href="#" class="hover:text-white transition-colors">Bantuan</a>
-                        <a href="#" class="hover:text-white transition-colors">Privasi</a>
-                    </span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left border-t border-slate-200 pt-10 mt-16 w-full">
+                    <!-- Info Unpad -->
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <img src="{{ asset('logo.png') }}" alt="Logo Universitas Padjadjaran" class="h-12 bg-white rounded p-1 border border-gray-100" onerror="this.src='{{ asset('logo-unpad.png') }}'">
+                            <div>
+                                <h3 class="font-extrabold text-lg leading-tight tracking-wide text-blue-900">UNIVERSITAS<br>PADJADJARAN</h3>
+                            </div>
+                        </div>
+                        <p class="font-bold text-sm text-slate-700 mb-2">
+                            Direktorat Perencanaan, Sistem<br>Informasi, dan Transformasi Digital
+                        </p>
+                        <p class="text-sm text-slate-600 leading-relaxed max-w-sm">
+                            Gedung Rektorat Unpad Kampus Jatinangor<br>
+                            Jln. Ir. Soekarno km. 21 Jatinangor, Kab. Sumedang 45363<br>
+                            Jawa Barat
+                        </p>
+                    </div>
+                    
+                    <!-- Copyright & Links -->
+                    <div class="flex flex-col md:items-end md:justify-end space-y-4">
+                        <div class="flex space-x-4 text-sm text-slate-600">
+                            <a href="#" class="hover:text-blue-700 transition-colors">Bantuan</a>
+                            <a href="#" class="hover:text-blue-700 transition-colors">Kebijakan Privasi</a>
+                        </div>
+                        <span class="text-xs text-slate-500">&copy; {{ date('Y') }} CCTV Universitas Padjadjaran. All rights reserved.</span>
+                    </div>
                 </div>
             </div>
         </section>
