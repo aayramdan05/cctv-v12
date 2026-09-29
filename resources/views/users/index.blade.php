@@ -30,6 +30,7 @@
             sortBy: '{{ request('sort_by', 'created_at') }}',
             sortDir: '{{ request('sort_dir', 'desc') }}',
             selectedUsers: [],
+            showBulkDeleteModal: false,
             get allSelected() {
                 const checkboxes = document.querySelectorAll('.user-checkbox');
                 return checkboxes.length > 0 && this.selectedUsers.length === checkboxes.length;
@@ -70,8 +71,8 @@
         }">
             
         <!-- Seamless Filter & Search Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <form id="filter-form" action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full" @submit.prevent="updateTable()">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+            <form id="filter-form" action="{{ route('users.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full md:flex-1" @submit.prevent="updateTable()">
                 <input type="hidden" name="sort_by" :value="sortBy">
                 <input type="hidden" name="sort_dir" :value="sortDir">
                 <div class="relative flex-1 min-w-[200px]">
@@ -116,16 +117,46 @@
             </form>
 
             @can('user_delete')
-            <div class="relative flex items-center" x-show="selectedUsers.length > 0" x-cloak>
-                <form action="{{ route('users.bulkDelete') }}" method="POST" class="inline-block" onsubmit="return confirm(`Yakin ingin menghapus ${selectedUsers.length} user yang dipilih?`);">
-                    @csrf
-                    <template x-for="id in selectedUsers" :key="id">
-                        <input type="hidden" name="user_ids[]" :value="id">
-                    </template>
-                    <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors text-sm font-semibold flex items-center gap-2">
-                        <i class="fas fa-trash-alt"></i> Hapus (<span x-text="selectedUsers.length"></span>)
-                    </button>
-                </form>
+            <div class="relative flex items-center ml-auto shrink-0" x-show="selectedUsers.length > 0" x-cloak>
+                <button type="button" @click="showBulkDeleteModal = true" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors text-sm font-semibold flex items-center gap-2">
+                    <i class="fas fa-trash-alt"></i> Hapus (<span x-text="selectedUsers.length"></span>)
+                </button>
+
+                <!-- Bulk Delete Modal -->
+                <div x-show="showBulkDeleteModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="showBulkDeleteModal = false"></div>
+                    <div class="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl m-4 transform transition-all text-left"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95">
+                        
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">Konfirmasi Hapus</h3>
+                                <p class="text-xs text-slate-500">Hapus <span x-text="selectedUsers.length"></span> user terpilih</p>
+                            </div>
+                        </div>
+                        
+                        <p class="text-sm text-slate-600 mb-6">Apakah Anda yakin ingin menghapus <span class="font-bold text-slate-800" x-text="selectedUsers.length"></span> pengguna yang dipilih secara permanen? Tindakan ini tidak dapat dibatalkan.</p>
+                        
+                        <form action="{{ route('users.bulkDelete') }}" method="POST">
+                            @csrf
+                            <template x-for="id in selectedUsers" :key="id">
+                                <input type="hidden" name="user_ids[]" :value="id">
+                            </template>
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" @click="showBulkDeleteModal = false" class="px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+                                <button type="submit" class="px-5 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/30 transition-all">Ya, Hapus</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
             @endcan
         </div>
