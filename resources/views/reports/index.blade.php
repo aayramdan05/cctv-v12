@@ -94,10 +94,10 @@
                     <div class="lg:w-2/3 flex flex-col gap-4">
                         <!-- Top 2-4 - Medium Cards -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            @foreach($topStorageCctvs->slice(1, 3) as $index => $topCctv)
+                            @foreach($topStorageCctvs->slice(1, 3) as $topCctv)
                                 <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-orange-300 transition-all hover:shadow-md">
                                     <div class="absolute -right-4 -top-4 w-14 h-14 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <span class="text-orange-300 font-black text-xl italic absolute bottom-2 left-3">#{{ $index + 2 }}</span>
+                                        <span class="text-orange-300 font-black text-xl italic absolute bottom-2 left-3">#{{ $loop->iteration + 1 }}</span>
                                     </div>
                                     <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">{{ $topCctv->kode_cctv }}</p>
                                     <h4 class="text-sm font-semibold text-slate-700 truncate mb-3" title="{{ $topCctv->nama_cctv }}">{{ $topCctv->nama_cctv }}</h4>
@@ -113,10 +113,10 @@
                         <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex-1">
                             <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-50 pb-2">Peringkat 5 - 10</h4>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-                                @foreach($topStorageCctvs->slice(4, 6) as $index => $topCctv)
+                                @foreach($topStorageCctvs->slice(4, 6) as $topCctv)
                                     <div class="flex items-center justify-between group hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition-colors">
                                         <div class="flex items-center gap-3 truncate">
-                                            <span class="text-sm font-black text-slate-300 w-5 text-right">#{{ $index + 5 }}</span>
+                                            <span class="text-sm font-black text-slate-300 w-5 text-right">#{{ $loop->iteration + 4 }}</span>
                                             <span class="text-xs font-semibold text-slate-600 truncate" title="{{ $topCctv->nama_cctv }}">{{ $topCctv->nama_cctv }}</span>
                                         </div>
                                         <span class="text-xs font-bold text-slate-800 whitespace-nowrap ml-2 bg-slate-100 px-2 py-0.5 rounded">{{ $topCctv->recordings_avg_size_mb ? round($topCctv->recordings_avg_size_mb, 1) : 0 }} MB</span>
