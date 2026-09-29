@@ -63,28 +63,70 @@
                 }
             }
         }">
-            <!-- Top 10 Storage Summary -->
+            <!-- Top 10 Storage Summary (Asymmetrical Layout) -->
             <div class="mb-8">
                 <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
                     <i class="fas fa-chart-bar text-red-500 mr-2"></i> Top 10 Konsumsi Storage (per 15 Menit)
                 </h3>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    @foreach($topStorageCctvs as $index => $topCctv)
-                        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-red-200 hover:shadow-md transition-all duration-300">
-                            <div class="absolute -right-4 -top-4 w-16 h-16 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <span class="text-red-200 font-black text-xl italic absolute bottom-3 left-4">#{{ $index + 1 }}</span>
+                
+                @if($topStorageCctvs->isNotEmpty())
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <!-- Top 1 - The Giant Highlight -->
+                    <div class="lg:w-1/3 flex">
+                        <div class="w-full bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-red-500/30 relative overflow-hidden flex flex-col justify-between group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                            <div class="absolute -right-6 -top-10 text-[140px] font-black opacity-10 italic leading-none group-hover:scale-110 transition-transform duration-500">#1</div>
+                            <div class="relative z-10 mb-8">
+                                <span class="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold tracking-wider mb-4 inline-block backdrop-blur-sm shadow-sm">KONSUMSI TERBESAR</span>
+                                <h3 class="text-2xl font-bold mb-1 line-clamp-2" title="{{ $topStorageCctvs[0]->nama_cctv }}">{{ $topStorageCctvs[0]->nama_cctv }}</h3>
+                                <p class="text-red-100 font-mono text-sm opacity-90">{{ $topStorageCctvs[0]->kode_cctv }}</p>
                             </div>
                             <div class="relative z-10">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{{ $topCctv->kode_cctv }}</p>
-                                <h4 class="text-xs font-semibold text-slate-700 truncate mb-3" title="{{ $topCctv->nama_cctv }}">{{ $topCctv->nama_cctv }}</h4>
-                                <div class="flex items-end gap-1">
-                                    <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-red-500 to-orange-500 leading-none">{{ $topCctv->recordings_avg_size_mb ? round($topCctv->recordings_avg_size_mb, 1) : 0 }}</span>
-                                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">MB</span>
+                                <p class="text-xs text-red-100 mb-1 font-medium">Rata-rata File per 15 Menit</p>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-5xl font-black">{{ $topStorageCctvs[0]->recordings_avg_size_mb ? round($topStorageCctvs[0]->recordings_avg_size_mb, 1) : 0 }}</span>
+                                    <span class="text-xl font-bold text-red-200">MB</span>
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                    </div>
+
+                    <!-- Top 2 to 10 Container -->
+                    <div class="lg:w-2/3 flex flex-col gap-4">
+                        <!-- Top 2-4 - Medium Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            @foreach($topStorageCctvs->slice(1, 3) as $index => $topCctv)
+                                <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-orange-300 transition-all hover:shadow-md">
+                                    <div class="absolute -right-4 -top-4 w-14 h-14 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <span class="text-orange-300 font-black text-xl italic absolute bottom-2 left-3">#{{ $index + 2 }}</span>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">{{ $topCctv->kode_cctv }}</p>
+                                    <h4 class="text-sm font-semibold text-slate-700 truncate mb-3" title="{{ $topCctv->nama_cctv }}">{{ $topCctv->nama_cctv }}</h4>
+                                    <div class="flex items-end gap-1">
+                                        <span class="text-2xl font-black text-slate-800">{{ $topCctv->recordings_avg_size_mb ? round($topCctv->recordings_avg_size_mb, 1) : 0 }}</span>
+                                        <span class="text-xs font-bold text-slate-400 mb-0.5">MB</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <!-- Top 5-10 - Compact List -->
+                        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex-1">
+                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-50 pb-2">Peringkat 5 - 10</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                                @foreach($topStorageCctvs->slice(4, 6) as $index => $topCctv)
+                                    <div class="flex items-center justify-between group hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition-colors">
+                                        <div class="flex items-center gap-3 truncate">
+                                            <span class="text-sm font-black text-slate-300 w-5 text-right">#{{ $index + 5 }}</span>
+                                            <span class="text-xs font-semibold text-slate-600 truncate" title="{{ $topCctv->nama_cctv }}">{{ $topCctv->nama_cctv }}</span>
+                                        </div>
+                                        <span class="text-xs font-bold text-slate-800 whitespace-nowrap ml-2 bg-slate-100 px-2 py-0.5 rounded">{{ $topCctv->recordings_avg_size_mb ? round($topCctv->recordings_avg_size_mb, 1) : 0 }} MB</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                @endif
             </div>
 
             <!-- Filter Form -->

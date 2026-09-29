@@ -22,12 +22,14 @@ class ReportController extends Controller
 
         // Apply filters
         if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_cctv', 'like', "%{$search}%")
-                  ->orWhere('kode_cctv', 'like', "%{$search}%")
-                  ->orWhere('ip', 'like', "%{$search}%");
-            });
+            $searchTerms = array_filter(explode(' ', strtolower($request->input('search'))));
+            foreach ($searchTerms as $term) {
+                $query->where(function ($q) use ($term) {
+                    $q->where(\Illuminate\Support\Facades\DB::raw('LOWER(nama_cctv)'), 'like', "%{$term}%")
+                      ->orWhere(\Illuminate\Support\Facades\DB::raw('LOWER(kode_cctv)'), 'like', "%{$term}%")
+                      ->orWhere('ip', 'like', "%{$term}%");
+                });
+            }
         }
 
         if ($request->filled('building_id')) {
