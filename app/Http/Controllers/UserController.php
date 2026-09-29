@@ -250,4 +250,40 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User berhasil diaktifkan.');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('user_delete');
+
+        $request->validate([
+            'user_ids' => ['required', 'array'],
+            'user_ids.*' => ['exists:users,id'],
+        ]);
+
+        $currentUser = auth()->user();
+        $users = User::whereIn('id', $request->user_ids)->get();
+
+        $deletedCount = 0;
+        foreach ($users as $user) {
+            if ($user->id === $currentUser->id) continue;
+            
+            // --- HIERARKI RBAC SECURITY ---
+            if ($currentUser->role === 'faculty_operator') {
+                if ($user->role !== 'user' || $user->faculty !== $currentUser->faculty) {
+                    continue; // Lewati jika tidak punya akses
+                }
+            } elseif (!in_array($currentUser->role, ['superadmin', 'admin'])) {
+                if (in_array($user->role, ['admin', 'superadmin'])) {
+                    continue; // Lewati jika mencoba hapus admin
+                }
+            } elseif ($currentUser->role !== 'superadmin' && $user->role === 'superadmin') {
+                continue; // Lewati jika non-superadmin mencoba hapus superadmin
+            }
+
+            $user->delete();
+            $deletedCount++;
+        }
+
+        return redirect()->route('users.index')->with('success', "$deletedCount User berhasil dihapus.");
+    }
 }

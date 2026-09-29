@@ -199,6 +199,7 @@ Route::middleware(['auth', 'permission:cctv_view'])->group(function () {
 });
 
 Route::middleware(['auth', 'permission:user_view'])->group(function () {
+    Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
     Route::resource('users', UserController::class);
     Route::post('users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
     Route::post('users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');

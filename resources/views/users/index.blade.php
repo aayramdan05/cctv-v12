@@ -29,6 +29,18 @@
             loading: false,
             sortBy: '{{ request('sort_by', 'created_at') }}',
             sortDir: '{{ request('sort_dir', 'desc') }}',
+            selectedUsers: [],
+            get allSelected() {
+                const checkboxes = document.querySelectorAll('.user-checkbox');
+                return checkboxes.length > 0 && this.selectedUsers.length === checkboxes.length;
+            },
+            toggleAll() {
+                if (this.allSelected) {
+                    this.selectedUsers = [];
+                } else {
+                    this.selectedUsers = Array.from(document.querySelectorAll('.user-checkbox')).map(cb => cb.value);
+                }
+            },
             handleSort(field) {
                 if (this.sortBy === field) {
                     this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
@@ -102,12 +114,30 @@
                     </a>
                 @endif
             </form>
+
+            @can('user_delete')
+            <div class="relative flex items-center" x-show="selectedUsers.length > 0" x-cloak>
+                <form action="{{ route('users.bulkDelete') }}" method="POST" class="inline-block" onsubmit="return confirm(`Yakin ingin menghapus ${selectedUsers.length} user yang dipilih?`);">
+                    @csrf
+                    <template x-for="id in selectedUsers" :key="id">
+                        <input type="hidden" name="user_ids[]" :value="id">
+                    </template>
+                    <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors text-sm font-semibold flex items-center gap-2">
+                        <i class="fas fa-trash-alt"></i> Hapus (<span x-text="selectedUsers.length"></span>)
+                    </button>
+                </form>
+            </div>
+            @endcan
         </div>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-cyan-100 select-none">
+                            <th class="pb-4 pl-4 w-10">
+                                <input type="checkbox" class="rounded border-slate-300 text-cyan-500 focus:ring-cyan-500 cursor-pointer"
+                                       :checked="allSelected" @click="toggleAll()">
+                            </th>
                             <th class="pb-4 pl-4 font-semibold cursor-pointer hover:text-cyan-500 transition-colors group" @click="handleSort('name')">
                                 Pengguna
                                 <i class="fas text-[10px] ml-1 transition-opacity" :class="sortBy === 'name' ? (sortDir === 'asc' ? 'fa-sort-up text-cyan-500' : 'fa-sort-down text-cyan-500') : 'fa-sort text-slate-300 opacity-0 group-hover:opacity-100'"></i>
@@ -128,6 +158,10 @@
                     <tbody id="user-table-body" class="text-sm text-slate-600">
                         @forelse ($users as $user)
                             <tr class="hover:bg-cyan-50/50 transition-colors group border-b border-slate-50 last:border-none">
+                                <td class="py-4 pl-4">
+                                    <input type="checkbox" class="user-checkbox rounded border-slate-300 text-cyan-500 focus:ring-cyan-500 cursor-pointer"
+                                           value="{{ $user->id }}" x-model="selectedUsers">
+                                </td>
                                 <td class="py-4 pl-4">
                                     <div class="flex items-center space-x-3">
                                         <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-200 to-slate-300 flex items-center justify-center text-slate-600 font-bold text-xs">
@@ -240,7 +274,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-12 text-center">
+                                <td colspan="7" class="py-12 text-center">
                                     <div class="flex flex-col items-center justify-center text-slate-400">
                                         <i class="fas fa-users text-4xl mb-3 opacity-50"></i>
                                         <p>Belum ada data user.</p>
