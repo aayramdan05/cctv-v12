@@ -118,45 +118,9 @@
 
             @can('user_delete')
             <div class="relative flex items-center ml-auto shrink-0" x-show="selectedUsers.length > 0" x-cloak>
-                <button type="button" @click="showBulkDeleteModal = true" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors text-sm font-semibold flex items-center gap-2">
+                <button type="button" @click="openBulkDeleteModal(Alpine.raw(selectedUsers))" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors text-sm font-semibold flex items-center gap-2">
                     <i class="fas fa-trash-alt"></i> Hapus (<span x-text="selectedUsers.length"></span>)
                 </button>
-
-                <!-- Bulk Delete Modal -->
-                <div x-show="showBulkDeleteModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
-                    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="showBulkDeleteModal = false"></div>
-                    <div class="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl m-4 transform transition-all text-left"
-                         x-transition:enter="ease-out duration-300"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="ease-in duration-200"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-end="opacity-0 scale-95">
-                        
-                        <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-slate-800">Konfirmasi Hapus</h3>
-                                <p class="text-xs text-slate-500">Hapus <span x-text="selectedUsers.length"></span> user terpilih</p>
-                            </div>
-                        </div>
-                        
-                        <p class="text-sm text-slate-600 mb-6">Apakah Anda yakin ingin menghapus <span class="font-bold text-slate-800" x-text="selectedUsers.length"></span> pengguna yang dipilih secara permanen? Tindakan ini tidak dapat dibatalkan.</p>
-                        
-                        <form action="{{ route('users.bulkDelete') }}" method="POST">
-                            @csrf
-                            <template x-for="id in selectedUsers" :key="id">
-                                <input type="hidden" name="user_ids[]" :value="id">
-                            </template>
-                            <div class="flex justify-end space-x-3">
-                                <button type="button" @click="showBulkDeleteModal = false" class="px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
-                                <button type="submit" class="px-5 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/30 transition-all">Ya, Hapus</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             </div>
             @endcan
         </div>
@@ -353,7 +317,70 @@
             </div>
         </div>
 
+        <!-- Bulk Delete Modal -->
+        <div id="bulkDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeBulkDeleteModal()"></div>
+            <div class="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl m-4 transform scale-95 opacity-0 transition-all duration-300" id="bulkDeleteModalContent">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Konfirmasi Hapus</h3>
+                        <p class="text-xs text-slate-500">Hapus <span id="bulkDeleteCount">0</span> user terpilih</p>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-slate-600 mb-6">Apakah Anda yakin ingin menghapus <span class="font-bold text-slate-800" id="bulkDeleteCountText">0</span> pengguna yang dipilih secara permanen? Tindakan ini tidak dapat dibatalkan.</p>
+                
+                <form id="bulkDeleteForm" action="{{ route('users.bulkDelete') }}" method="POST">
+                    @csrf
+                    <div id="bulkDeleteInputs"></div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeBulkDeleteModal()" class="px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+                        <button type="submit" class="px-5 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/30 transition-all">Ya, Hapus</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <script>
+            function openBulkDeleteModal(userIds) {
+                const modal = document.getElementById('bulkDeleteModal');
+                const content = document.getElementById('bulkDeleteModalContent');
+                
+                document.getElementById('bulkDeleteCount').textContent = userIds.length;
+                document.getElementById('bulkDeleteCountText').textContent = userIds.length;
+                
+                const inputsContainer = document.getElementById('bulkDeleteInputs');
+                inputsContainer.innerHTML = '';
+                userIds.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'user_ids[]';
+                    input.value = id;
+                    inputsContainer.appendChild(input);
+                });
+                
+                modal.classList.remove('hidden');
+                // Trigger reflow
+                void modal.offsetWidth;
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }
+
+            function closeBulkDeleteModal() {
+                const modal = document.getElementById('bulkDeleteModal');
+                const content = document.getElementById('bulkDeleteModalContent');
+                
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+
             function openDeactivateModal(userId, userName) {
                 const modal = document.getElementById('deactivateModal');
                 const content = document.getElementById('deactivateModalContent');
