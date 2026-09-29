@@ -53,11 +53,26 @@ class ReportController extends Controller
         // Paginate for web view (ajax supported)
         $cctvs = $query->paginate(25)->withQueryString();
 
-        // Retrieve Top 10 CCTVs by Storage Size
-        $topStorageCctvs = Cctv::withAvg('recordings', 'size_mb')
-                                ->orderByDesc('recordings_avg_size_mb')
-                                ->take(10)
-                                ->get();
+        // Retrieve Top 10 CCTVs by Storage Size (Optimized & Cached for 1 hour)
+        $topStorageCctvs = \Illuminate\Support\Facades\Cache::remember('top_10_storage_cctvs', 3600, function () {
+            $topIds = \Illuminate\Support\Facades\DB::table('recordings')
+                ->select('cctv_id', \Illuminate\Support\Facades\DB::raw('AVG(size_mb) as avg_size'))
+                ->groupBy('cctv_id')
+                ->orderByDesc('avg_size')
+                ->limit(10)
+                ->get();
+                
+            $cctvs = Cctv::whereIn('id', $topIds->pluck('cctv_id'))->get()->keyBy('id');
+            
+            $result = collect();
+            foreach ($topIds as $top) {
+                if ($cctv = $cctvs->get($top->cctv_id)) {
+                    $cctv->recordings_avg_size_mb = $top->avg_size;
+                    $result->push($cctv);
+                }
+            }
+            return $result;
+        });
 
         if ($request->ajax()) {
             return view('reports.index', compact('cctvs', 'buildings', 'servers', 'topStorageCctvs'));
