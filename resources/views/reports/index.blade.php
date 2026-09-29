@@ -63,6 +63,30 @@
                 }
             }
         }">
+            <!-- Top 10 Storage Summary -->
+            <div class="mb-8">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-red-500 mr-2"></i> Top 10 Konsumsi Storage (per 15 Menit)
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    @foreach($topStorageCctvs as $index => $topCctv)
+                        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-red-200 hover:shadow-md transition-all duration-300">
+                            <div class="absolute -right-4 -top-4 w-16 h-16 bg-gradient-to-br from-red-50 to-orange-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <span class="text-red-200 font-black text-xl italic absolute bottom-3 left-4">#{{ $index + 1 }}</span>
+                            </div>
+                            <div class="relative z-10">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{{ $topCctv->kode_cctv }}</p>
+                                <h4 class="text-xs font-semibold text-slate-700 truncate mb-3" title="{{ $topCctv->nama_cctv }}">{{ $topCctv->nama_cctv }}</h4>
+                                <div class="flex items-end gap-1">
+                                    <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-red-500 to-orange-500 leading-none">{{ $topCctv->recordings_avg_size_mb ? round($topCctv->recordings_avg_size_mb, 1) : 0 }}</span>
+                                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">MB</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
             <!-- Filter Form -->
             <div class="glass-effect rounded-2xl p-6 border border-cyan-100 mb-6 relative z-20">
                 <form id="filter-form" action="{{ route('reports.index') }}" method="GET" class="flex flex-wrap items-center gap-4 w-full" @submit.prevent="updateTable()">

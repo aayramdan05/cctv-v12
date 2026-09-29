@@ -53,11 +53,17 @@ class ReportController extends Controller
         // Paginate for web view (ajax supported)
         $cctvs = $query->paginate(25)->withQueryString();
 
+        // Retrieve Top 10 CCTVs by Storage Size
+        $topStorageCctvs = Cctv::withAvg('recordings', 'size_mb')
+                                ->orderByDesc('recordings_avg_size_mb')
+                                ->take(10)
+                                ->get();
+
         if ($request->ajax()) {
-            return view('reports.index', compact('cctvs', 'buildings', 'servers'));
+            return view('reports.index', compact('cctvs', 'buildings', 'servers', 'topStorageCctvs'));
         }
 
-        return view('reports.index', compact('cctvs', 'buildings', 'servers'));
+        return view('reports.index', compact('cctvs', 'buildings', 'servers', 'topStorageCctvs'));
     }
 
     /**
