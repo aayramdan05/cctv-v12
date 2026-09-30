@@ -188,92 +188,137 @@
         
         <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-8">
                     
-                    <!-- Left Card: Uptime & Status -->
+                                        <!-- Left Card: Uptime & Status -->
                     <div class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-sm rounded-2xl p-6 xl:col-span-2 flex flex-col">
                         <div class="flex justify-between items-start mb-6">
                             <div>
-                                <h3 class="text-[13px] font-extrabold text-slate-800 uppercase tracking-wide">Ringkasan Uptime & Status</h3>
+                                <h3 class="text-[14px] font-extrabold text-slate-800 uppercase tracking-wide">Ringkasan Uptime & Status</h3>
                                 <p class="text-[11px] text-slate-400 mt-0.5">Total kesiapan sistem surveilans</p>
                             </div>
                             <span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">97% Target SLA</span>
                         </div>
                         
                         @php
-                            $total = $totalCctv;
-                            $offline = $offlineCctv;
+                            $total = $totalCctv ?? 0;
+                            $offline = $offlineCctv ?? 0;
                             $online = $total - $offline;
                             $uptimePercent = $total > 0 ? round(($online / $total) * 100) : 0;
                             
-                            // Mock causes of offline based on requested UI
-                            $cause1 = round($offline * 0.47);
-                            $cause2 = round($offline * 0.35);
-                            $cause3 = $offline - $cause1 - $cause2;
+                            $indoor = $indoorCount ?? 0;
+                            $outdoor = $outdoorCount ?? 0;
+                            $totalInOut = $indoor + $outdoor;
+                            // Jika totalInOut 0 tapi total ada, gunakan fallback
+                            if($totalInOut == 0 && $total > 0) {
+                                $totalInOut = $total;
+                            }
+                            $indoorPercent = $totalInOut > 0 ? round(($indoor / $totalInOut) * 100) : 0;
+                            
+                            $gap = 6; // Stroke gap for visual effect
+                            
+                            // Donut 1 Math (Online / Offline)
+                            $p1_val = $uptimePercent;
+                            $p1_len = max(0.1, $p1_val - ($gap/2));
+                            $p1_off = 0;
+                            $p2_val = 100 - $uptimePercent;
+                            $p2_len = max(0.1, $p2_val - ($gap/2));
+                            $p2_off = -($p1_val + ($gap/2));
+                            
+                            // Donut 2 Math (Indoor / Outdoor)
+                            $p3_val = $indoorPercent;
+                            $p3_len = max(0.1, $p3_val - ($gap/2));
+                            $p3_off = 0;
+                            $p4_val = 100 - $indoorPercent;
+                            $p4_len = max(0.1, $p4_val - ($gap/2));
+                            $p4_off = -($p3_val + ($gap/2));
                         @endphp
 
-                        <div class="relative w-40 h-40 mx-auto mb-6">
-                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                <path class="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="5"></path>
-                                <path class="text-red-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="{{ 100 - $uptimePercent }}, 100" stroke-dashoffset="-{{ $uptimePercent }}" stroke-width="5"></path>
-                            </svg>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                <span class="text-3xl font-black text-slate-800">{{ $uptimePercent }}%</span>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">Uptime</span>
-                                <span class="text-[9px] text-emerald-500 font-bold mt-0.5">Normal</span>
-                            </div>
-                        </div>
+                        <svg width="0" height="0" class="absolute">
+                          <defs>
+                            <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stop-color="#8b5cf6" />
+                              <stop offset="100%" stop-color="#4f46e5" />
+                            </linearGradient>
+                            <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stop-color="#f59e0b" />
+                              <stop offset="100%" stop-color="#ea580c" />
+                            </linearGradient>
+                            <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stop-color="#2dd4bf" />
+                              <stop offset="100%" stop-color="#0284c7" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
 
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="flex-1 bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                    <span class="text-[11px] font-medium text-slate-600">Online</span>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <!-- Donut 1: Online vs Offline -->
+                            <div class="flex flex-col items-center">
+                                <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-4">
+                                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                                        <!-- Offline Segment (Orange) -->
+                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="url(#orangeGradient)" stroke-linecap="round" stroke-dasharray="{{ $p2_len }}, 100" stroke-dashoffset="{{ $p2_off }}" stroke-width="6"></path>
+                                        <!-- Online Segment (Purple) -->
+                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="url(#purpleGradient)" stroke-linecap="round" stroke-dasharray="{{ $p1_len }}, 100" stroke-dashoffset="{{ $p1_off }}" stroke-width="6"></path>
+                                    </svg>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span class="text-xl sm:text-2xl font-black text-slate-800">{{ $uptimePercent }}%</span>
+                                        <span class="text-[7px] sm:text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Uptime</span>
+                                    </div>
                                 </div>
-                                <span class="text-xs font-bold text-slate-800">{{ $online }}</span>
+                                <div class="w-full space-y-2">
+                                    <div class="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                            <span class="text-[9px] sm:text-[10px] font-medium text-slate-600">Online</span>
+                                        </div>
+                                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-800">{{ $online }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-orange-50/30 border border-orange-50 rounded-lg p-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+                                            <span class="text-[9px] sm:text-[10px] font-medium text-slate-600">Offline</span>
+                                        </div>
+                                        <span class="text-[10px] sm:text-[11px] font-bold text-orange-600">{{ $offline }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex-1 bg-red-50/30 border border-red-50 rounded-lg p-2.5 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                                    <span class="text-[11px] font-medium text-slate-600">Offline</span>
+                            
+                            <!-- Donut 2: Indoor vs Outdoor -->
+                            <div class="flex flex-col items-center">
+                                <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-4">
+                                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                                        <!-- Outdoor Segment (Gray) -->
+                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="#cbd5e1" stroke-linecap="round" stroke-dasharray="{{ $p4_len }}, 100" stroke-dashoffset="{{ $p4_off }}" stroke-width="6"></path>
+                                        <!-- Indoor Segment (Cyan) -->
+                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="url(#cyanGradient)" stroke-linecap="round" stroke-dasharray="{{ $p3_len }}, 100" stroke-dashoffset="{{ $p3_off }}" stroke-width="6"></path>
+                                    </svg>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span class="text-xl sm:text-2xl font-black text-slate-800">{{ $totalInOut }}</span>
+                                        <span class="text-[7px] sm:text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Unit Total</span>
+                                    </div>
                                 </div>
-                                <span class="text-xs font-bold text-red-600">{{ $offline }}</span>
+                                <div class="w-full space-y-2">
+                                    <div class="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-cyan-500"></div>
+                                            <span class="text-[9px] sm:text-[10px] font-medium text-slate-600">Indoor</span>
+                                        </div>
+                                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-800">{{ $indoor }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-slate-400"></div>
+                                            <span class="text-[9px] sm:text-[10px] font-medium text-slate-600">Outdoor</span>
+                                        </div>
+                                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-600">{{ $outdoor }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div class="mt-auto">
-                            <p class="text-[11px] font-medium text-slate-700 mb-3">Penyebab {{ $offline }} Kamera Offline:</p>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <div class="flex justify-between text-[10px] mb-1">
-                                        <span class="text-slate-500">Gangguan Switch PoE / Listrik</span>
-                                        <span class="font-bold text-slate-700">{{ $cause1 }} Unit (47%)</span>
-                                    </div>
-                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
-                                        <div class="bg-red-500 h-1.5 rounded-full" style="width: 47%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[10px] mb-1">
-                                        <span class="text-slate-500">Kabel FO / Network Disconnect</span>
-                                        <span class="font-bold text-slate-700">{{ $cause2 }} Unit (35%)</span>
-                                    </div>
-                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
-                                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: 35%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[10px] mb-1">
-                                        <span class="text-slate-500">Hardware / Kamera Rusak</span>
-                                        <span class="font-bold text-slate-700">{{ $cause3 }} Unit (18%)</span>
-                                    </div>
-                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
-                                        <div class="bg-slate-400 h-1.5 rounded-full" style="width: 18%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            <p class="text-[10px] text-slate-400 italic text-center leading-tight">Analitik unit perangkat real-time.</p>
                         </div>
                     </div>
-
                     <!-- Right Card: Gedung & Zona -->
                     <div class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-sm rounded-2xl p-6 xl:col-span-3 flex flex-col">
                         <div class="flex justify-between items-start mb-6">
