@@ -213,32 +213,40 @@
                             }
                             $indoorPercent = $totalInOut > 0 ? round(($indoor / $totalInOut) * 100) : 0;
                             
-                            $gap = 14; // Stroke gap for visual effect
+                            $gap = 5; // Stroke gap for visual effect
                             
                             // Donut 1 Math (Online / Offline)
                             $p1_val = $uptimePercent;
-                            $p1_len = max(0.1, $p1_val - ($gap/2));
-                            $p1_off = 0;
                             $p2_val = 100 - $uptimePercent;
-                            $p2_len = max(0.1, $p2_val - ($gap/2));
-                            $p2_off = -($p1_val + ($gap/2));
+                            
+                            $p1_len = max(0.1, $p1_val - $gap);
+                            $p1_off = -($gap / 2);
+                            if ($p1_val <= $gap) { $p1_len = 0.1; $p1_off = -($p1_val / 2); }
+                            
+                            $p2_len = max(0.1, $p2_val - $gap);
+                            $p2_off = -($p1_val + $gap / 2);
+                            if ($p2_val <= $gap) { $p2_len = 0.1; $p2_off = -($p1_val + $p2_val / 2); }
                             
                             // Asymmetrical thickness (smaller percentage = thicker)
-                            $p1_thick = ($p1_val <= $p2_val) ? 7.5 : 3.5;
-                            $p2_thick = ($p2_val <= $p1_val) ? 7.5 : 3.5;
-                            if($p1_val == $p2_val) { $p1_thick = 5; $p2_thick = 5; }
+                            $p1_thick = ($p1_val <= $p2_val) ? 6 : 3;
+                            $p2_thick = ($p2_val <= $p1_val) ? 6 : 3;
+                            if($p1_val == $p2_val) { $p1_thick = 4.5; $p2_thick = 4.5; }
                             
                             // Donut 2 Math (Indoor / Outdoor)
                             $p3_val = $indoorPercent;
-                            $p3_len = max(0.1, $p3_val - ($gap/2));
-                            $p3_off = 0;
                             $p4_val = 100 - $indoorPercent;
-                            $p4_len = max(0.1, $p4_val - ($gap/2));
-                            $p4_off = -($p3_val + ($gap/2));
                             
-                            $p3_thick = ($p3_val <= $p4_val) ? 7.5 : 3.5;
-                            $p4_thick = ($p4_val <= $p3_val) ? 7.5 : 3.5;
-                            if($p3_val == $p4_val) { $p3_thick = 5; $p4_thick = 5; }
+                            $p3_len = max(0.1, $p3_val - $gap);
+                            $p3_off = -($gap / 2);
+                            if ($p3_val <= $gap) { $p3_len = 0.1; $p3_off = -($p3_val / 2); }
+                            
+                            $p4_len = max(0.1, $p4_val - $gap);
+                            $p4_off = -($p3_val + $gap / 2);
+                            if ($p4_val <= $gap) { $p4_len = 0.1; $p4_off = -($p3_val + $p4_val / 2); }
+                            
+                            $p3_thick = ($p3_val <= $p4_val) ? 6 : 3;
+                            $p4_thick = ($p4_val <= $p3_val) ? 6 : 3;
+                            if($p3_val == $p4_val) { $p3_thick = 4.5; $p4_thick = 4.5; }
                         @endphp
 
                         <svg width="0" height="0" class="absolute">
