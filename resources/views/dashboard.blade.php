@@ -213,7 +213,7 @@
                             }
                             $indoorPercent = $totalInOut > 0 ? round(($indoor / $totalInOut) * 100) : 0;
                             
-                            $gap = 6; // Stroke gap for visual effect
+                            $gap = 14; // Stroke gap for visual effect
                             
                             // Donut 1 Math (Online / Offline)
                             $p1_val = $uptimePercent;
@@ -224,9 +224,9 @@
                             $p2_off = -($p1_val + ($gap/2));
                             
                             // Asymmetrical thickness (smaller percentage = thicker)
-                            $p1_thick = ($p1_val <= $p2_val) ? 10 : 4;
-                            $p2_thick = ($p2_val <= $p1_val) ? 10 : 4;
-                            if($p1_val == $p2_val) { $p1_thick = 6; $p2_thick = 6; }
+                            $p1_thick = ($p1_val <= $p2_val) ? 7.5 : 3.5;
+                            $p2_thick = ($p2_val <= $p1_val) ? 7.5 : 3.5;
+                            if($p1_val == $p2_val) { $p1_thick = 5; $p2_thick = 5; }
                             
                             // Donut 2 Math (Indoor / Outdoor)
                             $p3_val = $indoorPercent;
@@ -236,9 +236,9 @@
                             $p4_len = max(0.1, $p4_val - ($gap/2));
                             $p4_off = -($p3_val + ($gap/2));
                             
-                            $p3_thick = ($p3_val <= $p4_val) ? 10 : 4;
-                            $p4_thick = ($p4_val <= $p3_val) ? 10 : 4;
-                            if($p3_val == $p4_val) { $p3_thick = 6; $p4_thick = 6; }
+                            $p3_thick = ($p3_val <= $p4_val) ? 7.5 : 3.5;
+                            $p4_thick = ($p4_val <= $p3_val) ? 7.5 : 3.5;
+                            if($p3_val == $p4_val) { $p3_thick = 5; $p4_thick = 5; }
                         @endphp
 
                         <svg width="0" height="0" class="absolute">
