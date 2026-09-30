@@ -96,7 +96,11 @@ class CctvController extends Controller
                 'lat'            => 'nullable|numeric',
                 'lng'            => 'nullable|numeric',
                 'status'        => 'nullable|in:online,offline,maintenance',
+                'is_exception'  => 'nullable|boolean',
             ]);
+
+            // Ensure boolean value for is_exception
+            $validated['is_exception'] = $request->has('is_exception');
 
             // Handle Password RTSP (Jangan timpa dengan NULL jika kosong)
             if (empty($validated['rtsp_password'])) {
@@ -159,7 +163,11 @@ class CctvController extends Controller
                 'lat'            => 'nullable|numeric',
                 'lng'            => 'nullable|numeric',
                 'status'        => 'required|in:online,offline,maintenance',
+                'is_exception'  => 'nullable|boolean',
             ]);
+
+            // Ensure boolean value for is_exception
+            $validated['is_exception'] = $request->has('is_exception');
 
             // Handle Password RTSP (Jangan timpa dengan NULL jika kosong)
             if (empty($validated['rtsp_password'])) {

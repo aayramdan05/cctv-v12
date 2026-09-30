@@ -151,6 +151,7 @@ class Cctv extends Model
         'lng',
         'onvif_status',
         'onvif_error',
+        'is_exception',
     ];
 
     protected $casts = [
@@ -188,21 +189,26 @@ class Cctv extends Model
             return $query->whereRaw('1 = 0'); // Return kosong jika tidak login
         }
 
-        // 1. Superadmin, Admin & Operator Pusat: LIHAT SEMUA
-        if (in_array($user->role, ['superadmin', 'admin', 'operator', 'upt_lingkungan'])) {
+        // 1. Superadmin & Admin: LIHAT SEMUA (termasuk exception)
+        if (in_array($user->role, ['superadmin', 'admin'])) {
             return $query; 
         }
 
-        // 2. Operator Fakultas: LIHAT SESUAI FAKULTAS
+        // 1b. Operator Pusat & UPT Lingkungan: LIHAT SEMUA KECUALI EXCEPTION
+        if (in_array($user->role, ['operator', 'upt_lingkungan'])) {
+            return $query->where('is_exception', false);
+        }
+
+        // 2. Operator Fakultas: LIHAT SESUAI FAKULTAS (Kecuali exception)
         if ($user->role === 'faculty_operator') {
-            return $query->whereHas('building', function ($q) use ($user) {
+            return $query->where('is_exception', false)->whereHas('building', function ($q) use ($user) {
                 $q->where('fakultas', $user->faculty);
             });
         }
 
-        // 3. User Biasa & API Viewer: HANYA YANG DI-ASSIGN (PIVOT)
+        // 3. User Biasa & API Viewer: HANYA YANG DI-ASSIGN (Kecuali exception)
         if ($user->role === 'user' || $user->role === 'api_viewer') {
-            return $query->whereHas('users', function ($q) use ($user) {
+            return $query->where('is_exception', false)->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
         }

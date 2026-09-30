@@ -350,6 +350,18 @@
                         <p class="text-[10px] text-slate-400 mt-1">Gunakan password yang sama dengan RTSP jika tidak yakin.</p>
                     </div>
 
+                    @if(in_array(auth()->user()->role, ['superadmin', 'admin']))
+                    <div class="md:col-span-2 mt-4 bg-red-50/50 border border-red-100 rounded-xl p-4 flex items-start gap-4">
+                        <div class="flex items-center h-5 mt-0.5">
+                            <input id="is_exception" name="is_exception" type="checkbox" value="1" {{ old('is_exception') ? 'checked' : '' }} class="w-5 h-5 text-red-600 bg-white border-red-300 rounded focus:ring-red-500 focus:ring-2 cursor-pointer transition-all">
+                        </div>
+                        <div class="flex-1">
+                            <label for="is_exception" class="font-bold text-red-800 text-sm cursor-pointer block">Kamera Pengecualian (Restricted Area)</label>
+                            <p class="text-xs text-red-600/80 mt-1 leading-relaxed">Jika dicentang, kamera ini akan disembunyikan dari semua operator dan pengguna biasa. Hanya <strong>Super Admin</strong> dan <strong>Admin</strong> yang dapat melihatnya. Cocok untuk Ruang Server atau area privasi tinggi.</p>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="md:col-span-2 flex justify-end space-x-4 pt-6 border-t border-slate-100 mt-4">
                         <a href="{{ route('cctv.index') }}" class="px-6 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 font-medium transition-colors">Batal</a>
                         <button type="submit" class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all duration-300">
