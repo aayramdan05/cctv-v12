@@ -223,6 +223,11 @@
                             $p2_len = max(0.1, $p2_val - ($gap/2));
                             $p2_off = -($p1_val + ($gap/2));
                             
+                            // Asymmetrical thickness (smaller percentage = thicker)
+                            $p1_thick = ($p1_val <= $p2_val) ? 10 : 4;
+                            $p2_thick = ($p2_val <= $p1_val) ? 10 : 4;
+                            if($p1_val == $p2_val) { $p1_thick = 6; $p2_thick = 6; }
+                            
                             // Donut 2 Math (Indoor / Outdoor)
                             $p3_val = $indoorPercent;
                             $p3_len = max(0.1, $p3_val - ($gap/2));
@@ -230,6 +235,10 @@
                             $p4_val = 100 - $indoorPercent;
                             $p4_len = max(0.1, $p4_val - ($gap/2));
                             $p4_off = -($p3_val + ($gap/2));
+                            
+                            $p3_thick = ($p3_val <= $p4_val) ? 10 : 4;
+                            $p4_thick = ($p4_val <= $p3_val) ? 10 : 4;
+                            if($p3_val == $p4_val) { $p3_thick = 6; $p4_thick = 6; }
                         @endphp
 
                         <svg width="0" height="0" class="absolute">
@@ -253,11 +262,11 @@
                             <!-- Donut 1: Online vs Offline -->
                             <div class="flex flex-col items-center">
                                 <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-4">
-                                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                                    <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 42 42">
                                         <!-- Offline Segment (Orange) -->
-                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="url(#orangeGradient)" stroke-linecap="round" stroke-dasharray="{{ $p2_len }}, 100" stroke-dashoffset="{{ $p2_off }}" stroke-width="6"></path>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#orangeGradient)" stroke-linecap="round" stroke-dasharray="{{ $p2_len }}, 100" stroke-dashoffset="{{ $p2_off }}" stroke-width="{{ $p2_thick }}"></circle>
                                         <!-- Online Segment (Purple) -->
-                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="url(#purpleGradient)" stroke-linecap="round" stroke-dasharray="{{ $p1_len }}, 100" stroke-dashoffset="{{ $p1_off }}" stroke-width="6"></path>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#purpleGradient)" stroke-linecap="round" stroke-dasharray="{{ $p1_len }}, 100" stroke-dashoffset="{{ $p1_off }}" stroke-width="{{ $p1_thick }}"></circle>
                                     </svg>
                                     <div class="absolute inset-0 flex flex-col items-center justify-center">
                                         <span class="text-xl sm:text-2xl font-black text-slate-800">{{ $uptimePercent }}%</span>
@@ -285,11 +294,11 @@
                             <!-- Donut 2: Indoor vs Outdoor -->
                             <div class="flex flex-col items-center">
                                 <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-4">
-                                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                                    <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 42 42">
                                         <!-- Outdoor Segment (Gray) -->
-                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="#cbd5e1" stroke-linecap="round" stroke-dasharray="{{ $p4_len }}, 100" stroke-dashoffset="{{ $p4_off }}" stroke-width="6"></path>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="#cbd5e1" stroke-linecap="round" stroke-dasharray="{{ $p4_len }}, 100" stroke-dashoffset="{{ $p4_off }}" stroke-width="{{ $p4_thick }}"></circle>
                                         <!-- Indoor Segment (Cyan) -->
-                                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="url(#cyanGradient)" stroke-linecap="round" stroke-dasharray="{{ $p3_len }}, 100" stroke-dashoffset="{{ $p3_off }}" stroke-width="6"></path>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#cyanGradient)" stroke-linecap="round" stroke-dasharray="{{ $p3_len }}, 100" stroke-dashoffset="{{ $p3_off }}" stroke-width="{{ $p3_thick }}"></circle>
                                     </svg>
                                     <div class="absolute inset-0 flex flex-col items-center justify-center">
                                         <span class="text-xl sm:text-2xl font-black text-slate-800">{{ $totalInOut }}</span>
