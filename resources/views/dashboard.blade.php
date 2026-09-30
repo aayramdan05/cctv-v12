@@ -92,7 +92,101 @@
         <div id="main-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
             <div class="lg:col-span-2 flex flex-col gap-6">
-                <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                                <div id="campus-map" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-cyan-50 rounded-lg text-cyan-600">
+                            <i class="fas fa-map-marked-alt text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800">Campus Overview</h3>
+                    </div>
+                    <a href="{{ route('building.index') }}" class="text-xs text-cyan-600 font-bold hover:text-cyan-700 hover:underline transition-colors">
+                        View All
+                    </a>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($buildings as $building)
+                    <div onclick="location.href='{{ route('monitoring.index', ['building_id' => $building->id]) }}'"
+                         class="bg-white border border-slate-100 rounded-xl p-4 hover:border-cyan-300 hover:shadow-md transition-all group cursor-pointer">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 transition-colors">
+                                <i class="fas fa-building text-lg"></i>
+                            </div>
+                            <span class="px-2 py-1 rounded-md bg-green-50 text-green-600 text-[10px] font-bold border border-green-100 uppercase tracking-wide">
+                                Online
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h4 class="font-bold text-slate-800 text-sm truncate" title="{{ $building->nama_gedung }}">
+                                {{ $building->nama_gedung }}
+                            </h4>
+                            <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                                <i class="fas fa-video text-slate-300"></i>
+                                <span>{{ $building->cctvs_count }} Cameras</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-50 flex items-center justify-between text-xs">
+                            <span class="text-slate-400 font-medium truncate max-w-[120px]" title="{{ $building->fakultas }}">
+                                {{ $building->fakultas }}
+                            </span>
+                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-cyan-500 transition-colors"></i>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                </div>
+            </div>
+            
+            <div id="recent-alerts" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-red-50 rounded-lg text-red-500">
+                            <i class="fas fa-bell text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800">Alerts</h3>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    @forelse($alerts as $alert)
+                        @php
+                            $colorClass = ''; $iconColor = ''; $bgHover = '';
+                            if($alert['type'] == 'new') {
+                                $colorClass = '!border-purple-400'; $iconColor = 'text-purple-500'; $bgHover = 'hover:bg-purple-50/50';
+                            } elseif($alert['type'] == 'offline') {
+                                $colorClass = '!border-red-400'; $iconColor = 'text-red-500'; $bgHover = 'hover:bg-red-50/50';
+                            } elseif($alert['type'] == 'online') {
+                                $colorClass = '!border-green-400'; $iconColor = 'text-green-500'; $bgHover = 'hover:bg-green-50/50';
+                            }
+                        @endphp
+
+                        <div class="bg-white/80 rounded-xl p-3 border-l-4 {{ $colorClass }} {{ $bgHover }} transition-colors shadow-sm">
+                            <div class="flex items-start justify-between mb-1">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas {{ $alert['icon'] }} {{ $iconColor }} text-xs"></i>
+                                    <span class="text-xs font-bold text-slate-700">{{ $alert['title'] }}</span>
+                                </div>
+                                <span class="text-[10px] text-slate-400 font-mono">{{ $alert['time'] }}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 ml-5 leading-relaxed">{{ $alert['message'] }}</p>
+                        </div>
+                    @empty
+                        <div class="bg-green-50/50 rounded-xl p-6 text-center border border-green-100">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-check text-green-600"></i>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800">Semua Sistem Normal</p>
+                            <p class="text-xs text-slate-500 mt-1">Tidak ada notifikasi baru.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-8">
                     
                     <!-- Left Card: Uptime & Status -->
                     <div class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-sm rounded-2xl p-6 xl:col-span-2 flex flex-col">
@@ -241,7 +335,7 @@
                                             <i class="fas {{ $bOffline > 2 ? 'fa-exclamation-triangle' : 'fa-building' }} text-sm"></i>
                                         </div>
                                         <div>
-                                            <h4 class="{{ $titleColor }} text-[11px] font-bold truncate max-w-[120px]" title="{{ $building->nama_gedung }}">{{ $building->nama_gedung }}</h4>
+                                            <h4 class="{{ $titleColor }} text-[11px] font-bold truncate max-w-[180px]" title="{{ $building->nama_gedung }}">{{ $building->nama_gedung }}</h4>
                                             {!! $descHtml !!}
                                         </div>
                                     </div>
@@ -266,54 +360,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
             
-            <div id="recent-alerts" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6 h-full flex flex-col">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-red-50 rounded-lg text-red-500">
-                            <i class="fas fa-bell text-lg"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-800">Alerts</h3>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    @forelse($alerts as $alert)
-                        @php
-                            $colorClass = ''; $iconColor = ''; $bgHover = '';
-                            if($alert['type'] == 'new') {
-                                $colorClass = '!border-purple-400'; $iconColor = 'text-purple-500'; $bgHover = 'hover:bg-purple-50/50';
-                            } elseif($alert['type'] == 'offline') {
-                                $colorClass = '!border-red-400'; $iconColor = 'text-red-500'; $bgHover = 'hover:bg-red-50/50';
-                            } elseif($alert['type'] == 'online') {
-                                $colorClass = '!border-green-400'; $iconColor = 'text-green-500'; $bgHover = 'hover:bg-green-50/50';
-                            }
-                        @endphp
-
-                        <div class="bg-white/80 rounded-xl p-3 border-l-4 {{ $colorClass }} {{ $bgHover }} transition-colors shadow-sm">
-                            <div class="flex items-start justify-between mb-1">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas {{ $alert['icon'] }} {{ $iconColor }} text-xs"></i>
-                                    <span class="text-xs font-bold text-slate-700">{{ $alert['title'] }}</span>
-                                </div>
-                                <span class="text-[10px] text-slate-400 font-mono">{{ $alert['time'] }}</span>
-                            </div>
-                            <p class="text-xs text-slate-500 ml-5 leading-relaxed">{{ $alert['message'] }}</p>
-                        </div>
-                    @empty
-                        <div class="bg-green-50/50 rounded-xl p-6 text-center border border-green-100">
-                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i class="fas fa-check text-green-600"></i>
-                            </div>
-                            <p class="text-sm font-bold text-slate-800">Semua Sistem Normal</p>
-                            <p class="text-xs text-slate-500 mt-1">Tidak ada notifikasi baru.</p>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-        
         <div id="live-feeds-section" class="mb-8">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
