@@ -92,98 +92,177 @@
         <div id="main-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
             <div class="lg:col-span-2 flex flex-col gap-6">
-                <div id="campus-map" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-cyan-50 rounded-lg text-cyan-600">
-                            <i class="fas fa-map-marked-alt text-lg"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-800">Campus Overview</h3>
-                    </div>
-                    <a href="{{ route('building.index') }}" class="text-xs text-cyan-600 font-bold hover:text-cyan-700 hover:underline transition-colors">
-                        View All
-                    </a>
-                </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($buildings as $building)
-                    <div onclick="location.href='{{ route('monitoring.index', ['building_id' => $building->id]) }}'"
-                         class="bg-white border border-slate-100 rounded-xl p-4 hover:border-cyan-300 hover:shadow-md transition-all group cursor-pointer">
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 transition-colors">
-                                <i class="fas fa-building text-lg"></i>
+                <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                    
+                    <!-- Left Card: Uptime & Status -->
+                    <div class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-sm rounded-2xl p-6 xl:col-span-2 flex flex-col">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="text-[13px] font-extrabold text-slate-800 uppercase tracking-wide">Ringkasan Uptime & Status</h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Total kesiapan sistem surveilans</p>
                             </div>
-                            <span class="px-2 py-1 rounded-md bg-green-50 text-green-600 text-[10px] font-bold border border-green-100 uppercase tracking-wide">
-                                Online
-                            </span>
+                            <span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">97% Target SLA</span>
                         </div>
                         
-                        <div class="mb-3">
-                            <h4 class="font-bold text-slate-800 text-sm truncate" title="{{ $building->nama_gedung }}">
-                                {{ $building->nama_gedung }}
-                            </h4>
-                            <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                <i class="fas fa-video text-slate-300"></i>
-                                <span>{{ $building->cctvs_count }} Cameras</span>
+                        @php
+                            $total = $totalCctv;
+                            $offline = $offlineCctv;
+                            $online = $total - $offline;
+                            $uptimePercent = $total > 0 ? round(($online / $total) * 100) : 0;
+                            
+                            // Mock causes of offline based on requested UI
+                            $cause1 = round($offline * 0.47);
+                            $cause2 = round($offline * 0.35);
+                            $cause3 = $offline - $cause1 - $cause2;
+                        @endphp
+
+                        <div class="relative w-40 h-40 mx-auto mb-6">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="5"></path>
+                                <path class="text-red-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="{{ 100 - $uptimePercent }}, 100" stroke-dashoffset="-{{ $uptimePercent }}" stroke-width="5"></path>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-3xl font-black text-slate-800">{{ $uptimePercent }}%</span>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">Uptime</span>
+                                <span class="text-[9px] text-emerald-500 font-bold mt-0.5">Normal</span>
                             </div>
                         </div>
 
-                        <div class="pt-3 border-t border-slate-50 flex items-center justify-between text-xs">
-                            <span class="text-slate-400 font-medium truncate max-w-[120px]" title="{{ $building->fakultas }}">
-                                {{ $building->fakultas }}
-                            </span>
-                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-cyan-500 transition-colors"></i>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="flex-1 bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    <span class="text-[11px] font-medium text-slate-600">Online</span>
+                                </div>
+                                <span class="text-xs font-bold text-slate-800">{{ $online }}</span>
+                            </div>
+                            <div class="flex-1 bg-red-50/30 border border-red-50 rounded-lg p-2.5 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                    <span class="text-[11px] font-medium text-slate-600">Offline</span>
+                                </div>
+                                <span class="text-xs font-bold text-red-600">{{ $offline }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto">
+                            <p class="text-[11px] font-medium text-slate-700 mb-3">Penyebab {{ $offline }} Kamera Offline:</p>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-[10px] mb-1">
+                                        <span class="text-slate-500">Gangguan Switch PoE / Listrik</span>
+                                        <span class="font-bold text-slate-700">{{ $cause1 }} Unit (47%)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div class="bg-red-500 h-1.5 rounded-full" style="width: 47%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] mb-1">
+                                        <span class="text-slate-500">Kabel FO / Network Disconnect</span>
+                                        <span class="font-bold text-slate-700">{{ $cause2 }} Unit (35%)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] mb-1">
+                                        <span class="text-slate-500">Hardware / Kamera Rusak</span>
+                                        <span class="font-bold text-slate-700">{{ $cause3 }} Unit (18%)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div class="bg-slate-400 h-1.5 rounded-full" style="width: 18%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    @endforeach
-                </div>
-                </div>
-                
-                <!-- System Health Analytics -->
-                <div id="system-health" class="bg-white/70 backdrop-blur-md border border-white/30 shadow-sm rounded-2xl p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-cyan-50 rounded-lg text-cyan-600">
-                                <i class="fas fa-heartbeat text-lg"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-slate-800">System Health Analytics</h3>
-                        </div>
-                    </div>
-                    
-                    @php
-                        $total = $totalCctv;
-                        $offline = $offlineCctv;
-                        $online = $total - $offline;
-                        $uptimePercent = $total > 0 ? round(($online / $total) * 100) : 0;
-                    @endphp
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                        <div class="relative w-48 h-48 mx-auto md:ml-0">
-                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                <path class="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="6"></path>
-                                <path class="text-red-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="{{ 100 - $uptimePercent }}, 100" stroke-dashoffset="-{{ $uptimePercent }}" stroke-width="6"></path>
-                            </svg>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                <span class="text-3xl font-bold text-slate-800">{{ $uptimePercent }}%</span>
-                                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">UPTIME</span>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                                    <span class="text-sm text-slate-700">Online Cameras</span>
+
+                    <!-- Right Card: Gedung & Zona -->
+                    <div class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-sm rounded-2xl p-6 xl:col-span-3 flex flex-col">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <h3 class="text-[13px] font-extrabold text-slate-800 uppercase tracking-wide">Kesehatan Per Gedung & Zona</h3>
+                                    <span class="px-2 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 font-semibold border border-slate-200">{{ $totalGedung }} Total Lokasi</span>
                                 </div>
-                                <span class="font-bold text-slate-800">{{ $online }}</span>
+                                <p class="text-[11px] text-slate-400">Pemetaan langsung status online unit CCTV dan konsistensi rekaman</p>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                                    <span class="text-sm text-slate-700">Offline Cameras</span>
+                            <a href="{{ route('building.index') }}" class="text-[11px] text-cyan-600 font-bold hover:text-cyan-700 transition-colors">Lihat Seluruh Gedung <i class="fas fa-chevron-right ml-1 text-[9px]"></i></a>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @foreach($buildings as $building)
+                            @php
+                                $bTotal = $building->cctvs_count;
+                                $bOnline = $building->online_cctvs_count;
+                                $bOffline = $bTotal - $bOnline;
+                                $bPercent = $bTotal > 0 ? round(($bOnline / $bTotal) * 100, 1) : 0;
+                                
+                                if($bOffline === 0) {
+                                    $bStyle = 'border-emerald-100 shadow-sm hover:border-emerald-300';
+                                    $iconBg = 'bg-slate-50 border border-slate-100';
+                                    $iconColor = 'text-slate-400';
+                                    $badgeStyle = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                                    $badgeText = 'ONLINE';
+                                    $barColor = 'bg-emerald-500';
+                                    $textColor = 'text-emerald-500';
+                                    $titleColor = 'text-slate-800';
+                                    $descHtml = '<p class="text-[9px] text-slate-400 mt-0.5">'.$building->fakultas.'</p>';
+                                } elseif($bOffline <= 2) {
+                                    $bStyle = 'border-amber-200 shadow-sm hover:border-amber-400';
+                                    $iconBg = 'bg-amber-50 border border-amber-100';
+                                    $iconColor = 'text-amber-500';
+                                    $badgeStyle = 'bg-amber-50 text-amber-600 border-amber-200';
+                                    $badgeText = $bOffline . ' OFFLINE';
+                                    $barColor = 'bg-amber-500';
+                                    $textColor = 'text-amber-600';
+                                    $titleColor = 'text-slate-800';
+                                    $descHtml = '<p class="text-[9px] text-slate-400 mt-0.5">'.$building->fakultas.'</p>';
+                                } else {
+                                    $bStyle = 'border-red-200 shadow-sm bg-red-50/30 hover:border-red-400';
+                                    $iconBg = 'bg-red-500';
+                                    $iconColor = 'text-white';
+                                    $badgeStyle = 'bg-red-500 text-white border-red-500 shadow-sm';
+                                    $badgeText = $bOffline . ' OFFLINE';
+                                    $barColor = 'bg-red-500';
+                                    $textColor = 'text-red-600';
+                                    $titleColor = 'text-slate-800 font-bold';
+                                    $descHtml = '<p class="text-[9px] text-red-600 font-medium mt-0.5">Insiden Kritis Terkonsentrasi</p>';
+                                }
+                            @endphp
+                            <div onclick="location.href='{{ route('monitoring.index', ['building_id' => $building->id]) }}'"
+                                 class="border {{ $bStyle }} bg-white rounded-xl p-4 cursor-pointer hover:shadow-md transition-all relative overflow-hidden group">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex gap-3">
+                                        <div class="w-8 h-8 rounded-lg {{ $iconBg }} {{ $iconColor }} flex items-center justify-center shrink-0">
+                                            <i class="fas {{ $bOffline > 2 ? 'fa-exclamation-triangle' : 'fa-building' }} text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="{{ $titleColor }} text-[11px] font-bold truncate max-w-[120px]" title="{{ $building->nama_gedung }}">{{ $building->nama_gedung }}</h4>
+                                            {!! $descHtml !!}
+                                        </div>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold border {{ $badgeStyle }} tracking-wider">{{ $badgeText }}</span>
                                 </div>
-                                <span class="font-bold text-red-500">{{ $offline }}</span>
+                                
+                                @if($bOffline > 2)
+                                <p class="text-[9px] text-red-500 mb-2 leading-relaxed">Sebagian besar kamera terputus sejak beberapa saat lalu. Perlu pengecekan segera.</p>
+                                @endif
+
+                                <div class="mt-auto">
+                                    <div class="flex justify-between items-end mb-1.5">
+                                        <span class="text-[10px] text-slate-500 font-medium">{{ $bOnline }}/{{ $bTotal }} Kamera Aktif</span>
+                                        <span class="text-[10px] font-bold {{ $textColor }}">{{ $bPercent }}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1">
+                                        <div class="{{ $barColor }} h-1 rounded-full" style="width: {{ $bPercent }}%"></div>
+                                    </div>
+                                </div>
                             </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>

@@ -31,10 +31,17 @@ class DashboardController extends Controller
             // 2. DATA GEDUNG
             if ($user->role === 'faculty_operator') {
                 $buildings = Building::where('fakultas', $user->faculty)
-                            ->withCount('cctvs')->get();
+                            ->withCount('cctvs')
+                            ->withCount(['cctvs as online_cctvs_count' => function ($query) {
+                                $query->where('status', 'online');
+                            }])
+                            ->get();
                 $totalGedung = Building::where('fakultas', $user->faculty)->count();
             } else {
                 $buildings = Building::withCount('cctvs')
+                            ->withCount(['cctvs as online_cctvs_count' => function ($query) {
+                                $query->where('status', 'online');
+                            }])
                             ->orderBy('cctvs_count', 'desc')->take(6)->get();
                 $totalGedung = Building::count();
             }
