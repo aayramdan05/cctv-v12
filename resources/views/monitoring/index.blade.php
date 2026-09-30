@@ -9,7 +9,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 gap-3 md:h-12 min-h-[3rem]" x-show="!isFullscreen" x-transition>
             <div class="flex items-center gap-4 min-w-0 shrink w-full md:w-auto">
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 truncate">Live Monitoring</h2>
-                <p class="text-xs text-slate-500 hidden md:block">WebRTC Realtime & Instant Playback. <span class="text-amber-600 font-medium ml-2"><i class="fas fa-info-circle mr-1"></i>NB: Video rekaman terbaru hanya dapat dilihat setelah 15 menit</span></p>
+                <p class="text-[11px] text-amber-600 font-medium hidden md:block"><i class="fas fa-info-circle mr-1"></i>NB: Video rekaman terbaru hanya dapat dilihat setelah 15 menit</p>
             </div>
 
             <div class="flex flex-wrap gap-2 items-center shrink-0 max-w-full w-full md:w-auto justify-start md:justify-end">
