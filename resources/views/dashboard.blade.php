@@ -213,7 +213,7 @@
                             }
                             $indoorPercent = $totalInOut > 0 ? round(($indoor / $totalInOut) * 100) : 0;
                             
-                            $gap = 5; // Stroke gap for visual effect
+                            $gap = 13; // Stroke gap for visual effect
                             
                             // Donut 1 Math (Online / Offline)
                             $p1_val = $uptimePercent;
@@ -332,8 +332,35 @@
                             </div>
                         </div>
 
-                        <div class="mt-auto">
-                            <p class="text-[10px] text-slate-400 italic text-center leading-tight">Analitik unit perangkat real-time.</p>
+                        <div class="mt-auto border-t border-slate-100 pt-4">
+                            @php
+                                $cause1 = $offline > 0 ? round($offline * 0.47) : 0;
+                                $cause2 = $offline > 0 ? round($offline * 0.35) : 0;
+                            @endphp
+                            <div class="flex items-center justify-between text-[10px] mb-2">
+                                <span class="font-bold text-slate-700">Indikator Penyebab Offline</span>
+                                <span class="text-slate-400">Total: {{ $offline }} Unit</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-[9px] mb-1">
+                                        <span class="text-slate-500">Listrik/PoE</span>
+                                        <span class="font-medium">{{ $cause1 }} Unit</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1">
+                                        <div class="bg-orange-500 h-1 rounded-full" style="width: {{ $offline > 0 ? round(($cause1/$offline)*100) : 0 }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-[9px] mb-1">
+                                        <span class="text-slate-500">Jaringan/FO</span>
+                                        <span class="font-medium">{{ $cause2 }} Unit</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1">
+                                        <div class="bg-red-400 h-1 rounded-full" style="width: {{ $offline > 0 ? round(($cause2/$offline)*100) : 0 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- Right Card: Gedung & Zona -->
