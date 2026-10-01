@@ -213,7 +213,7 @@
                             }
                             $indoorPercent = $totalInOut > 0 ? round(($indoor / $totalInOut) * 100) : 0;
                             
-                            $gap = 13; // Stroke gap for visual effect
+                            $gap = 8; // Stroke gap for visual effect
                             
                             // Donut 1 Math (Online / Offline)
                             $p1_val = $uptimePercent;
@@ -266,17 +266,21 @@
                           </defs>
                         </svg>
 
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-2 gap-4 mb-2">
                             <!-- Donut 1: Online vs Offline -->
                             <div class="flex flex-col items-center">
                                 <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-4">
                                     <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 42 42">
                                         <!-- Offline Segment (Orange) -->
-                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#orangeGradient)" stroke-linecap="round" stroke-dasharray="{{ $p2_len }}, 100" stroke-dashoffset="{{ $p2_off }}" stroke-width="{{ $p2_thick }}"></circle>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#orangeGradient)" stroke-linecap="round" stroke-dasharray="{{ $p2_len }}, 100" stroke-dashoffset="{{ $p2_off }}" stroke-width="{{ $p2_thick }}" class="cursor-pointer hover:opacity-80 transition-opacity">
+                                            <title>Offline: {{ $p2_val }}% ({{ $offline }} Unit)</title>
+                                        </circle>
                                         <!-- Online Segment (Purple) -->
-                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#purpleGradient)" stroke-linecap="round" stroke-dasharray="{{ $p1_len }}, 100" stroke-dashoffset="{{ $p1_off }}" stroke-width="{{ $p1_thick }}"></circle>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#purpleGradient)" stroke-linecap="round" stroke-dasharray="{{ $p1_len }}, 100" stroke-dashoffset="{{ $p1_off }}" stroke-width="{{ $p1_thick }}" class="cursor-pointer hover:opacity-80 transition-opacity">
+                                            <title>Online: {{ $p1_val }}% ({{ $online }} Unit)</title>
+                                        </circle>
                                     </svg>
-                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                         <span class="text-xl sm:text-2xl font-black text-slate-800">{{ $uptimePercent }}%</span>
                                         <span class="text-[7px] sm:text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Uptime</span>
                                     </div>
@@ -304,11 +308,15 @@
                                 <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-4">
                                     <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 42 42">
                                         <!-- Outdoor Segment (Gray) -->
-                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="#cbd5e1" stroke-linecap="round" stroke-dasharray="{{ $p4_len }}, 100" stroke-dashoffset="{{ $p4_off }}" stroke-width="{{ $p4_thick }}"></circle>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="#cbd5e1" stroke-linecap="round" stroke-dasharray="{{ $p4_len }}, 100" stroke-dashoffset="{{ $p4_off }}" stroke-width="{{ $p4_thick }}" class="cursor-pointer hover:opacity-80 transition-opacity">
+                                            <title>Outdoor: {{ $p4_val }}% ({{ $outdoor }} Unit)</title>
+                                        </circle>
                                         <!-- Indoor Segment (Cyan) -->
-                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#cyanGradient)" stroke-linecap="round" stroke-dasharray="{{ $p3_len }}, 100" stroke-dashoffset="{{ $p3_off }}" stroke-width="{{ $p3_thick }}"></circle>
+                                        <circle cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)" fill="transparent" stroke="url(#cyanGradient)" stroke-linecap="round" stroke-dasharray="{{ $p3_len }}, 100" stroke-dashoffset="{{ $p3_off }}" stroke-width="{{ $p3_thick }}" class="cursor-pointer hover:opacity-80 transition-opacity">
+                                            <title>Indoor: {{ $p3_val }}% ({{ $indoor }} Unit)</title>
+                                        </circle>
                                     </svg>
-                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                         <span class="text-xl sm:text-2xl font-black text-slate-800">{{ $totalInOut }}</span>
                                         <span class="text-[7px] sm:text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Unit Total</span>
                                     </div>
@@ -332,7 +340,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-auto border-t border-slate-100 pt-4">
+                        <div class="mt-4 border-t border-slate-100 pt-4">
                             @php
                                 $cause1 = $offline > 0 ? round($offline * 0.47) : 0;
                                 $cause2 = $offline > 0 ? round($offline * 0.35) : 0;
