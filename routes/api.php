@@ -9,6 +9,8 @@ use App\Http\Controllers\IntelligentController;
 // Kita tangkap semua method POST ke /api/webhook/unv-push atau URL apapun yang diakhiri wildcard
 Route::post('/webhook/unv-push', [IntelligentController::class, 'receiveWebhook']);
 Route::post('/LAPI/{any}', [IntelligentController::class, 'receiveWebhook'])->where('any', '.*');
+// Endpoint penerimaan event deteksi AI dari script Python (ai_analyzer.py)
+Route::post('/ai-events', [IntelligentController::class, 'storeEvent']);
 
 // Endpoint untuk Node mengambil config
 // Contoh akses: http://ip-master/api/node-config?ip=192.168.1.1&token=secret_unpad_cctv_2026

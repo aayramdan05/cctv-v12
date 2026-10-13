@@ -383,8 +383,10 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::post('/superadmin/roles', [App\Http\Controllers\SuperAdminController::class, 'roleStore'])->name('superadmin.roles.store');
     Route::delete('/superadmin/roles/{slug}', [App\Http\Controllers\SuperAdminController::class, 'roleDestroy'])->name('superadmin.roles.destroy');
 
-    // Intelligent (People Counting Testing)
+    // Intelligent AI (Object Tracking & Forensic Narrative)
     Route::get('/intelligent', [IntelligentController::class, 'index'])->name('intelligent.index');
+    Route::get('/intelligent/events', [IntelligentController::class, 'getEvents'])->name('intelligent.events');
+    Route::post('/intelligent/summary', [IntelligentController::class, 'generateSummary'])->name('intelligent.summary');
     Route::get('/intelligent/data', [IntelligentController::class, 'getRealtimeData'])->name('intelligent.data');
     Route::get('/intelligent/onvif', [IntelligentController::class, 'checkOnvif'])->name('intelligent.onvif');
 });
