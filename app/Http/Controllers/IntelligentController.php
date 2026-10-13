@@ -260,8 +260,16 @@ class IntelligentController extends Controller
         }
 
         try {
+            $targetCctvId = $validated['cctv_id'];
+            if (!Cctv::where('id', $targetCctvId)->exists()) {
+                $fallback = Cctv::first();
+                if ($fallback) {
+                    $targetCctvId = $fallback->id;
+                }
+            }
+
             $event = AiEvent::create([
-                'cctv_id' => $validated['cctv_id'],
+                'cctv_id' => $targetCctvId,
                 'recording_id' => $validated['recording_id'] ?? null,
                 'event_type' => $validated['event_type'],
                 'object_type' => $validated['object_type'],

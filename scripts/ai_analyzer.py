@@ -14,6 +14,24 @@ import argparse
 from datetime import datetime, timedelta
 import urllib.request
 import urllib.error
+import warnings
+
+# 1. Matikan verbose C++ log PyTorch & NNPACK warnings di lingkungan CPU
+os.environ['TORCH_CPP_LOG_LEVEL'] = 'ERROR'
+warnings.filterwarnings('ignore')
+
+try:
+    import torch
+    # Matikan NNPACK flag agar tidak memicu error "Could not initialize NNPACK" di CPU
+    try:
+        if hasattr(torch.backends, 'nnpack'):
+            torch.backends.nnpack.set_flags(False)
+    except Exception:
+        pass
+    # Alokasikan thread CPU optimal (maksimal 4 thread agar server tetap adil membagi CPU)
+    torch.set_num_threads(max(1, min(4, os.cpu_count() or 2)))
+except ImportError:
+    pass
 
 try:
     import cv2
@@ -200,8 +218,21 @@ class CctvAiAnalyzer:
         self.tracked_objects = {}  # {track_id: metadata}
         self.disappeared_candidates = {} # {track_id: metadata}
         self.events_log = []
+        self.pseudo_id_counter = 1000
 
-    def process_video(self, video_source, sample_fps=2, max_duration_sec=None):
+    def _match_or_create_pseudo_track(self, cls_name, xyxy):
+        """Fallback tracker berbasis kedekatan spasial jika ByteTrack belum assign ID"""
+        cx, cy = (xyxy[0] + xyxy[2]) / 2, (xyxy[1] + xyxy[3]) / 2
+        for tid, obj in self.tracked_objects.items():
+            if obj['class_name'] == cls_name and obj['status'] == 'active':
+                ocx = (obj['bbox'][0] + obj['bbox'][2]) / 2
+                ocy = (obj['bbox'][1] + obj['bbox'][3]) / 2
+                if abs(cx - ocx) + abs(cy - ocy) < 180:
+                    return tid
+        self.pseudo_id_counter += 1
+        return self.pseudo_id_counter
+
+    def process_video(self, video_source, sample_fps=1, max_duration_sec=None, conf_threshold=0.25):
         """
         Menganalisis file rekaman video / stream CCTV
         """
@@ -213,16 +244,27 @@ class CctvAiAnalyzer:
         orig_fps = cap.get(cv2.CAP_PROP_FPS) or 25
         frame_interval = max(1, int(orig_fps / sample_fps))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        video_duration_sec = total_frames / orig_fps if orig_fps > 0 else 0
+
+        target_duration = min(video_duration_sec, max_duration_sec) if max_duration_sec else video_duration_sec
+        total_sampled = max(1, int((target_duration * orig_fps) / frame_interval))
 
         print(f"[AI] Memulai analisa: {video_source}")
-        print(f"[AI] Total Frame: {total_frames}, FPS Asli: {orig_fps:.1f}, Sampling Rate: {sample_fps} FPS (interval 1 frame tiap {frame_interval})")
+        print(f"[AI] Total Frame: {total_frames} (Durasi: {int(video_duration_sec // 60)}m {int(video_duration_sec % 60)}s), FPS Asli: {orig_fps:.1f}")
+        print(f"[AI] Sampling Rate: {sample_fps} FPS (interval 1 frame tiap {frame_interval} frame, target proses: {total_sampled} frame di CPU, Ambang Batas Conf: {conf_threshold})")
 
         frame_idx = 0
-        current_time = datetime.now() - timedelta(minutes=15)
+        sampled_count = 0
+        current_time = datetime.now() - timedelta(seconds=int(video_duration_sec))
 
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
+                break
+
+            current_sec = frame_idx / orig_fps
+            if max_duration_sec and current_sec > max_duration_sec:
+                print(f"[AI] Batas durasi uji ({max_duration_sec}s) tercapai. Menghentikan pemindaian awal.")
                 break
 
             # Hanya proses frame sesuai interval sampling
@@ -230,18 +272,28 @@ class CctvAiAnalyzer:
                 frame_idx += 1
                 continue
 
+            sampled_count += 1
             # Update waktu simulasi
-            frame_time = current_time + timedelta(seconds=(frame_idx / orig_fps))
+            frame_time = current_time + timedelta(seconds=current_sec)
             time_str = frame_time.strftime('%H:%M:%S')
 
-            # Run YOLO Tracking
-            # Filter classes: Person (0), Vehicles (2,3,5,7), Bag/Laptop/Phone (24,26,28,63,67)
+            # Tampilkan progress bar setiap 5% atau 50 frame agar user tahu proses CPU berjalan lancar
+            if sampled_count == 1 or sampled_count % max(1, int(total_sampled / 20)) == 0 or sampled_count == total_sampled:
+                pct = int((sampled_count / total_sampled) * 100)
+                pos_m = int(current_sec // 60)
+                pos_s = int(current_sec % 60)
+                tot_m = int(video_duration_sec // 60)
+                tot_s = int(video_duration_sec % 60)
+                print(f"⏳ [AI Progress: {pct}%] ({sampled_count}/{total_sampled} frame) | Menit ke {pos_m:02d}:{pos_s:02d} dari {tot_m:02d}:{tot_s:02d}", flush=True)
+
+            # Run YOLO Tracking secara eksplisit di CPU
             results = self.model.track(
                 source=frame,
                 persist=True,
                 classes=list(TARGET_CLASSES.keys()),
                 verbose=False,
-                conf=0.35
+                conf=conf_threshold,
+                device='cpu'
             )
 
             current_frame_tracks = set()
@@ -271,17 +323,21 @@ class CctvAiAnalyzer:
                     self.tracked_objects[demo_laptop_id]['last_seen'] = frame_time
                     self.tracked_objects[demo_laptop_id]['frames_stationary'] += 1
 
-
             if results and len(results) > 0 and results[0].boxes is not None:
                 boxes = results[0].boxes
                 for box in boxes:
                     cls_id = int(box.cls[0].item()) if box.cls is not None else -1
                     conf = float(box.conf[0].item()) if box.conf is not None else 0.0
-                    track_id = int(box.id[0].item()) if box.id is not None else -1
                     xyxy = box.xyxy[0].cpu().numpy().astype(int)
 
                     cls_name = TARGET_CLASSES.get(cls_id, 'object')
                     x1, y1, x2, y2 = xyxy
+
+                    # Ambil track ID dari ByteTrack, jika belum ada buat pseudo track spasial
+                    if box.id is not None and len(box.id) > 0:
+                        track_id = int(box.id[0].item())
+                    else:
+                        track_id = self._match_or_create_pseudo_track(cls_name, xyxy)
 
                     if cls_name == 'person':
                         current_persons_boxes.append(xyxy)
@@ -462,7 +518,9 @@ def main():
     parser.add_argument("--video", type=str, help="Path ke file video MP4 rekaman")
     parser.add_argument("--demo", action="store_true", help="Jalankan mode demo simulasi (membuat video uji otomatis)")
     parser.add_argument("--cctv-id", type=int, default=1, help="ID CCTV di database master")
-    parser.add_argument("--fps", type=int, default=2, help="Sampling FPS (default: 2)")
+    parser.add_argument("--fps", type=int, default=1, help="Sampling FPS (default: 1 FPS, optimal di CPU)")
+    parser.add_argument("--conf", type=float, default=0.25, help="Ambang batas deteksi confidence YOLO (default: 0.25)")
+    parser.add_argument("--limit-sec", type=int, default=None, help="Batas durasi detik yang ingin diuji coba (misal: 60 untuk 1 menit pertama)")
     parser.add_argument("--master-url", type=str, default=None, help="URL Server Master Laravel (misal: http://127.0.0.1:8000)")
     parser.add_argument("--ollama-url", type=str, default="http://localhost:11434", help="URL server Ollama lokal")
 
@@ -482,14 +540,19 @@ def main():
         ollama_url=args.ollama_url
     )
 
-    events = analyzer.process_video(video_path, sample_fps=args.fps)
+    events = analyzer.process_video(video_path, sample_fps=args.fps, max_duration_sec=args.limit_sec, conf_threshold=args.conf)
 
     print("\n---------------- HASIL RINGKASAN EVENT ----------------")
-    for idx, ev in enumerate(events, 1):
-        print(f"[{idx}] Waktu: {ev['event_time']} | Tipe: {ev['event_type']} | Objek: {ev['object_type']} ({ev['color']})")
-        print(f"    Narasi: {ev['narrative']}")
-        if ev['last_seen_time']:
-            print(f"    Terakhir Terlihat: {ev['last_seen_time']}")
+    if not events:
+        print("[INFO] Tidak ada aktivitas / objek (kendaraan, orang, tas, laptop) yang terdeteksi dalam rentang waktu video ini.")
+        print("[TIPS] 1. Coba pilih file rekaman di jam aktif siang hari (misal jam 09:00 - 15:00) saat ada aktivitas melintas.")
+        print("       2. Anda dapat menurunkan ambang batas deteksi: --conf 0.15")
+    else:
+        for idx, ev in enumerate(events, 1):
+            print(f"[{idx}] Waktu: {ev['event_time']} | Tipe: {ev['event_type']} | Objek: {ev['object_type']} ({ev['color']})")
+            print(f"    Narasi: {ev['narrative']}")
+            if ev['last_seen_time']:
+                print(f"    Terakhir Terlihat: {ev['last_seen_time']}")
     print("-------------------------------------------------------\n")
 
 
