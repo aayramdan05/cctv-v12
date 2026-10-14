@@ -232,7 +232,7 @@ class MotionDetector:
     Pendeteksi gerakan ultra-ringan berbasis OpenCV Frame Differencing.
     Menghemat 70-85% pemrosesan CPU dengan melewatkan frame statis sebelum memanggil YOLO.
     """
-    def __init__(self, min_motion_ratio=0.003, scale_width=320, cooldown_frames=3):
+    def __init__(self, min_motion_ratio=0.005, scale_width=320, cooldown_frames=1):
         self.min_motion_ratio = min_motion_ratio
         self.scale_width = scale_width
         self.cooldown_frames = cooldown_frames
