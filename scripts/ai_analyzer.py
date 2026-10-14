@@ -44,6 +44,21 @@ except ImportError:
 
 try:
     from ultralytics import YOLO
+    # Matikan kompensasi gerakan kamera (GMC) karena CCTV Unpad adalah kamera statis tetap (bukan drone/kamera goyang)
+    # Ini 100% menghilangkan error (-215:Assertion failed) lkpyramid.cpp dan menghemat siklus CPU
+    try:
+        from ultralytics.trackers.utils.gmc import GMC
+        def _noop_gmc_apply(self, raw_frame, detections=None):
+            return np.eye(2, 3)
+        GMC.apply = _noop_gmc_apply
+        GMC.apply_sparseoptflow = _noop_gmc_apply
+        GMC.apply_features = _noop_gmc_apply
+        GMC.apply_ecc = _noop_gmc_apply
+    except Exception:
+        pass
+
+    import logging
+    logging.getLogger("ultralytics").addFilter(lambda record: "GMC failed" not in record.getMessage())
 except ImportError:
     print("[ERROR] Ultralytics YOLO not installed. Run: pip install ultralytics")
     sys.exit(1)
@@ -114,6 +129,111 @@ def detect_dominant_color(bgr_crop):
         return "ungu"
 
     return "berwarna"
+
+
+def draw_detection_box(frame, bbox, label=None, color_bgr=(34, 197, 94), is_alert=False, is_dashed=False):
+    """
+    Menggambar bounding box modern, profesional, dan tajam pada frame snapshot CCTV:
+    - Garis sudut kontras tinggi (corner brackets)
+    - Label badge latar belakang dengan teks putih tajam
+    - Dukungan penanda objek hilang (crosshair & border merah)
+    """
+    if frame is None:
+        return None
+    img = frame.copy()
+    if bbox is None or len(bbox) != 4:
+        return img
+
+    h, w = img.shape[:2]
+    x1, y1, x2, y2 = [int(v) for v in bbox]
+    x1 = max(0, min(w - 1, x1))
+    y1 = max(0, min(h - 1, y1))
+    x2 = max(0, min(w - 1, x2))
+    y2 = max(0, min(h - 1, y2))
+
+    if x2 <= x1 or y2 <= y1:
+        return img
+
+    thickness = max(2, int(min(h, w) / 360))
+    box_color = (0, 0, 230) if (is_alert or is_dashed) else color_bgr
+
+    if is_dashed:
+        # Penanda lokasi objek yang hilang (border merah tipis + 4 sudut tebal + crosshair tengah)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 180), thickness=1, lineType=cv2.LINE_AA)
+        corner_len = min(int((x2 - x1) * 0.25), int((y2 - y1) * 0.25), 25)
+        if corner_len > 3:
+            cv2.line(img, (x1, y1), (x1 + corner_len, y1), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x1, y1), (x1, y1 + corner_len), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x2, y1), (x2 - corner_len, y1), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x2, y1), (x2, y1 + corner_len), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x1, y2), (x1 + corner_len, y2), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x1, y2), (x1, y2 - corner_len), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x2, y2), (x2 - corner_len, y2), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+            cv2.line(img, (x2, y2), (x2, y2 - corner_len), (0, 0, 255), thickness=thickness + 1, lineType=cv2.LINE_AA)
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+        cv2.drawMarker(img, (cx, cy), (0, 0, 255), markerType=cv2.MARKER_TILTED_CROSS, markerSize=18, thickness=2)
+    else:
+        # Bounding box solid dengan sudut kontras
+        cv2.rectangle(img, (x1, y1), (x2, y2), box_color, thickness=thickness, lineType=cv2.LINE_AA)
+        corner_len = min(int((x2 - x1) * 0.2), int((y2 - y1) * 0.2), 18)
+        if corner_len > 4:
+            cv2.line(img, (x1, y1), (x1 + corner_len, y1), (255, 255, 255), thickness=thickness, lineType=cv2.LINE_AA)
+            cv2.line(img, (x1, y1), (x1, y1 + corner_len), (255, 255, 255), thickness=thickness, lineType=cv2.LINE_AA)
+            cv2.line(img, (x2, y2), (x2 - corner_len, y2), (255, 255, 255), thickness=thickness, lineType=cv2.LINE_AA)
+            cv2.line(img, (x2, y2), (x2, y2 - corner_len), (255, 255, 255), thickness=thickness, lineType=cv2.LINE_AA)
+
+    # Label text badge
+    if label:
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = max(0.40, min(w, h) / 1200.0)
+        font_thickness = max(1, int(font_scale * 1.6))
+        (text_w, text_h), _ = cv2.getTextSize(label, font, font_scale, font_thickness)
+
+        if y1 - text_h - 10 > 0:
+            badge_y1 = y1 - text_h - 10
+            badge_y2 = y1
+        else:
+            badge_y1 = y1
+            badge_y2 = y1 + text_h + 10
+
+        badge_x1 = x1
+        badge_x2 = min(w - 1, x1 + text_w + 14)
+
+        badge_color = (0, 0, 200) if (is_alert or is_dashed) else box_color
+        cv2.rectangle(img, (badge_x1, badge_y1), (badge_x2, badge_y2), badge_color, -1)
+        cv2.rectangle(img, (badge_x1, badge_y1), (badge_x2, badge_y2), (255, 255, 255), 1, lineType=cv2.LINE_AA)
+        cv2.putText(img, label, (badge_x1 + 6, badge_y2 - 6), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+
+    return img
+
+
+def is_spatially_present(target_bbox, current_boxes, current_classes, target_cls, max_dist=60, min_iou=0.15):
+    """
+    Cek apakah objek secara fisik masih berada di koordinat yang sama meskipun ID tracker ByteTrack berganti.
+    Mencegah alarm barang hilang palsu jika laptop/tas masih berada di atas meja.
+    """
+    if target_bbox is None or not current_boxes:
+        return False, None
+
+    tx1, ty1, tx2, ty2 = target_bbox
+    tcx, tcy = (tx1 + tx2) / 2.0, (ty1 + ty2) / 2.0
+    target_group = {'laptop', 'backpack', 'handbag', 'suitcase', 'cell phone'}
+
+    for (x1, y1, x2, y2), cls_name in zip(current_boxes, current_classes):
+        if cls_name == target_cls or (cls_name in target_group and target_cls in target_group):
+            cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+            if abs(tcx - cx) < max_dist and abs(tcy - cy) < max_dist:
+                return True, (x1, y1, x2, y2)
+
+            ix1, iy1 = max(tx1, x1), max(ty1, y1)
+            ix2, iy2 = min(tx2, x2), min(ty2, y2)
+            if ix2 > ix1 and iy2 > iy1:
+                inter = (ix2 - ix1) * (iy2 - iy1)
+                union = (tx2 - tx1) * (ty2 - ty1) + (x2 - x1) * (y2 - y1) - inter
+                if union > 0 and (inter / union) >= min_iou:
+                    return True, (x1, y1, x2, y2)
+
+    return False, None
 
 
 def frame_to_base64(frame):
@@ -437,13 +557,18 @@ class CctvAiAnalyzer:
 
             current_frame_tracks = set()
             current_persons_boxes = []
+            current_frame_all_boxes = []
+            current_frame_all_classes = []
 
             # Jika mode demo, simulasikan juga objek laptop di meja yang aktif di frame 0-40 lalu hilang
             if 'demo' in str(video_source).lower() and frame_idx < 40:
                 demo_laptop_id = 999
                 current_frame_tracks.add(demo_laptop_id)
                 laptop_bbox = np.array([280, 320, 380, 390])
+                current_frame_all_boxes.append(laptop_bbox)
+                current_frame_all_classes.append('laptop')
                 if demo_laptop_id not in self.tracked_objects:
+                    demo_snap_before = draw_detection_box(frame, laptop_bbox, "OBJEK SEMULA: LAPTOP (94%)", color_bgr=(0, 215, 255))
                     self.tracked_objects[demo_laptop_id] = {
                         'track_id': demo_laptop_id,
                         'class_name': 'laptop',
@@ -452,8 +577,8 @@ class CctvAiAnalyzer:
                         'first_seen': frame_time,
                         'last_seen': frame_time,
                         'bbox': laptop_bbox,
-                        'frames_stationary': 10,
-                        'snapshot_before': frame.copy(),
+                        'frames_stationary': 12,
+                        'snapshot_before': demo_snap_before,
                         'snapshot_during': None,
                         'snapshot_after': None,
                         'status': 'active'
@@ -471,6 +596,9 @@ class CctvAiAnalyzer:
 
                     cls_name = TARGET_CLASSES.get(cls_id, 'object')
                     x1, y1, x2, y2 = xyxy
+
+                    current_frame_all_boxes.append(xyxy)
+                    current_frame_all_classes.append(cls_name)
 
                     # Ambil track ID dari ByteTrack, jika belum ada buat pseudo track spasial
                     if box.id is not None and len(box.id) > 0:
@@ -498,31 +626,35 @@ class CctvAiAnalyzer:
                                 'last_seen': frame_time,
                                 'bbox': xyxy,
                                 'frames_stationary': 0,
-                                'snapshot_before': frame.copy(),
+                                'snapshot_before': None,
                                 'snapshot_during': None,
                                 'snapshot_after': None,
                                 'status': 'active'
                             }
 
-                            # Catat event kendaraan atau orang masuk
+                            # Catat event kendaraan atau orang masuk DENGAN BOUNDING BOX VISUAL!
                             if cls_name in ['car', 'motorcycle', 'truck', 'bus']:
+                                badge_label = f"{OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%) - {color.capitalize()}"
+                                annotated_snap = draw_detection_box(frame, xyxy, badge_label, color_bgr=(34, 197, 94))
                                 self._trigger_event(
                                     event_type='vehicle_flow',
                                     object_type=cls_name,
                                     color=color,
                                     confidence=conf,
                                     event_time=frame_time,
-                                    snapshot=frame,
+                                    snapshot=annotated_snap,
                                     narrative_hint=f"{OBJECT_NAMES_ID.get(cls_name, cls_name)} warna {color} terdeteksi melintas pada jam {time_str}."
                                 )
                             elif cls_name == 'person':
+                                badge_label = f"ORANG ({int(conf * 100)}%) - Pakaian {color.capitalize()}"
+                                annotated_snap = draw_detection_box(frame, xyxy, badge_label, color_bgr=(59, 130, 246))
                                 self._trigger_event(
                                     event_type='presence_detected',
                                     object_type='person',
                                     color=color,
                                     confidence=conf,
                                     event_time=frame_time,
-                                    snapshot=frame,
+                                    snapshot=annotated_snap,
                                     narrative_hint=f"Seseorang dengan pakaian dominan warna {color} terpantau melintas di area kamera pada jam {time_str}."
                                 )
                         else:
@@ -535,61 +667,104 @@ class CctvAiAnalyzer:
                             center_diff = abs((x1 + x2)/2 - (prev_x1 + prev_x2)/2) + abs((y1 + y2)/2 - (prev_y1 + prev_y2)/2)
                             if center_diff < 15: # diam
                                 obj['frames_stationary'] += 1
-                                # Update snapshot awal saat masih tenang
-                                if obj['frames_stationary'] == 3:
-                                    obj['snapshot_before'] = frame.copy()
+                                # Update snapshot awal saat masih stabil di tempat
+                                if obj['frames_stationary'] == 5 or obj['snapshot_before'] is None:
+                                    badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%)"
+                                    obj['snapshot_before'] = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
                             else:
                                 obj['frames_stationary'] = 0
 
                             obj['bbox'] = xyxy
 
             # Periksa objek yang HILANG / TIDAK LAGI TERDETEKSI
-            # Terutama barang berharga: laptop, backpack, cell phone, handbag
+            # Hanya periksa barang berharga yang SUDAH PERNAH STASIONER/DIAM CUKUP LAMA
             for track_id, obj in list(self.tracked_objects.items()):
                 if obj['status'] == 'active' and track_id not in current_frame_tracks:
-                    # Objek tidak terdeteksi di frame ini
+                    obj_cls = obj['class_name']
+
+                    # Hanya pantau barang berharga (laptop, backpack, handbag, suitcase)
+                    if obj_cls not in ['laptop', 'backpack', 'handbag', 'suitcase']:
+                        continue
+
+                    # Filter Sensitivitas 1: Objek HARUS pernah diam minimal 8 frame (~8-10 detik)
+                    # Jika barang hanya lewat dibawa orang, JANGAN pernah anggap hilang!
+                    if obj.get('frames_stationary', 0) < 8:
+                        continue
+
+                    # Filter Sensitivitas 2: Cek apakah secara fisik objek masih ada di koordinat meja yang sama
+                    # (Meski ID tracker-nya berganti atau terdeteksi oleh bounding box lain)
+                    is_present, matched_box = is_spatially_present(
+                        obj['bbox'], current_frame_all_boxes, current_frame_all_classes, obj_cls
+                    )
+                    if is_present:
+                        # Laptop MASIH ADA DI LOKASI! Hanya jitter tracker ID. Reset counter hilang!
+                        self.disappeared_candidates.pop(track_id, None)
+                        obj['bbox'] = matched_box
+                        obj['last_seen'] = frame_time
+                        obj['frames_stationary'] += 1
+                        continue
+
+                    # Objek benar-benar tidak terdeteksi secara fisik di koordinat tersebut
                     if track_id not in self.disappeared_candidates:
                         self.disappeared_candidates[track_id] = {
                             'missing_count': 1,
-                            'disappeared_at': frame_time
+                            'disappeared_at': frame_time,
+                            'last_frame': frame.copy()
                         }
                     else:
                         self.disappeared_candidates[track_id]['missing_count'] += 1
+                        self.disappeared_candidates[track_id]['last_frame'] = frame.copy()
 
-                    # Jika hilang selama beberapa sample frame berturut-turut
-                    if self.disappeared_candidates[track_id]['missing_count'] >= 3:
-                        obj_cls = obj['class_name']
-                        # Cek apakah ini barang yang berpotensi hilang/dipindahkan
-                        if obj_cls in ['laptop', 'backpack', 'cell phone', 'handbag']:
-                            obj['status'] = 'disappeared'
-                            obj['snapshot_after'] = frame.copy()
+                    # Filter Sensitivitas 3: Harus hilang konsisten minimal 15 frame berturut-turut (15 detik)
+                    # Menghindari alarm palsu akibat orang melintas sesaat menghalangi pandangan (occlusion)
+                    if self.disappeared_candidates[track_id]['missing_count'] >= 15:
+                        obj['status'] = 'disappeared'
 
-                            # Cek korelasi apakah ada orang (person) di dekatnya saat terakhir terlihat
-                            suspect_nearby = len(current_persons_boxes) > 0
+                        # Foto setelah hilang: Berikan bounding box merah dashed pada lokasi koordinat meja yang kosong
+                        after_label = f"LOKASI BARANG HILANG ({OBJECT_NAMES_ID.get(obj_cls, obj_cls).upper()})"
+                        obj['snapshot_after'] = draw_detection_box(
+                            frame, obj['bbox'], after_label, color_bgr=(0, 0, 255), is_alert=True, is_dashed=True
+                        )
 
-                            narrative_hint = (
-                                f"PERINGATAN: {OBJECT_NAMES_ID.get(obj_cls, obj_cls)} warna {obj['color']} "
-                                f"yang semula berada di lokasi tidak lagi terlihat sejak {time_str} WIB. "
-                                f"Terakhir terpantau pada {obj['last_seen'].strftime('%H:%M:%S')} WIB."
+                        # Snapshot saat kejadian: gambar suspect jika ada orang di sekitar
+                        during_frame = self.disappeared_candidates[track_id]['last_frame']
+                        suspect_nearby = len(current_persons_boxes) > 0
+                        if suspect_nearby:
+                            for p_box in current_persons_boxes:
+                                during_frame = draw_detection_box(during_frame, p_box, "TERDUGA / ORANG DI AREA", color_bgr=(0, 165, 255))
+                        during_snap = draw_detection_box(during_frame, obj['bbox'], "TITIK OBJEK HILANG", color_bgr=(0, 0, 255), is_dashed=True)
+
+                        narrative_hint = (
+                            f"PERINGATAN: {OBJECT_NAMES_ID.get(obj_cls, obj_cls)} warna {obj['color']} "
+                            f"yang semula berada di lokasi tidak lagi terlihat sejak {time_str} WIB. "
+                            f"Terakhir terpantau stabil pada {obj['last_seen'].strftime('%H:%M:%S')} WIB."
+                        )
+                        if suspect_nearby:
+                            narrative_hint += " Terdeteksi keberadaan seseorang di area sekitar saat objek berpindah."
+
+                        # Pastikan snapshot_before memiliki bounding box jika belum ada
+                        snap_before = obj.get('snapshot_before')
+                        if snap_before is None:
+                            snap_before = draw_detection_box(
+                                frame, obj['bbox'], f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(obj_cls, obj_cls).upper()}", color_bgr=(0, 215, 255)
                             )
-                            if suspect_nearby:
-                                narrative_hint += " Terdeteksi keberadaan seseorang di area sekitar saat objek berpindah."
 
-                            self._trigger_event(
-                                event_type='missing_item',
-                                object_type=obj_cls,
-                                color=obj['color'],
-                                confidence=obj['confidence'],
-                                event_time=frame_time,
-                                last_seen_time=obj['last_seen'],
-                                snapshot=frame,
-                                snapshot_before=obj.get('snapshot_before'),
-                                snapshot_after=obj.get('snapshot_after'),
-                                narrative_hint=narrative_hint,
-                                metadata={'suspect_detected': suspect_nearby, 'tracker_id': track_id}
-                            )
+                        self._trigger_event(
+                            event_type='missing_item',
+                            object_type=obj_cls,
+                            color=obj['color'],
+                            confidence=obj['confidence'],
+                            event_time=frame_time,
+                            last_seen_time=obj['last_seen'],
+                            snapshot=during_snap,
+                            snapshot_before=snap_before,
+                            snapshot_after=obj.get('snapshot_after'),
+                            narrative_hint=narrative_hint,
+                            metadata={'suspect_detected': suspect_nearby, 'tracker_id': track_id}
+                        )
 
-                            del self.disappeared_candidates[track_id]
+                        del self.disappeared_candidates[track_id]
+
                 elif track_id in current_frame_tracks and track_id in self.disappeared_candidates:
                     # Objek muncul kembali (hanya tertutup sementara / occlusion)
                     del self.disappeared_candidates[track_id]
@@ -641,9 +816,15 @@ class CctvAiAnalyzer:
 
         self.events_log.append(event_data)
 
-        # Print highlight ke konsol
-        icon = "🚨 [BARANG HILANG]" if event_type == 'missing_item' else "🚗 [KENDARAAN]"
+        # Print highlight ke konsol dengan ikon yang sesuai
+        if event_type == 'missing_item':
+            icon = "🚨 [BARANG HILANG]"
+        elif event_type == 'presence_detected':
+            icon = "🚶 [ORANG TERDETEKSI]"
+        else:
+            icon = "🚗 [KENDARAAN]"
         print(f"{icon} {event_time.strftime('%H:%M:%S')} - {narrative}")
+
 
         # Jika master URL ditentukan, kirimkan via HTTP POST ke Laravel
         if self.master_url:
