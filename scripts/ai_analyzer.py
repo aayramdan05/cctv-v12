@@ -16,8 +16,10 @@ import urllib.request
 import urllib.error
 import warnings
 
-# 1. Matikan verbose C++ log PyTorch & NNPACK warnings di lingkungan CPU
+# 1. Matikan verbose C++ log PyTorch, OpenCV FFmpeg & NNPACK warnings di lingkungan CPU
 os.environ['TORCH_CPP_LOG_LEVEL'] = 'ERROR'
+os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '-8'
+os.environ['OPENCV_LOG_LEVEL'] = 'OFF'
 warnings.filterwarnings('ignore')
 
 try:
@@ -421,10 +423,11 @@ class CctvAiAnalyzer:
                 tot_s = int(video_duration_sec % 60)
                 print(f"⏳ [AI Progress: {pct}%] ({sampled_count}/{total_sampled} frame) | Video: {pos_m:02d}:{pos_s:02d}/{tot_m:02d}:{tot_s:02d} | [YOLO RUN: {yolo_runs_count}]", flush=True)
 
-            # Run YOLO Tracking secara eksplisit di CPU
+            # Run YOLO Tracking secara eksplisit di CPU (ByteTrack murni tanpa GMC optical flow kamera bergerak)
             results = self.model.track(
                 source=frame,
                 persist=True,
+                tracker='bytetrack.yaml',
                 classes=list(TARGET_CLASSES.keys()),
                 verbose=False,
                 conf=conf_threshold,
