@@ -308,7 +308,7 @@ class CctvAiAnalyzer:
         self.pseudo_id_counter += 1
         return self.pseudo_id_counter
 
-    def process_video(self, video_source, sample_fps=1.0, max_duration_sec=None, conf_threshold=0.25, use_motion_filter=True, min_motion_ratio=0.003, cctv_id=None, imgsz=480):
+    def process_video(self, video_source, sample_fps=1.0, max_duration_sec=None, conf_threshold=0.25, use_motion_filter=True, min_motion_ratio=0.003, cctv_id=None, imgsz=480, min_contour_area=150):
         """
         Menganalisis file rekaman video / stream CCTV dengan Motion Pre-Filter
         """
@@ -361,9 +361,9 @@ class CctvAiAnalyzer:
         print(f"[AI] Memulai analisa: {video_source} (CCTV ID: {self.cctv_id})")
         print(f"[AI] Total Frame: {total_frames} (Durasi: {int(video_duration_sec // 60)}m {int(video_duration_sec % 60)}s), FPS Asli: {orig_fps:.1f}")
         print(f"[AI] Sampling Rate: {sample_fps} FPS (interval 1 frame tiap {frame_interval} frame, target proses: {total_sampled} frame di CPU)")
-        print(f"[AI] Motion Pre-Filter: {filter_status} (Threshold: {min_motion_ratio*100:.2f}%)")
+        print(f"[AI] Motion Pre-Filter: {filter_status} (Threshold: {min_motion_ratio*100:.2f}%, Min Area: {min_contour_area}px)")
 
-        motion_detector = MotionDetector(min_motion_ratio=min_motion_ratio) if use_motion_filter else None
+        motion_detector = MotionDetector(min_motion_ratio=min_motion_ratio, min_contour_area=min_contour_area) if use_motion_filter else None
         yolo_runs_count = 0
         skipped_motion_count = 0
 
@@ -672,6 +672,7 @@ def main():
     parser.add_argument("--limit-sec", type=int, default=None, help="Batas durasi detik yang ingin diuji coba (misal: 60 untuk 1 menit pertama)")
     parser.add_argument("--no-motion-filter", action="store_true", help="Matikan fitur Motion Pre-filter (proses semua frame dengan YOLO)")
     parser.add_argument("--motion-thresh", type=float, default=0.003, help="Ambang batas deteksi gerak pixel ratio (default: 0.003 / 0.3%%)")
+    parser.add_argument("--motion-area", type=int, default=150, help="Ambang batas ukuran gumpalan objek pixel area (default: 150 px)")
     parser.add_argument("--master-url", type=str, default=None, help="URL Server Master Laravel (misal: http://127.0.0.1:8000)")
     parser.add_argument("--ollama-url", type=str, default="http://localhost:11434", help="URL server Ollama lokal")
 
@@ -699,7 +700,8 @@ def main():
         conf_threshold=args.conf,
         use_motion_filter=use_mf,
         min_motion_ratio=args.motion_thresh,
-        imgsz=args.imgsz
+        imgsz=args.imgsz,
+        min_contour_area=args.motion_area
     )
 
     print("\n---------------- HASIL RINGKASAN EVENT ----------------")

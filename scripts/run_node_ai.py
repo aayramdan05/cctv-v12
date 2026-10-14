@@ -128,7 +128,7 @@ def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True
     return selected_files
 
 
-def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec, imgsz=480):
+def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec, imgsz=480, min_contour_area=150):
     """
     Mode Watcher: Memantau folder rekaman secara real-time dan menganalisis rekaman baru
     begitu FFmpeg selesai menulis chunk 15 menit (moov atom telah ditulis).
@@ -175,7 +175,8 @@ def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, m
                                 use_motion_filter=use_motion_filter,
                                 min_motion_ratio=motion_thresh,
                                 cctv_id=cam_id,
-                                imgsz=imgsz
+                                imgsz=imgsz,
+                                min_contour_area=min_contour_area
                             )
                             dur = time.time() - t0
                             print(f"✅ Selesai analisa dalam {dur:.1f} detik. {len(events)} event dicatat ke Master.\n")
@@ -220,6 +221,8 @@ def main():
                         help="Matikan fitur Motion Pre-filter")
     parser.add_argument("--motion-thresh", type=float, default=0.003,
                         help="Threshold gerakan pixel ratio (default: 0.003 / 0.3%%)")
+    parser.add_argument("--motion-area", type=int, default=150,
+                        help="Ambang batas ukuran gumpalan objek pixel area (default: 150 px, gunakan 250-400 untuk abaikan daun/angin)")
     parser.add_argument("--watch", action="store_true",
                         help="Jalankan dalam mode Watcher (otomatis analisa file baru saat selesai direkam)")
 
@@ -235,6 +238,7 @@ def main():
     print(f"Sampling Rate     : {args.fps} FPS")
     print(f"Resolusi Inferensi: {args.imgsz}x{args.imgsz}")
     print(f"Motion Pre-Filter : {'AKTIF (Hemat CPU 70-85%)' if use_mf else 'NONAKTIF'}")
+    print(f"Blob Min Area     : {args.motion_area} px")
     print(f"Confidence        : {args.conf}")
     print("=================================================================\n")
 
@@ -255,7 +259,8 @@ def main():
             use_motion_filter=use_mf,
             motion_thresh=args.motion_thresh,
             limit_sec=args.limit_sec,
-            imgsz=args.imgsz
+            imgsz=args.imgsz,
+            min_contour_area=args.motion_area
         )
         return
 
@@ -301,7 +306,8 @@ def main():
                 use_motion_filter=use_mf,
                 min_motion_ratio=args.motion_thresh,
                 cctv_id=cid,
-                imgsz=args.imgsz
+                imgsz=args.imgsz,
+                min_contour_area=args.motion_area
             )
             t_elapsed = time.time() - t_start
             total_events_found += len(events)
