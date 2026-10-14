@@ -629,6 +629,12 @@ class CctvAiAnalyzer:
                         color = detect_dominant_color(crop)
 
                         if track_id not in self.tracked_objects:
+                            # Jika barang berharga (laptop, tas), siapkan snapshot_before dengan bounding box langsung sejak awal
+                            init_snap_before = None
+                            if cls_name in ['laptop', 'backpack', 'handbag', 'suitcase', 'cell phone']:
+                                badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%) - {color.capitalize()}"
+                                init_snap_before = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
+
                             # Objek baru terdaftar
                             self.tracked_objects[track_id] = {
                                 'track_id': track_id,
@@ -639,7 +645,8 @@ class CctvAiAnalyzer:
                                 'last_seen': frame_time,
                                 'bbox': xyxy,
                                 'frames_stationary': 0,
-                                'snapshot_before': None,
+                                'snapshot_before': init_snap_before,
+                                'raw_frame_before': frame.copy(),
                                 'snapshot_during': None,
                                 'snapshot_after': None,
                                 'status': 'active'
@@ -680,10 +687,12 @@ class CctvAiAnalyzer:
                             center_diff = abs((x1 + x2)/2 - (prev_x1 + prev_x2)/2) + abs((y1 + y2)/2 - (prev_y1 + prev_y2)/2)
                             if center_diff < 15: # diam
                                 obj['frames_stationary'] += 1
-                                # Update snapshot awal saat masih stabil di tempat
-                                if obj['frames_stationary'] == 5 or obj['snapshot_before'] is None:
-                                    badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%)"
-                                    obj['snapshot_before'] = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
+                                # Update snapshot awal saat masih stabil di tempat (perbarui dengan frame diam terbaik)
+                                if cls_name in ['laptop', 'backpack', 'handbag', 'suitcase', 'cell phone']:
+                                    if obj['frames_stationary'] <= 8 or obj['snapshot_before'] is None:
+                                        badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%) - {color.capitalize()}"
+                                        obj['snapshot_before'] = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
+                                        obj['raw_frame_before'] = frame.copy()
                             else:
                                 obj['frames_stationary'] = 0
 
@@ -733,19 +742,23 @@ class CctvAiAnalyzer:
                     if self.disappeared_candidates[track_id]['missing_count'] >= 15:
                         obj['status'] = 'disappeared'
 
-                        # Foto setelah hilang: Berikan bounding box merah dashed pada lokasi koordinat meja yang kosong
-                        after_label = f"LOKASI BARANG HILANG ({OBJECT_NAMES_ID.get(obj_cls, obj_cls).upper()})"
-                        obj['snapshot_after'] = draw_detection_box(
-                            frame, obj['bbox'], after_label, color_bgr=(0, 0, 255), is_alert=True, is_dashed=True
-                        )
+                        # 1. Foto Sebelum: WAJIB memiliki Bounding Box pada objek aslinya
+                        snap_before = obj.get('snapshot_before')
+                        if snap_before is None:
+                            raw_before = obj.get('raw_frame_before', frame)
+                            badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(obj_cls, obj_cls).upper()} ({int(obj['confidence'] * 100)}%)"
+                            snap_before = draw_detection_box(raw_before, obj['bbox'], badge_label, color_bgr=(0, 215, 255))
 
-                        # Snapshot saat kejadian: gambar suspect jika ada orang di sekitar
-                        during_frame = self.disappeared_candidates[track_id]['last_frame']
+                        # 2. Foto Saat Kejadian: Tampilkan orang terduga di area jika ada
+                        during_frame = self.disappeared_candidates[track_id]['last_frame'].copy()
                         suspect_nearby = len(current_persons_boxes) > 0
                         if suspect_nearby:
                             for p_box in current_persons_boxes:
-                                during_frame = draw_detection_box(during_frame, p_box, "TERDUGA / ORANG DI AREA", color_bgr=(0, 165, 255))
-                        during_snap = draw_detection_box(during_frame, obj['bbox'], "TITIK OBJEK HILANG", color_bgr=(0, 0, 255), is_dashed=True)
+                                during_frame = draw_detection_box(during_frame, p_box, "ORANG TERPANTAU DI AREA", color_bgr=(0, 165, 255))
+                        during_snap = during_frame
+
+                        # 3. Foto Sesudah: Bersih menunjukkan area yang kini kosong (tanpa objek)
+                        after_snap = frame.copy()
 
                         narrative_hint = (
                             f"PERINGATAN: {OBJECT_NAMES_ID.get(obj_cls, obj_cls)} warna {obj['color']} "
@@ -754,13 +767,6 @@ class CctvAiAnalyzer:
                         )
                         if suspect_nearby:
                             narrative_hint += " Terdeteksi keberadaan seseorang di area sekitar saat objek berpindah."
-
-                        # Pastikan snapshot_before memiliki bounding box jika belum ada
-                        snap_before = obj.get('snapshot_before')
-                        if snap_before is None:
-                            snap_before = draw_detection_box(
-                                frame, obj['bbox'], f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(obj_cls, obj_cls).upper()}", color_bgr=(0, 215, 255)
-                            )
 
                         self._trigger_event(
                             event_type='missing_item',
@@ -771,7 +777,7 @@ class CctvAiAnalyzer:
                             last_seen_time=obj['last_seen'],
                             snapshot=during_snap,
                             snapshot_before=snap_before,
-                            snapshot_after=obj.get('snapshot_after'),
+                            snapshot_after=after_snap,
                             narrative_hint=narrative_hint,
                             metadata={'suspect_detected': suspect_nearby, 'tracker_id': track_id}
                         )

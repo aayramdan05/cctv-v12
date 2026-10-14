@@ -33,12 +33,32 @@ class IntelligentController extends Controller
         // Ambil event dari Database, fallback ke Demo Data jika kosong / local laptop tanpa DB
         $events = $this->getEventsData($request);
         
-        $stats = [
-            'total' => count($events),
-            'missing_items' => count(array_filter($events, fn($e) => $e['event_type'] === 'missing_item')),
-            'vehicles' => count(array_filter($events, fn($e) => in_array($e['object_type'], ['car', 'motorcycle', 'truck']))),
-            'persons' => count(array_filter($events, fn($e) => $e['object_type'] === 'person')),
-        ];
+        // Hitung statistik kumulatif riil langsung dari Database (Bukan dari array slice 50)
+        // Mencegah total deteksi mentok di 50 dan mencegah counter barang hilang reset ke 0
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events') && AiEvent::exists()) {
+                $stats = [
+                    'total' => AiEvent::count(),
+                    'missing_items' => AiEvent::where('event_type', 'missing_item')->count(),
+                    'vehicles' => AiEvent::whereIn('object_type', ['car', 'motorcycle', 'truck', 'bus'])->count(),
+                    'persons' => AiEvent::where('object_type', 'person')->count(),
+                ];
+            } else {
+                $stats = [
+                    'total' => count($events),
+                    'missing_items' => count(array_filter($events, fn($e) => $e['event_type'] === 'missing_item')),
+                    'vehicles' => count(array_filter($events, fn($e) => in_array($e['object_type'], ['car', 'motorcycle', 'truck', 'bus']))),
+                    'persons' => count(array_filter($events, fn($e) => $e['object_type'] === 'person')),
+                ];
+            }
+        } catch (\Throwable $e) {
+            $stats = [
+                'total' => count($events),
+                'missing_items' => count(array_filter($events, fn($e) => $e['event_type'] === 'missing_item')),
+                'vehicles' => count(array_filter($events, fn($e) => in_array($e['object_type'], ['car', 'motorcycle', 'truck', 'bus']))),
+                'persons' => count(array_filter($events, fn($e) => $e['object_type'] === 'person')),
+            ];
+        }
 
         return view('intelligent.index', [
             'cctvs' => $cctvs,
@@ -77,7 +97,8 @@ class IntelligentController extends Controller
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events')) {
                 $query = AiEvent::with('cctv')->filter($filters)->orderBy('event_time', 'desc');
-                $dbEvents = $query->take(50)->get();
+                $limit = (int) $request->input('limit', 250);
+                $dbEvents = $query->take(max(10, min(1000, $limit)))->get();
 
                 if ($dbEvents->isNotEmpty()) {
                     return $dbEvents->map(function ($ev) {
