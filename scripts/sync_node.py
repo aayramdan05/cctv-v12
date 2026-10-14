@@ -41,7 +41,7 @@ GO2RTC_CONFIG_PATH = os.getenv('GO2RTC_CONFIG_PATH', '/home/aay/go2rtc.yaml')
 STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/var/www/html/storage/recordings')
 
 MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
-SYNC_TOKEN = os.getenv('SYNC_TOKEN') # Harus sama dengan di Master
+SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026') # Harus sama dengan di Master
 
 # Konfigurasi AI Analysis Engine (YOLO + Motion Pre-Filter)
 ENABLE_AI_ANALYSIS = os.getenv('ENABLE_AI_ANALYSIS', 'false').lower() in ('true', '1', 'yes')
