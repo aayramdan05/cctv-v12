@@ -204,6 +204,29 @@ def create_synthetic_demo_video(output_path="demo_cctv_sample.mp4", num_frames=1
     return output_path
 
 
+def has_moov_atom(filepath):
+    """
+    Cek cepat apakah file MP4 memiliki atom 'moov' (tanda rekaman FFmpeg telah selesai).
+    File yang sedang aktif direkam belum memiliki moov atom, sehingga belum bisa dibuka.
+    """
+    try:
+        size = os.path.getsize(filepath)
+        if size < 1024 * 50:  # File < 50KB belum valid
+            return False
+        with open(filepath, 'rb') as f:
+            head = f.read(1024 * 512)
+            if b'moov' in head:
+                return True
+            if size > 1024 * 512:
+                f.seek(max(0, size - 1024 * 1024))
+                tail = f.read()
+                if b'moov' in tail:
+                    return True
+        return False
+    except Exception:
+        return False
+
+
 class MotionDetector:
     """
     Pendeteksi gerakan ultra-ringan berbasis OpenCV Frame Differencing.
@@ -303,6 +326,11 @@ class CctvAiAnalyzer:
                     self.cctv_id = int(parts[1])
             except Exception:
                 pass
+
+        # Cek apakah file masih aktif direkam oleh FFmpeg
+        if not has_moov_atom(video_source):
+            print(f"[ERROR] Video {base_name} masih aktif direkam oleh FFmpeg (moov atom belum ada). Tunggu hingga chunk 15 menit selesai.")
+            return []
 
         cap = cv2.VideoCapture(video_source)
         if not cap.isOpened():

@@ -34,12 +34,13 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 
-from ai_analyzer import CctvAiAnalyzer
+from ai_analyzer import CctvAiAnalyzer, has_moov_atom
 
 
 def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True):
     """
-    Mencari file rekaman CCTV (.mp4) di direktori penyimpanan lokal.
+    Mencari file rekaman CCTV (.mp4) yang SUDAH SELESAI (memiliki moov atom).
+    File yang sedang aktif direkam oleh FFmpeg diabaikan agar tidak memicu error 'moov atom not found'.
     Format path: {base_dir}/{YYYY-MM-DD}/cam_{id}_{timestamp}.mp4
     """
     if not os.path.exists(base_dir):
@@ -51,7 +52,6 @@ def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True
 
     target_folder = os.path.join(base_dir, date_str)
     if not os.path.exists(target_folder):
-        # Jika folder hari ini belum ada, cari folder tanggal terbaru yang ada
         all_folders = sorted([f for f in glob.glob(os.path.join(base_dir, "*")) if os.path.isdir(f)], reverse=True)
         if all_folders:
             target_folder = all_folders[0]
@@ -82,20 +82,48 @@ def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True
             cid = int(parts[1])
             cams_files.setdefault(cid, []).append(f)
 
-    # Urutkan file berdasarkan waktu modifikasi terbaru
+    # Urutkan file berdasarkan waktu modifikasi terbaru (terkini -> terlama)
     for cid in cams_files:
         cams_files[cid].sort(key=lambda x: os.path.getmtime(x), reverse=True)
 
+    # Cari folder tanggal sebelumnya untuk fallback jika file hari ini masih aktif direkam
+    prev_folders = sorted([d for d in glob.glob(os.path.join(base_dir, "*")) if os.path.isdir(d) and os.path.basename(d) < date_str], reverse=True)
+
     selected_files = []
     if latest_only:
-        # Ambil hanya 1 rekaman paling baru per kamera
+        # Ambil hanya 1 rekaman paling baru per kamera yang SUDAH SELESAI
         for cid in sorted(cams_files.keys()):
-            selected_files.append((cid, cams_files[cid][0]))
+            completed_file = None
+            for f in cams_files[cid]:
+                if has_moov_atom(f):
+                    completed_file = f
+                    break
+
+            if completed_file:
+                selected_files.append((cid, completed_file))
+            else:
+                # File hari ini untuk kamera ini masih in-progress, cari file rekaman selesai dari tanggal sebelumnya
+                found_prev = False
+                for prev_dir in prev_folders[:3]:
+                    prev_pattern = os.path.join(prev_dir, f"cam_{cid}_*.mp4")
+                    prev_files = sorted(glob.glob(prev_pattern), key=os.path.getmtime, reverse=True)
+                    for pf in prev_files:
+                        if has_moov_atom(pf):
+                            selected_files.append((cid, pf))
+                            found_prev = True
+                            print(f"ℹ️ [CAM {cid}] Rekaman hari ini masih aktif direkam FFmpeg. Mengambil rekaman selesai dari {os.path.basename(prev_dir)}: {os.path.basename(pf)}")
+                            break
+                    if found_prev:
+                        break
+
+                if not found_prev:
+                    print(f"⏳ [CAM {cid}] File {os.path.basename(cams_files[cid][0])} masih aktif direkam oleh FFmpeg (menunggu chunk 15m selesai).")
     else:
-        # Ambil semua rekaman per kamera
+        # Ambil semua rekaman yang sudah selesai
         for cid in sorted(cams_files.keys()):
             for f in cams_files[cid]:
-                selected_files.append((cid, f))
+                if has_moov_atom(f):
+                    selected_files.append((cid, f))
 
     return selected_files
 
@@ -103,7 +131,7 @@ def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True
 def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec):
     """
     Mode Watcher: Memantau folder rekaman secara real-time dan menganalisis rekaman baru
-    begitu FFmpeg selesai menulis chunk 15 menit.
+    begitu FFmpeg selesai menulis chunk 15 menit (moov atom telah ditulis).
     """
     print(f"\n👀 [WATCHER MODE AKTIF] Memantau rekaman baru di: {base_dir}")
     print("Tekan Ctrl+C untuk berhenti.\n")
@@ -116,7 +144,7 @@ def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, m
     if os.path.exists(today_folder):
         existing = glob.glob(os.path.join(today_folder, "*.mp4"))
         processed_files.update(existing)
-        print(f"ℹ️ Terdeteksi {len(existing)} file rekaman lama (dilewati, menunggu rekaman baru)...")
+        print(f"ℹ️ Terdeteksi {len(existing)} file rekaman lama (dilewati, menunggu rekaman baru selesai)...")
 
     while True:
         try:
@@ -127,13 +155,10 @@ def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, m
                 current_files = glob.glob(os.path.join(today_folder, "*.mp4"))
                 for filepath in sorted(current_files, key=os.path.getmtime):
                     if filepath not in processed_files:
-                        # Cek apakah file sudah selesai ditulis (ukuran stabil dalam 3 detik)
-                        size1 = os.path.getsize(filepath)
-                        time.sleep(3)
-                        size2 = os.path.getsize(filepath)
-
-                        if size1 == size2 and size2 > 1024 * 1024:  # Ukuran > 1MB dan stabil
-                            print(f"\n🎬 [REKAMAN BARU SELESAI] {os.path.basename(filepath)} ({size2 / (1024*1024):.2f} MB)")
+                        # Cek apakah FFmpeg sudah selesai menulis dan menutup file (moov atom ada)
+                        if has_moov_atom(filepath):
+                            size_mb = os.path.getsize(filepath) / (1024 * 1024)
+                            print(f"\n🎬 [REKAMAN SELESAI] {os.path.basename(filepath)} ({size_mb:.1f} MB)")
                             processed_files.add(filepath)
 
                             # Ekstrak CCTV ID
