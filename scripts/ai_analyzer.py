@@ -307,7 +307,7 @@ class CctvAiAnalyzer:
         self.pseudo_id_counter += 1
         return self.pseudo_id_counter
 
-    def process_video(self, video_source, sample_fps=1, max_duration_sec=None, conf_threshold=0.25, use_motion_filter=True, min_motion_ratio=0.003, cctv_id=None):
+    def process_video(self, video_source, sample_fps=1.0, max_duration_sec=None, conf_threshold=0.25, use_motion_filter=True, min_motion_ratio=0.003, cctv_id=None, imgsz=480):
         """
         Menganalisis file rekaman video / stream CCTV dengan Motion Pre-Filter
         """
@@ -427,7 +427,8 @@ class CctvAiAnalyzer:
                 classes=list(TARGET_CLASSES.keys()),
                 verbose=False,
                 conf=conf_threshold,
-                device='cpu'
+                device='cpu',
+                imgsz=imgsz
             )
 
             current_frame_tracks = set()
@@ -609,12 +610,15 @@ class CctvAiAnalyzer:
                        last_seen_time=None, narrative_hint="", metadata=None):
         """Membuat event terstruktur, meminta narasi Ollama, dan menyimpan ke log"""
 
-        # Generate narasi via Ollama (dengan fallback otomatis)
-        narrative = query_ollama_narrative(
-            prompt=narrative_hint,
-            ollama_url=self.ollama_url,
-            fallback=narrative_hint
-        )
+        # Generate narasi via Ollama khusus event penting (missing_item) agar tidak lag/blocking pada kendaraan & orang melintas
+        if event_type == 'missing_item' and self.ollama_url:
+            narrative = query_ollama_narrative(
+                prompt=narrative_hint,
+                ollama_url=self.ollama_url,
+                fallback=narrative_hint
+            )
+        else:
+            narrative = narrative_hint
 
         event_data = {
             'cctv_id': self.cctv_id,
@@ -661,7 +665,8 @@ def main():
     parser.add_argument("--video", type=str, help="Path ke file video MP4 rekaman")
     parser.add_argument("--demo", action="store_true", help="Jalankan mode demo simulasi (membuat video uji otomatis)")
     parser.add_argument("--cctv-id", type=int, default=1, help="ID CCTV di database master")
-    parser.add_argument("--fps", type=int, default=1, help="Sampling FPS (default: 1 FPS, optimal di CPU)")
+    parser.add_argument("--fps", type=float, default=1.0, help="Sampling FPS (default: 1.0, gunakan 0.5 untuk 1 frame tiap 2 detik)")
+    parser.add_argument("--imgsz", type=int, default=480, help="Resolusi inferensi YOLO (default: 480 untuk efisiensi CPU, atau 640)")
     parser.add_argument("--conf", type=float, default=0.25, help="Ambang batas deteksi confidence YOLO (default: 0.25)")
     parser.add_argument("--limit-sec", type=int, default=None, help="Batas durasi detik yang ingin diuji coba (misal: 60 untuk 1 menit pertama)")
     parser.add_argument("--no-motion-filter", action="store_true", help="Matikan fitur Motion Pre-filter (proses semua frame dengan YOLO)")
@@ -692,7 +697,8 @@ def main():
         max_duration_sec=args.limit_sec,
         conf_threshold=args.conf,
         use_motion_filter=use_mf,
-        min_motion_ratio=args.motion_thresh
+        min_motion_ratio=args.motion_thresh,
+        imgsz=args.imgsz
     )
 
     print("\n---------------- HASIL RINGKASAN EVENT ----------------")

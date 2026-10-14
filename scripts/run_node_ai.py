@@ -128,7 +128,7 @@ def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True
     return selected_files
 
 
-def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec):
+def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec, imgsz=480):
     """
     Mode Watcher: Memantau folder rekaman secara real-time dan menganalisis rekaman baru
     begitu FFmpeg selesai menulis chunk 15 menit (moov atom telah ditulis).
@@ -174,7 +174,8 @@ def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, m
                                 conf_threshold=conf,
                                 use_motion_filter=use_motion_filter,
                                 min_motion_ratio=motion_thresh,
-                                cctv_id=cam_id
+                                cctv_id=cam_id,
+                                imgsz=imgsz
                             )
                             dur = time.time() - t0
                             print(f"✅ Selesai analisa dalam {dur:.1f} detik. {len(events)} event dicatat ke Master.\n")
@@ -209,8 +210,10 @@ def main():
                         help="Batas maksimal video yang diproses dalam uji coba ini (contoh: --max-videos 5)")
     parser.add_argument("--limit-sec", type=int, default=None,
                         help="Batas durasi video (detik) per rekaman untuk pengujian cepat (contoh: --limit-sec 60)")
-    parser.add_argument("--fps", type=int, default=1,
-                        help="Sampling FPS (default: 1 FPS, optimal di CPU)")
+    parser.add_argument("--fps", type=float, default=1.0,
+                        help="Sampling FPS (default: 1.0, contoh: 0.5 untuk 1 frame tiap 2 detik, 0.33 untuk 1 frame tiap 3 detik)")
+    parser.add_argument("--imgsz", type=int, default=480,
+                        help="Resolusi inferensi YOLO (default: 480 untuk CPU cepat, atau 640)")
     parser.add_argument("--conf", type=float, default=0.25,
                         help="Ambang batas deteksi confidence YOLO (default: 0.25)")
     parser.add_argument("--no-motion-filter", action="store_true",
@@ -230,6 +233,7 @@ def main():
     print(f"Direktori Rekaman : {args.recordings_dir}")
     print(f"Master Laravel    : {args.master_url}")
     print(f"Sampling Rate     : {args.fps} FPS")
+    print(f"Resolusi Inferensi: {args.imgsz}x{args.imgsz}")
     print(f"Motion Pre-Filter : {'AKTIF (Hemat CPU 70-85%)' if use_mf else 'NONAKTIF'}")
     print(f"Confidence        : {args.conf}")
     print("=================================================================\n")
@@ -250,7 +254,8 @@ def main():
             conf=args.conf,
             use_motion_filter=use_mf,
             motion_thresh=args.motion_thresh,
-            limit_sec=args.limit_sec
+            limit_sec=args.limit_sec,
+            imgsz=args.imgsz
         )
         return
 
@@ -295,7 +300,8 @@ def main():
                 conf_threshold=args.conf,
                 use_motion_filter=use_mf,
                 min_motion_ratio=args.motion_thresh,
-                cctv_id=cid
+                cctv_id=cid,
+                imgsz=args.imgsz
             )
             t_elapsed = time.time() - t_start
             total_events_found += len(events)

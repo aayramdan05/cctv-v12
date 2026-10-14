@@ -45,9 +45,11 @@ SYNC_TOKEN = os.getenv('SYNC_TOKEN') # Harus sama dengan di Master
 
 # Konfigurasi AI Analysis Engine (YOLO + Motion Pre-Filter)
 ENABLE_AI_ANALYSIS = os.getenv('ENABLE_AI_ANALYSIS', 'false').lower() in ('true', '1', 'yes')
-AI_SAMPLE_FPS = int(os.getenv('AI_SAMPLE_FPS', '1'))
+AI_SAMPLE_FPS = float(os.getenv('AI_SAMPLE_FPS', '0.5'))
 AI_MOTION_FILTER = os.getenv('AI_MOTION_FILTER', 'true').lower() in ('true', '1', 'yes')
+AI_MOTION_THRESH = float(os.getenv('AI_MOTION_THRESH', '0.005'))
 AI_CONFIDENCE = float(os.getenv('AI_CONFIDENCE', '0.25'))
+AI_IMGSZ = int(os.getenv('AI_IMGSZ', '480'))
 AI_OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434')
 
 # Inisialisasi Antrean Thread-Safe untuk AI (Kapasitas hingga 300 rekaman)
@@ -252,8 +254,9 @@ def ai_queue_worker():
                 sample_fps=AI_SAMPLE_FPS,
                 conf_threshold=AI_CONFIDENCE,
                 use_motion_filter=AI_MOTION_FILTER,
-                min_motion_ratio=0.003,
-                cctv_id=cam_id
+                min_motion_ratio=AI_MOTION_THRESH,
+                cctv_id=cam_id,
+                imgsz=AI_IMGSZ
             )
 
             dur = time.time() - start_t
