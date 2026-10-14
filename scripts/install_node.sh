@@ -192,6 +192,10 @@ EOF
 cp "$HOME_DIR/cctv-scripts/cctv-sync.service" /etc/systemd/system/
 # Service CCTV ONVIF
 cp "$HOME_DIR/cctv-scripts/cctv-onvif.service" /etc/systemd/system/
+# Service CCTV AI Analytics (Terpisah & Independen)
+if [ -f "$HOME_DIR/cctv-scripts/cctv-ai.service" ]; then
+    cp "$HOME_DIR/cctv-scripts/cctv-ai.service" /etc/systemd/system/
+fi
 
 systemctl daemon-reload
 systemctl enable go2rtc cctv-sync cctv-onvif

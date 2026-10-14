@@ -50,8 +50,10 @@ STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/var/www/html/storage/recordin
 MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
 SYNC_TOKEN = os.getenv('SYNC_TOKEN', 'secret_unpad_cctv_2026') # Harus sama dengan di Master
 
-# Konfigurasi AI Analysis Engine (YOLO + Motion Pre-Filter)
-ENABLE_AI_ANALYSIS = os.getenv('ENABLE_AI_ANALYSIS', 'false').lower() in ('true', '1', 'yes')
+# Arsitektur Terisolasi: AI Video Analytics kini berjalan sebagai daemon mandiri (cctv-ai.service)
+# agar proses perekaman 42 kamera FFmpeg 100% aman dan tidak terganggu.
+# Default di dalam sync_node dimatikan agar hemat CPU dan RAM.
+ENABLE_AI_ANALYSIS = os.getenv('ENABLE_AI_INTERNAL', 'false').lower() in ('true', '1', 'yes')
 AI_SAMPLE_FPS = float(os.getenv('AI_SAMPLE_FPS', '1.0'))
 AI_MOTION_FILTER = os.getenv('AI_MOTION_FILTER', 'true').lower() in ('true', '1', 'yes')
 AI_MOTION_THRESH = float(os.getenv('AI_MOTION_THRESH', '0.003'))

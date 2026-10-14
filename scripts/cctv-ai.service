@@ -1,0 +1,18 @@
+[Unit]
+Description=CCTV AI Video Analytics Watcher Agent (Independent Add-On)
+After=network.target cctv-sync.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/aay/cctv-scripts/run_node_ai.py --watch --fps 1.0
+WorkingDirectory=/home/aay/cctv-scripts
+User=aay
+Restart=always
+RestartSec=15
+Nice=15
+CPUSchedulingPolicy=other
+# Batasi beban komputasi AI maksimal 1.5 core (dari 16 core fisik)
+CPUQuota=150%
+
+[Install]
+WantedBy=multi-user.target

@@ -13,17 +13,39 @@ Kegunaan:
 
 import os
 import sys
+
+# 1. Kunci thread CPU library C-runtime (OpenMP / BLAS / MKL) agar AI hanya memakai 1 Core CPU
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
+# Prioritaskan CPU paling rendah (nice 15) di lingkungan Linux agar perekaman FFmpeg & streaming tidak terganggu
+try:
+    os.nice(15)
+except Exception:
+    pass
+
+try:
+    import torch
+    torch.set_num_threads(1)
+    if hasattr(torch, 'set_num_interop_threads'):
+        torch.set_num_interop_threads(1)
+except Exception:
+    pass
+
+try:
+    import cv2
+    cv2.setNumThreads(1)
+except Exception:
+    pass
+
 import time
 import glob
 import argparse
 from datetime import datetime
 from dotenv import load_dotenv
-
-# Prioritaskan CPU rendah (nice 15) di lingkungan Linux agar perekaman FFmpeg & streaming Go2RTC tidak terganggu
-try:
-    os.nice(15)
-except Exception:
-    pass
 
 # Load environment variable
 load_dotenv('/home/aay/cctv-scripts/.env')
@@ -180,6 +202,7 @@ def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, m
                             )
                             dur = time.time() - t0
                             print(f"✅ Selesai analisa dalam {dur:.1f} detik. {len(events)} event dicatat ke Master.\n")
+                            time.sleep(2.0)  # Cooldown 2 detik agar CPU istirahat sebelum memproses rekaman berikutnya
                         else:
                             # File masih dalam proses perekaman oleh FFmpeg, tunggu loop berikutnya
                             pass
