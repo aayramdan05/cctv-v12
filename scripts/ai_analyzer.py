@@ -20,6 +20,14 @@ import warnings
 os.environ['TORCH_CPP_LOG_LEVEL'] = 'ERROR'
 os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '-8'
 os.environ['OPENCV_LOG_LEVEL'] = 'OFF'
+
+# 2. Batasi jumlah thread internal (OpenMP / BLAS / MKL) ke 1 thread per worker
+# Mencegah 400+ thread bertumpuk di CPU Linux yang menyebabkan load average melonjak
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
 warnings.filterwarnings('ignore')
 
 try:
@@ -30,14 +38,16 @@ try:
             torch.backends.nnpack.set_flags(False)
     except Exception:
         pass
-    # Alokasikan thread CPU optimal (maksimal 4 thread agar server tetap adil membagi CPU)
-    torch.set_num_threads(max(1, min(4, os.cpu_count() or 2)))
+    # Alokasikan 1 thread CPU per worker agar hemat daya dan tidak memonopoli core server
+    torch.set_num_threads(1)
 except ImportError:
     pass
 
 try:
     import cv2
     import numpy as np
+    # Batasi OpenCV agar tidak memakai seluruh 16 core sekaligus (cukup 1 thread)
+    cv2.setNumThreads(1)
 except ImportError:
     print("[ERROR] OpenCV (cv2) or numpy not installed. Run: pip install opencv-python numpy")
     sys.exit(1)
@@ -554,6 +564,9 @@ class CctvAiAnalyzer:
                 device='cpu',
                 imgsz=imgsz
             )
+
+            # Throttle mikro 5ms agar CPU tidak terkunci 100% terus-menerus (memberi nafas bagi OS)
+            time.sleep(0.005)
 
             current_frame_tracks = set()
             current_persons_boxes = []

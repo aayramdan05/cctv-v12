@@ -1,4 +1,11 @@
 import os
+# Batasi thread CPU library C-runtime (OpenMP / BLAS / MKL) agar worker AI tidak memicu ratusan thread
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
 import sys
 import time
 import subprocess
@@ -51,7 +58,7 @@ AI_MOTION_THRESH = float(os.getenv('AI_MOTION_THRESH', '0.003'))
 AI_MOTION_AREA = int(os.getenv('AI_MOTION_AREA', '150'))
 AI_CONFIDENCE = float(os.getenv('AI_CONFIDENCE', '0.25'))
 AI_IMGSZ = int(os.getenv('AI_IMGSZ', '480'))
-AI_WORKERS_COUNT = int(os.getenv('AI_WORKERS', '2'))
+AI_WORKERS_COUNT = int(os.getenv('AI_WORKERS', '1'))
 AI_OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434')
 
 # Inisialisasi Antrean Thread-Safe untuk AI (Kapasitas hingga 300 rekaman)
@@ -266,6 +273,7 @@ def ai_queue_worker(worker_id=1):
             print(f"✅ [AI WORKER #{worker_id}] Selesai analisa {cam_label} dalam {dur:.1f} detik. Total {len(events)} event dicatat.", flush=True)
 
             ai_queue.task_done()
+            time.sleep(1.0)  # Beri istirahat CPU 1 detik sebelum mengambil video berikutnya di antrean
         except Exception as e:
             print(f"❌ [AI WORKER #{worker_id}] Error pada proses analisa video: {e}", flush=True)
             try:
