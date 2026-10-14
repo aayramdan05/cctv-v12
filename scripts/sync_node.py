@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import subprocess
 import psycopg2
@@ -8,10 +9,16 @@ import requests
 import select
 import glob
 import threading
+import queue
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import builtins
 import random
+
+# Pastikan folder scripts ini terbaca di sys.path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
 
 # Global dictionary untuk menyimpan nama kamera berdasarkan ID
 camera_names = {}
@@ -35,6 +42,16 @@ STORAGE_BASE_PATH = os.getenv('RECORDINGS_PATH', '/var/www/html/storage/recordin
 
 MASTER_URL = os.getenv('MASTER_URL', f"http://{DB_HOST}")
 SYNC_TOKEN = os.getenv('SYNC_TOKEN') # Harus sama dengan di Master
+
+# Konfigurasi AI Analysis Engine (YOLO + Motion Pre-Filter)
+ENABLE_AI_ANALYSIS = os.getenv('ENABLE_AI_ANALYSIS', 'false').lower() in ('true', '1', 'yes')
+AI_SAMPLE_FPS = int(os.getenv('AI_SAMPLE_FPS', '1'))
+AI_MOTION_FILTER = os.getenv('AI_MOTION_FILTER', 'true').lower() in ('true', '1', 'yes')
+AI_CONFIDENCE = float(os.getenv('AI_CONFIDENCE', '0.25'))
+AI_OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434')
+
+# Inisialisasi Antrean Thread-Safe untuk AI (Kapasitas hingga 300 rekaman)
+ai_queue = queue.Queue(maxsize=300) if ENABLE_AI_ANALYSIS else None
 
 def get_db_connection():
     """Membuat koneksi ke database Master dengan Autocommit (Anti-Zombie)"""
@@ -183,6 +200,74 @@ def sync_go2rtc_config_from_db():
         print(f"❌ Error Sync Config from API: {e}")
         return []
 
+def ai_queue_worker():
+    """
+    Worker background sekuensial (FIFO) untuk AI Video Analytics (YOLO + Motion Filter).
+    Berjalan dengan prioritas CPU rendah (nice 15) agar tidak mengganggu FFmpeg dan Go2RTC.
+    """
+    if not ENABLE_AI_ANALYSIS or ai_queue is None:
+        return
+
+    # Set prioritas proses AI lebih rendah di Linux Kernel (nice 15)
+    try:
+        os.nice(15)
+        print("🧠 [AI WORKER] Prioritas CPU diset ke nice 15 (background task).", flush=True)
+    except Exception:
+        pass
+
+    try:
+        from ai_analyzer import CctvAiAnalyzer
+        print(f"🧠 [AI WORKER] Menginisialisasi CctvAiAnalyzer (Master: {MASTER_URL})...", flush=True)
+        analyzer = CctvAiAnalyzer(
+            model_weight='yolov8n.pt',
+            master_url=MASTER_URL,
+            ollama_url=AI_OLLAMA_URL
+        )
+        print("🧠 [AI WORKER] AI Analysis Engine Siap! Menunggu rekaman selesai...", flush=True)
+    except Exception as e:
+        print(f"❌ [AI WORKER] Gagal menginisialisasi AI Engine: {e}", flush=True)
+        return
+
+    while True:
+        try:
+            cam_id, video_path = ai_queue.get()
+            cam_label = camera_names.get(cam_id, f"ID_{cam_id}")
+
+            if not os.path.exists(video_path):
+                print(f"⚠️ [AI WORKER] File rekaman tidak ditemukan: {video_path}", flush=True)
+                ai_queue.task_done()
+                continue
+
+            # Abaikan jika ukuran file terlalu kecil (misal rekaman korup / 0 byte)
+            if os.path.getsize(video_path) < 1024:
+                print(f"⚠️ [AI WORKER] File rekaman terlalu kecil/rusak (<1KB): {video_path}", flush=True)
+                ai_queue.task_done()
+                continue
+
+            print(f"🧠 [AI WORKER] Memulai analisa video {cam_label} ({os.path.basename(video_path)}). Sisa antrean: {ai_queue.qsize()}", flush=True)
+            start_t = time.time()
+
+            events = analyzer.process_video(
+                video_source=video_path,
+                sample_fps=AI_SAMPLE_FPS,
+                conf_threshold=AI_CONFIDENCE,
+                use_motion_filter=AI_MOTION_FILTER,
+                min_motion_ratio=0.003,
+                cctv_id=cam_id
+            )
+
+            dur = time.time() - start_t
+            print(f"✅ [AI WORKER] Selesai analisa {cam_label} dalam {dur:.1f} detik. Total {len(events)} event dicatat.", flush=True)
+
+            ai_queue.task_done()
+        except Exception as e:
+            print(f"❌ [AI WORKER] Error pada proses analisa video: {e}", flush=True)
+            try:
+                ai_queue.task_done()
+            except Exception:
+                pass
+            time.sleep(2)
+
 def record_worker(cam_id, stream_url):
     """Worker rekaman individu per kamera (Fragmented MP4 with AAC audio)"""
     # 🕒 Jeda acak (0-15 detik) untuk mencegah "Connection Spike" saat start up
@@ -290,6 +375,14 @@ def record_worker(cam_id, stream_url):
                     print(f"🎬 [{cam_label}] Rekaman selesai & diperbarui: {final_filename} ({file_size_mb} MB)", flush=True)
                 except Exception as e:
                     print(f"❌ [{cam_label}] Gagal update hasil ke DB: {e}", flush=True)
+
+                # 🧠 Masukkan rekaman baru ke antrean AI Analytics jika diaktifkan
+                if ENABLE_AI_ANALYSIS and ai_queue is not None:
+                    try:
+                        ai_queue.put_nowait((cam_id, final_path))
+                        print(f"🧠 [{cam_label}] Rekaman masuk antrean AI (Antrean: {ai_queue.qsize()})", flush=True)
+                    except queue.Full:
+                        print(f"⚠️ [{cam_label}] Antrean AI penuh, melewati analisa video ini", flush=True)
             
         except Exception as e:
             print(f"❌ [{cam_label}] Worker Error: {e}", flush=True)
@@ -310,6 +403,11 @@ if __name__ == '__main__':
     # 2. Jalankan Auto-Cleanup di background
     print(f"📡 DEBUG: Memulai thread Auto-Cleanup...", flush=True)
     threading.Thread(target=auto_cleanup, daemon=True).start()
+    
+    # 2b. Jalankan AI Analysis Worker sekuensial jika diaktifkan di .env
+    if ENABLE_AI_ANALYSIS and ai_queue is not None:
+        print("🧠 DEBUG: Memulai worker thread AI Video Analytics...", flush=True)
+        threading.Thread(target=ai_queue_worker, daemon=True).start()
     
     active_threads = {}
     active_processes = {} # Melacak proses FFmpeg yang sedang jalan
