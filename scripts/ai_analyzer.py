@@ -229,11 +229,12 @@ def has_moov_atom(filepath):
 
 class MotionDetector:
     """
-    Pendeteksi gerakan ultra-ringan berbasis OpenCV Frame Differencing.
-    Menghemat 70-85% pemrosesan CPU dengan melewatkan frame statis sebelum memanggil YOLO.
+    Pendeteksi gerakan ultra-ringan berbasis OpenCV Frame Differencing + Blob Contour Filtering.
+    Mengabaikan noise sensor, ranting pohon bergoyang, dan teks jam kamera OSD.
     """
-    def __init__(self, min_motion_ratio=0.005, scale_width=320, cooldown_frames=1):
+    def __init__(self, min_motion_ratio=0.005, min_contour_area=80, scale_width=320, cooldown_frames=1):
         self.min_motion_ratio = min_motion_ratio
+        self.min_contour_area = min_contour_area
         self.scale_width = scale_width
         self.cooldown_frames = cooldown_frames
         self.prev_gray = None
@@ -241,8 +242,8 @@ class MotionDetector:
 
     def check_motion(self, frame):
         """
-        Mengecek apakah frame memiliki pergerakan pixel yang signifikan.
-        Return: (is_motion: bool, motion_ratio: float)
+        Mengecek apakah frame memiliki pergerakan objek nyata yang solid.
+        Return: (is_motion: bool, motion_metric: float)
         """
         h, w = frame.shape[:2]
         scale = self.scale_width / float(w)
@@ -257,26 +258,26 @@ class MotionDetector:
 
         # Hitung selisih pixel absolut antar frame
         diff = cv2.absdiff(self.prev_gray, gray)
-        _, thresh = cv2.threshold(diff, 22, 255, cv2.THRESH_BINARY)
-        thresh = cv2.dilate(thresh, None, iterations=1)
+        _, thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)
+        thresh = cv2.dilate(thresh, None, iterations=2)
 
-        motion_pixels = cv2.countNonZero(thresh)
-        total_pixels = small_frame.shape[0] * small_frame.shape[1]
-        motion_ratio = motion_pixels / float(total_pixels)
+        # Cari kontur gumpalan pergerakan nyata (bukan noise titik-titik tersebar)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        has_real_object = any(cv2.contourArea(c) >= self.min_contour_area for c in contours)
 
         self.prev_gray = gray
 
         # Evaluasi batas gerakan
-        if motion_ratio >= self.min_motion_ratio:
+        if has_real_object:
             self.cooldown_counter = self.cooldown_frames
-            return True, motion_ratio
+            return True, 1.0
 
         # Masa cooldown agar objek yang melambat sebentar tidak terputus
         if self.cooldown_counter > 0:
             self.cooldown_counter -= 1
-            return True, motion_ratio
+            return True, 1.0
 
-        return False, motion_ratio
+        return False, 0.0
 
 
 class CctvAiAnalyzer:
