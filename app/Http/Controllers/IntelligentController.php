@@ -73,11 +73,15 @@ class IntelligentController extends Controller
     public function getEvents(Request $request)
     {
         $events = $this->getEventsData($request);
+        $totalDb = class_exists(AiEvent::class) && \Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events')
+            ? AiEvent::count()
+            : count($events);
 
         return response()->json([
             'status' => 'success',
             'data' => $events,
-            'total' => count($events),
+            'count' => count($events),
+            'total' => $totalDb,
         ]);
     }
 
@@ -98,7 +102,9 @@ class IntelligentController extends Controller
             if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events')) {
                 $query = AiEvent::with('cctv')->filter($filters)->orderBy('event_time', 'desc');
                 $limit = (int) $request->input('limit', 250);
-                $dbEvents = $query->take(max(10, min(1000, $limit)))->get();
+                $page = max(1, (int) $request->input('page', 1));
+                $offset = ($page - 1) * $limit;
+                $dbEvents = $query->skip($offset)->take(max(10, min(1000, $limit)))->get();
 
                 if ($dbEvents->isNotEmpty()) {
                     return $dbEvents->map(function ($ev) {

@@ -209,12 +209,31 @@
 
             <!-- 5. Events Feed / Timeline Cards -->
             <div class="space-y-4">
-                <div class="flex items-center justify-between px-1">
+                <div id="events-feed-header" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                     <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <i class="fas fa-clock-rotate-left text-slate-400"></i>
                         Linimasa Investigasi Visual
                     </h2>
-                    <span class="text-xs font-semibold text-slate-500" x-text="'Menampilkan ' + filteredEvents.length + ' catatan kejadian'"></span>
+                    <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        <span class="text-xs font-semibold text-slate-500 hidden sm:inline" 
+                              x-text="'Menampilkan ' + paginatedEvents.length + ' dari ' + filteredEvents.length + ' catatan kejadian'"></span>
+                        <span class="text-xs text-slate-300 hidden sm:inline">|</span>
+                        <span class="text-xs font-bold text-purple-600" x-text="'Halaman ' + currentPage + ' / ' + totalPages"></span>
+
+                        <!-- Tombol Halaman Mini di Header -->
+                        <div x-show="totalPages > 1" class="flex items-center gap-1 ml-1">
+                            <button type="button" @click="prevPage()" :disabled="currentPage === 1"
+                                    title="Halaman Sebelumnya"
+                                    class="w-7 h-7 rounded-lg border border-slate-200 text-xs flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                <i class="fas fa-chevron-left text-[10px]"></i>
+                            </button>
+                            <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
+                                    title="Halaman Berikutnya"
+                                    class="w-7 h-7 rounded-lg border border-slate-200 text-xs flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                <i class="fas fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Empty State -->
@@ -226,8 +245,8 @@
                     <p class="text-sm text-slate-500 mt-1">Coba ubah kata kunci pencarian atau reset filter kamera Anda.</p>
                 </div>
 
-                <!-- Event Cards Repeater -->
-                <template x-for="event in filteredEvents" :key="event.id">
+                <!-- Event Cards Repeater (Paginated for Ultra Fast Rendering) -->
+                <template x-for="event in paginatedEvents" :key="event.id">
                     <div class="bg-white rounded-2xl border transition-all hover:shadow-md overflow-hidden"
                          :class="event.event_type === 'missing_item' ? 'border-rose-300 shadow-rose-100/50 ring-1 ring-rose-200' : 'border-slate-200/80 shadow-xs'">
                         
@@ -314,7 +333,7 @@
                                             <!-- Snapshot 1: Sebelum -->
                                             <div class="relative rounded-xl overflow-hidden border border-slate-200 group bg-slate-900 cursor-pointer"
                                                  @click="openImageModal(event.snapshot_before_url, 'Foto Sebelum Hilang: Objek Masih Berada di Tempat')">
-                                                <img :src="event.snapshot_before_url" alt="Sebelum" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
+                                                <img :src="event.snapshot_before_url" loading="lazy" alt="Sebelum" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
                                                 <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[11px] font-bold text-emerald-400 backdrop-blur-xs">
                                                     1. Sebelum (Stabil)
                                                 </div>
@@ -326,7 +345,7 @@
                                             <!-- Snapshot 2: Saat Kejadian -->
                                             <div class="relative rounded-xl overflow-hidden border border-rose-300 group bg-slate-900 cursor-pointer"
                                                  @click="openImageModal(event.snapshot_url, 'Foto Saat Kejadian: Terdeteksi Interaksi Objek / Orang')">
-                                                <img :src="event.snapshot_url" alt="Saat Kejadian" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
+                                                <img :src="event.snapshot_url" loading="lazy" alt="Saat Kejadian" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
                                                 <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-rose-600 text-[11px] font-bold text-white shadow-xs">
                                                     2. Saat Kejadian (Interaksi)
                                                 </div>
@@ -338,7 +357,7 @@
                                             <!-- Snapshot 3: Sesudah (Kosong) -->
                                             <div class="relative rounded-xl overflow-hidden border border-slate-200 group bg-slate-900 cursor-pointer"
                                                  @click="openImageModal(event.snapshot_after_url, 'Foto Sesudah Hilang: Lokasi Meja / Area Kosong')">
-                                                <img :src="event.snapshot_after_url" alt="Sesudah" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
+                                                <img :src="event.snapshot_after_url" loading="lazy" alt="Sesudah" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
                                                 <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[11px] font-bold text-rose-400 backdrop-blur-xs">
                                                     3. Sesudah (Kosong/Hilang)
                                                 </div>
@@ -355,7 +374,7 @@
                                     <div class="flex items-center gap-4">
                                         <div class="relative w-48 h-28 rounded-xl overflow-hidden border border-slate-200 group bg-slate-900 cursor-pointer flex-shrink-0"
                                              @click="openImageModal(event.snapshot_url, event.narrative)">
-                                            <img :src="event.snapshot_url" alt="Snapshot" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                                            <img :src="event.snapshot_url" loading="lazy" alt="Snapshot" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
                                             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
                                                 <i class="fas fa-magnifying-glass-plus mr-1"></i> Perbesar
                                             </div>
@@ -381,14 +400,73 @@
                                     <a :href="'{{ route('playback.index') }}?cctv_id=' + event.cctv_id" 
                                        target="_blank"
                                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors shadow-xs">
-                                        <i class="fas fa-circle-play"></i>
-                                        Buka Rekaman (Playback)
+                                        <i class="fas fa-circle-play mr-1"></i> Buka Rekaman (Playback)
                                     </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </template>
+
+                <!-- Pagination Controls Bar (Smooth & Fast) -->
+                <div x-show="filteredEvents.length > perPage" class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                    <div class="text-xs text-slate-500 font-medium">
+                        Menampilkan <span class="font-bold text-slate-800" x-text="(currentPage - 1) * perPage + 1"></span> - 
+                        <span class="font-bold text-slate-800" x-text="Math.min(currentPage * perPage, filteredEvents.length)"></span> 
+                        dari <span class="font-bold text-slate-800" x-text="filteredEvents.length"></span> kejadian
+                    </div>
+
+                    <div class="flex items-center gap-1.5 flex-wrap justify-center">
+                        <!-- Tombol Sebelumnya -->
+                        <button type="button" @click="prevPage()" :disabled="currentPage === 1"
+                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                            <i class="fas fa-chevron-left mr-1"></i> Sebelumnya
+                        </button>
+
+                        <!-- Nomor Halaman -->
+                        <template x-for="(page, idx) in pageNumbers" :key="idx">
+                            <div class="inline-flex items-center">
+                                <span x-show="page === '...'" class="px-2 py-1 text-slate-400 text-xs font-bold select-none">...</span>
+                                <button x-show="page !== '...'" type="button" @click="goToPage(page)"
+                                        :class="currentPage === page ? 'bg-purple-600 text-white shadow-xs font-black' : 'border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold'"
+                                        class="w-8 h-8 rounded-xl text-xs flex items-center justify-center transition-all"
+                                        x-text="page">
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Tombol Berikutnya -->
+                        <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
+                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                            Berikutnya <i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- Pilihan Jumlah Per Halaman -->
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                        <span>Per halaman:</span>
+                        <select x-model.number="perPage" @change="currentPage = 1"
+                                class="py-1 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-bold focus:ring-purple-500 focus:border-purple-500">
+                            <option value="12">12</option>
+                            <option value="24">24</option>
+                            <option value="48">48</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tombol Muat Data Tambahan dari Server (Jika DB memiliki ribuan data) -->
+                <div x-show="hasMoreServerData" class="text-center pt-2">
+                    <button type="button" @click="loadMoreFromServer()" :disabled="isLoadingMore"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs hover:border-purple-300 hover:text-purple-700 transition-all disabled:opacity-50">
+                        <template x-if="isLoadingMore">
+                            <i class="fas fa-circle-notch fa-spin text-purple-600"></i>
+                        </template>
+                        <template x-if="!isLoadingMore">
+                            <i class="fas fa-database text-purple-600"></i>
+                        </template>
+                        <span x-text="isLoadingMore ? 'Mengambil data dari server...' : 'Muat 250 Data Terdahulu dari Database'"></span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -473,11 +551,63 @@
                 modalImageCaption: '',
                 showPoCModal: false,
 
+                currentPage: 1,
+                perPage: 12,
+                serverPage: 1,
+                hasMoreServerData: false,
+                isLoadingMore: false,
+
                 init() {
                     this.filteredEvents = this.events;
+                    if (this.stats && this.stats.total > this.events.length) {
+                        this.hasMoreServerData = true;
+                    }
+                },
+
+                get paginatedEvents() {
+                    const start = (this.currentPage - 1) * this.perPage;
+                    return this.filteredEvents.slice(start, start + this.perPage);
+                },
+
+                get totalPages() {
+                    return Math.max(1, Math.ceil(this.filteredEvents.length / this.perPage));
+                },
+
+                get pageNumbers() {
+                    const total = this.totalPages;
+                    const current = this.currentPage;
+                    const pages = [];
+                    if (total <= 7) {
+                        for (let i = 1; i <= total; i++) pages.push(i);
+                    } else {
+                        pages.push(1);
+                        if (current > 3) pages.push('...');
+                        const start = Math.max(2, current - 1);
+                        const end = Math.min(total - 1, current + 1);
+                        for (let i = start; i <= end; i++) pages.push(i);
+                        if (current < total - 2) pages.push('...');
+                        pages.push(total);
+                    }
+                    return pages;
+                },
+
+                goToPage(p) {
+                    if (p >= 1 && p <= this.totalPages) {
+                        this.currentPage = p;
+                        document.getElementById('events-feed-header')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                },
+
+                prevPage() {
+                    this.goToPage(this.currentPage - 1);
+                },
+
+                nextPage() {
+                    this.goToPage(this.currentPage + 1);
                 },
 
                 applyFilters() {
+                    this.currentPage = 1;
                     const q = this.searchQuery.toLowerCase().trim();
                     const cctv = this.selectedCctv;
                     const obj = this.selectedObject;
@@ -505,6 +635,7 @@
 
                 setObjectFilter(obj) {
                     this.selectedObject = obj;
+                    this.currentPage = 1;
                     this.applyFilters();
                 },
 
@@ -541,6 +672,31 @@
                         console.error('Gagal memuat ringkasan:', e);
                     } finally {
                         this.isGeneratingSummary = false;
+                    }
+                },
+
+                async loadMoreFromServer() {
+                    if (this.isLoadingMore) return;
+                    this.isLoadingMore = true;
+                    try {
+                        this.serverPage++;
+                        const resp = await fetch(`{{ route('intelligent.events') }}?limit=250&page=${this.serverPage}`);
+                        const res = await resp.json();
+                        if (res.status === 'success' && res.data && res.data.length > 0) {
+                            const existingIds = new Set(this.events.map(e => e.id));
+                            const newEvents = res.data.filter(e => !existingIds.has(e.id));
+                            this.events = [...this.events, ...newEvents];
+                            this.applyFilters();
+                            if (this.events.length >= res.total || res.data.length < 250) {
+                                this.hasMoreServerData = false;
+                            }
+                        } else {
+                            this.hasMoreServerData = false;
+                        }
+                    } catch (e) {
+                        console.error('Gagal mengambil data tambahan dari server:', e);
+                    } finally {
+                        this.isLoadingMore = false;
                     }
                 }
             }
