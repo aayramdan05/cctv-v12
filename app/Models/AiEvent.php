@@ -61,7 +61,15 @@ class AiEvent extends Model
         }
 
         if (!empty($filters['object_type']) && $filters['object_type'] !== 'all') {
-            $query->where('object_type', $filters['object_type']);
+            if ($filters['object_type'] === 'laptop') {
+                $query->whereIn('object_type', ['laptop', 'cell phone']);
+            } elseif ($filters['object_type'] === 'backpack') {
+                $query->whereIn('object_type', ['backpack', 'handbag', 'suitcase']);
+            } elseif ($filters['object_type'] === 'car') {
+                $query->whereIn('object_type', ['car', 'truck', 'bus']);
+            } else {
+                $query->where('object_type', $filters['object_type']);
+            }
         }
 
         if (!empty($filters['date'])) {

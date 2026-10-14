@@ -44,10 +44,12 @@
             <!-- 2. Statistics Overview Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Card Total -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+                <div @click="filterByType('all')" 
+                     :class="selectedEventType === 'all' && selectedObject === 'all' ? 'ring-2 ring-purple-600 bg-purple-50/20' : 'hover:border-purple-300'"
+                     class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all cursor-pointer group select-none">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Deteksi</span>
-                        <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-purple-600 transition-colors">Total Deteksi</span>
+                        <div class="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-purple-100 text-slate-600 group-hover:text-purple-600 flex items-center justify-center transition-colors">
                             <i class="fas fa-list-check"></i>
                         </div>
                     </div>
@@ -58,28 +60,32 @@
                 </div>
 
                 <!-- Card Barang Hilang (Alert) -->
-                <div class="bg-white rounded-2xl p-5 border border-rose-200 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
+                <div @click="filterByType('missing_item')"
+                     :class="selectedEventType === 'missing_item' ? 'ring-2 ring-rose-600 bg-rose-50/40 shadow-rose-100/60' : 'hover:border-rose-400'"
+                     class="bg-white rounded-2xl p-5 border border-rose-200 shadow-xs hover:shadow-md transition-all relative overflow-hidden group cursor-pointer select-none">
                     <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-rose-500/10 rounded-full group-hover:scale-125 transition-transform"></div>
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
                             Barang Hilang / Berpindah
                         </span>
-                        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-xs">
                             <i class="fas fa-box-open"></i>
                         </div>
                     </div>
                     <div class="mt-3 flex items-baseline gap-2">
                         <span class="text-3xl font-black text-rose-600" x-text="stats.missing_items"></span>
-                        <span class="text-xs font-bold text-rose-600">Perlu Perhatian</span>
+                        <span class="text-xs font-bold text-rose-600">Perlu Perhatian (Klik Filter)</span>
                     </div>
                 </div>
 
                 <!-- Card Kendaraan -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+                <div @click="filterByType('vehicle_flow')"
+                     :class="selectedEventType === 'vehicle_flow' ? 'ring-2 ring-blue-600 bg-blue-50/20' : 'hover:border-blue-300'"
+                     class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all cursor-pointer group select-none">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Lalu Lintas Kendaraan</span>
-                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Lalu Lintas Kendaraan</span>
+                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center transition-colors">
                             <i class="fas fa-car-side"></i>
                         </div>
                     </div>
@@ -90,10 +96,12 @@
                 </div>
 
                 <!-- Card Pejalan Kaki -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+                <div @click="filterByType('presence_detected')"
+                     :class="selectedEventType === 'presence_detected' ? 'ring-2 ring-emerald-600 bg-emerald-50/20' : 'hover:border-emerald-300'"
+                     class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all cursor-pointer group select-none">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Deteksi Orang</span>
-                        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">Deteksi Orang</span>
+                        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors">
                             <i class="fas fa-person-walking"></i>
                         </div>
                     </div>
@@ -174,10 +182,17 @@
                 <!-- Quick Filter Pills -->
                 <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
                     <span class="text-xs font-bold text-slate-400 mr-1">Filter Objek:</span>
-                    <button type="button" @click="setObjectFilter('all')" 
-                            :class="selectedObject === 'all' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    <button type="button" @click="filterByType('all')" 
+                            :class="selectedObject === 'all' && selectedEventType === 'all' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                             class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        Semua Objek
+                        Semua Kejadian
+                    </button>
+                    <!-- Tombol Cepat Barang Hilang (Prioritas Utama) -->
+                    <button type="button" @click="filterByType('missing_item')" 
+                            :class="selectedEventType === 'missing_item' ? 'bg-rose-600 text-white font-black shadow-xs' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-bold'"
+                            class="px-3 py-1 rounded-lg text-xs transition-colors inline-flex items-center gap-1.5">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        🚨 Barang Hilang (<span x-text="stats.missing_items"></span>)
                     </button>
                     <button type="button" @click="setObjectFilter('laptop')" 
                             :class="selectedObject === 'laptop' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -192,7 +207,7 @@
                     <button type="button" @click="setObjectFilter('car')" 
                             :class="selectedObject === 'car' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                             class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        🚗 Mobil
+                        🚗 Mobil & Truk
                     </button>
                     <button type="button" @click="setObjectFilter('motorcycle')" 
                             :class="selectedObject === 'motorcycle' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -213,6 +228,9 @@
                     <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <i class="fas fa-clock-rotate-left text-slate-400"></i>
                         Linimasa Investigasi Visual
+                        <span x-show="isLoadingEvents" class="inline-flex items-center gap-1.5 text-xs text-purple-600 font-bold ml-2">
+                            <i class="fas fa-circle-notch fa-spin"></i> Mengambil data...
+                        </span>
                     </h2>
                     <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                         <span class="text-xs font-semibold text-slate-500 hidden sm:inline" 
@@ -606,22 +624,49 @@
                     this.goToPage(this.currentPage + 1);
                 },
 
-                applyFilters() {
+                isLoadingEvents: false,
+
+                filterByType(type) {
+                    this.selectedEventType = type;
+                    this.selectedObject = 'all';
+                    this.currentPage = 1;
+                    this.applyFilters(true);
+                },
+
+                setObjectFilter(obj) {
+                    this.selectedObject = obj;
+                    if (obj !== 'all' && (obj === 'laptop' || obj === 'backpack') && this.selectedEventType === 'vehicle_flow') {
+                        this.selectedEventType = 'all';
+                    }
+                    this.currentPage = 1;
+                    this.applyFilters(true);
+                },
+
+                async applyFilters(forceServer = false) {
                     this.currentPage = 1;
                     const q = this.searchQuery.toLowerCase().trim();
                     const cctv = this.selectedCctv;
                     const obj = this.selectedObject;
                     const type = this.selectedEventType;
 
+                    // 1. Filter di memori lokal browser
                     this.filteredEvents = this.events.filter(item => {
                         // Filter CCTV
                         if (cctv && item.cctv_id != cctv) return false;
 
-                        // Filter Object
-                        if (obj !== 'all' && item.object_type !== obj) return false;
-
                         // Filter Event Type
                         if (type !== 'all' && item.event_type !== type) return false;
+
+                        // Filter Object (grup cerdas)
+                        if (obj === 'laptop') {
+                            if (!['laptop', 'cell phone'].includes(item.object_type)) return false;
+                        } else if (obj === 'backpack') {
+                            if (!['backpack', 'handbag', 'suitcase'].includes(item.object_type)) return false;
+                        } else if (obj === 'car') {
+                            if (!['car', 'truck', 'bus'].includes(item.object_type)) return false;
+                        } else if (obj !== 'all' && item.object_type !== obj) {
+                            return false;
+                        }
 
                         // Search Query
                         if (q) {
@@ -631,12 +676,37 @@
 
                         return true;
                     });
+
+                    // 2. Jika filter aktif ATAU hasil lokal tidak ditemukan, ambil real-time dari database server!
+                    if (forceServer || this.filteredEvents.length === 0 || type === 'missing_item' || (obj !== 'all' && this.filteredEvents.length < 5)) {
+                        await this.fetchFilteredFromServer();
+                    }
                 },
 
-                setObjectFilter(obj) {
-                    this.selectedObject = obj;
-                    this.currentPage = 1;
-                    this.applyFilters();
+                async fetchFilteredFromServer() {
+                    this.isLoadingEvents = true;
+                    try {
+                        const params = new URLSearchParams({
+                            limit: 250,
+                            cctv_id: this.selectedCctv || '',
+                            event_type: this.selectedEventType || 'all',
+                            object_type: this.selectedObject || 'all',
+                            search: this.searchQuery || ''
+                        });
+                        const resp = await fetch(`{{ route('intelligent.events') }}?${params.toString()}`);
+                        const res = await resp.json();
+                        if (res.status === 'success' && res.data) {
+                            const existingIds = new Set(this.events.map(e => e.id));
+                            const newEvents = res.data.filter(e => !existingIds.has(e.id));
+                            this.events = [...newEvents, ...this.events];
+                            this.filteredEvents = res.data;
+                            this.currentPage = 1;
+                        }
+                    } catch (e) {
+                        console.error('Gagal mengambil data terfilter dari server:', e);
+                    } finally {
+                        this.isLoadingEvents = false;
+                    }
                 },
 
                 openImageModal(url, caption) {

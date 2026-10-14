@@ -100,7 +100,13 @@ class IntelligentController extends Controller
 
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events')) {
-                $query = AiEvent::with('cctv')->filter($filters)->orderBy('event_time', 'desc');
+                $query = AiEvent::with('cctv')->filter($filters);
+                
+                // Prioritaskan peringatan barang hilang (missing_item) di posisi atas
+                if (empty($filters['event_type']) || $filters['event_type'] === 'all') {
+                    $query->orderByRaw("CASE WHEN event_type = 'missing_item' THEN 0 ELSE 1 END");
+                }
+                $query->orderBy('event_time', 'desc');
                 $limit = (int) $request->input('limit', 250);
                 $page = max(1, (int) $request->input('page', 1));
                 $offset = ($page - 1) * $limit;
