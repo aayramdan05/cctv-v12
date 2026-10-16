@@ -95,6 +95,11 @@ class IntelligentController extends Controller
             'object_type' => $request->input('object_type', 'all'),
             'event_type' => $request->input('event_type', 'all'),
             'date' => $request->input('date'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'start_time' => $request->input('start_time'),
+            'end_time' => $request->input('end_time'),
+            'time_preset' => $request->input('time_preset'),
             'search' => $request->input('search'),
         ];
 
@@ -125,6 +130,8 @@ class IntelligentController extends Controller
                             'confidence' => round($ev->confidence * 100, 1),
                             'event_time' => $ev->event_time->format('H:i:s'),
                             'event_date' => $ev->event_time->format('d M Y'),
+                            'date_ymd' => $ev->event_time->format('Y-m-d'),
+                            'raw_datetime' => $ev->event_time->format('Y-m-d H:i:s'),
                             'last_seen_time' => $ev->last_seen_time ? $ev->last_seen_time->format('H:i:s') : null,
                             'narrative' => $ev->narrative,
                             'snapshot_url' => $ev->snapshot_url,

@@ -1,549 +1,729 @@
 <x-app-layout>
-    <div x-data="intelligentApp()" class="pt-20 p-4 md:p-8 min-h-screen bg-slate-50/70 relative">
-        <!-- Ambient Background Glows -->
-        <div class="fixed top-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="fixed bottom-10 left-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div x-data="intelligentApp()" class="pt-16 md:pt-18 pb-20 px-3 md:px-6 max-w-[1600px] mx-auto space-y-3.5 font-sans text-slate-800">
 
-        <div class="max-w-7xl mx-auto relative z-10 space-y-6">
-
-            <!-- 1. Header Section -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <!-- 1. Compact Header Bar -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/95 backdrop-blur-md px-4 py-3 rounded-xl border border-slate-200/80 shadow-xs">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-xs">
+                    <i class="fas fa-brain text-base"></i>
+                </div>
                 <div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-purple-500/20">
-                            <i class="fas fa-brain text-2xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                                Intelligent AI Video Analytics
-                                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">v2.0 Beta</span>
-                            </h1>
-                            <p class="text-sm text-slate-500 font-medium">Pelacakan Objek, Deteksi Kehilangan Barang, & Linimasa Narasi Berbasis YOLO + Ollama</p>
-                        </div>
-                    </div>
+                    <h1 class="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        AI Video Analytics & Event Log
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">v2.1</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium hidden sm:block">Audit forensic kejadian, pelacakan objek, & deteksi kehilangan barang CCTV</p>
+                </div>
+            </div>
+
+            <!-- Badges & Action -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    YOLOv8 Active
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hidden md:inline-flex">
+                    <i class="fas fa-robot text-purple-500 text-[11px]"></i>
+                    Ollama Narrator
+                </span>
+                <button type="button" @click="showPoCModal = true" 
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-xs">
+                    <i class="fas fa-terminal text-cyan-400 text-[11px]"></i>
+                    Panduan PoC
+                </button>
+            </div>
+        </header>
+
+        <!-- 2. Compact Metric Strip & Interactive KPI Filter -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <!-- Total Deteksi -->
+            <div @click="filterByType('all')" 
+                 :class="selectedEventType === 'all' && selectedObject === 'all' ? 'ring-2 ring-purple-600 bg-purple-50/40 border-purple-300' : 'bg-white hover:border-slate-300'"
+                 class="p-3 rounded-xl border border-slate-200/80 shadow-xs transition-all cursor-pointer select-none flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Deteksi</span>
+                    <span class="text-xl font-black text-slate-800 leading-tight mt-0.5 block" x-text="stats.total"></span>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-list-check"></i>
+                </div>
+            </div>
+
+            <!-- Barang Hilang (Priority Alert) -->
+            <div @click="filterByType('missing_item')"
+                 :class="selectedEventType === 'missing_item' ? 'ring-2 ring-rose-600 bg-rose-50 border-rose-300' : 'bg-white hover:border-rose-300'"
+                 class="p-3 rounded-xl border border-rose-200 shadow-xs transition-all cursor-pointer select-none flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>
+                        Barang Hilang
+                    </span>
+                    <span class="text-xl font-black text-rose-600 leading-tight mt-0.5 block" x-text="stats.missing_items"></span>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-triangle-exclamation"></i>
+                </div>
+            </div>
+
+            <!-- Kendaraan -->
+            <div @click="filterByType('vehicle_flow')"
+                 :class="selectedEventType === 'vehicle_flow' ? 'ring-2 ring-blue-600 bg-blue-50/40 border-blue-300' : 'bg-white hover:border-slate-300'"
+                 class="p-3 rounded-xl border border-slate-200/80 shadow-xs transition-all cursor-pointer select-none flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Kendaraan</span>
+                    <span class="text-xl font-black text-blue-600 leading-tight mt-0.5 block" x-text="stats.vehicles"></span>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-car-side"></i>
+                </div>
+            </div>
+
+            <!-- Orang -->
+            <div @click="filterByType('presence_detected')"
+                 :class="selectedEventType === 'presence_detected' ? 'ring-2 ring-emerald-600 bg-emerald-50/40 border-emerald-300' : 'bg-white hover:border-slate-300'"
+                 class="p-3 rounded-xl border border-slate-200/80 shadow-xs transition-all cursor-pointer select-none flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Orang / Pejalan</span>
+                    <span class="text-xl font-black text-emerald-600 leading-tight mt-0.5 block" x-text="stats.persons"></span>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
+                    <i class="fas fa-person-walking"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. AI Narrative Mini-Summary (Compact Collapsible) -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 rounded-xl px-4 py-2.5 text-white shadow-xs flex items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="w-6 h-6 rounded-md bg-purple-500/30 flex items-center justify-center text-purple-200 flex-shrink-0">
+                    <i class="fas fa-wand-magic-sparkles text-xs"></i>
+                </div>
+                <div class="truncate flex-1">
+                    <span class="font-bold text-purple-300 mr-1.5" x-text="'[' + summarySource + ']'"></span>
+                    <span class="text-slate-200 font-normal truncate" x-text="summaryText"></span>
+                </div>
+            </div>
+            <button type="button" @click="refreshSummary()" :disabled="isGeneratingSummary"
+                    title="Perbarui Analisa Narasi AI"
+                    class="flex-shrink-0 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                <i class="fas fa-rotate" :class="{'fa-spin': isGeneratingSummary}"></i>
+                <span class="hidden sm:inline" x-text="isGeneratingSummary ? 'Memproses...' : 'Perbarui'"></span>
+            </button>
+        </div>
+
+        <!-- 4. Unified High-Productivity Filter Bar with TIME FILTER -->
+        <div class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs space-y-2.5">
+            <!-- Row 1: Search, Camera, Event Type, Time Filter, View Mode -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
+                <!-- Search Box -->
+                <div class="sm:col-span-4 relative">
+                    <i class="fas fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" x-model="searchQuery" @input.debounce.300ms="applyFilters()"
+                           placeholder="Cari objek, warna, narasi, lokasi..." 
+                           class="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-purple-500 font-medium text-slate-800 placeholder-slate-400">
+                    <button x-show="searchQuery" @click="searchQuery = ''; applyFilters()" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times text-[10px]"></i>
+                    </button>
                 </div>
 
-                <!-- System Engine Badges -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        YOLOv8 Active
-                    </span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-xs">
-                        <i class="fas fa-robot text-purple-500"></i>
-                        Ollama Narrative
-                    </span>
-                    <button @click="showPoCModal = true" 
-                            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-sm">
-                        <i class="fas fa-terminal text-cyan-400"></i>
-                        Panduan PoC AI
+                <!-- Camera Select -->
+                <div class="sm:col-span-3">
+                    <select x-model="selectedCctv" @change="applyFilters()" 
+                            class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 font-medium text-slate-700">
+                        <option value="">Semua Kamera CCTV</option>
+                        @foreach($cctvs as $cctv)
+                            <option value="{{ $cctv->id }}">{{ $cctv->nama_cctv }} ({{ $cctv->building->nama_gedung ?? 'Kampus' }})</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Time Filter Preset Dropdown -->
+                <div class="sm:col-span-3">
+                    <select x-model="timePreset" @change="handleTimePresetChange()" 
+                            class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 font-bold text-slate-700">
+                        <option value="all">🕒 Waktu: Semua Waktu</option>
+                        <option value="today">📅 Waktu: Hari Ini (Today)</option>
+                        <option value="yesterday">⏪ Waktu: Kemarin</option>
+                        <option value="last_7_days">🗓️ Waktu: 7 Hari Terakhir</option>
+                        <option value="custom">⚙️ Waktu: Rentang Kustom (Jam/Tgl)...</option>
+                    </select>
+                </div>
+
+                <!-- View Mode Switcher -->
+                <div class="sm:col-span-2 flex items-center justify-end gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 select-none">
+                    <button type="button" @click="viewMode = 'table'" 
+                            :class="viewMode === 'table' ? 'bg-white text-purple-700 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-semibold'"
+                            class="flex-1 py-1 px-2 rounded text-[11px] transition-all flex items-center justify-center gap-1">
+                        <i class="fas fa-table-list"></i>
+                        <span>Tabel</span>
+                    </button>
+                    <button type="button" @click="viewMode = 'cards'" 
+                            :class="viewMode === 'cards' ? 'bg-white text-purple-700 font-black shadow-xs' : 'text-slate-500 hover:text-slate-800 font-semibold'"
+                            class="flex-1 py-1 px-2 rounded text-[11px] transition-all flex items-center justify-center gap-1">
+                        <i class="fas fa-grip-vertical"></i>
+                        <span>Kartu</span>
                     </button>
                 </div>
             </div>
 
-            <!-- 2. Statistics Overview Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Card Total -->
-                <div @click="filterByType('all')" 
-                     :class="selectedEventType === 'all' && selectedObject === 'all' ? 'ring-2 ring-purple-600 bg-purple-50/20' : 'hover:border-purple-300'"
-                     class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all cursor-pointer group select-none">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-purple-600 transition-colors">Total Deteksi</span>
-                        <div class="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-purple-100 text-slate-600 group-hover:text-purple-600 flex items-center justify-center transition-colors">
-                            <i class="fas fa-list-check"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3 flex items-baseline gap-2">
-                        <span class="text-3xl font-black text-slate-800" x-text="stats.total"></span>
-                        <span class="text-xs text-slate-500">event tercatat</span>
-                    </div>
+            <!-- Row 2: Custom Date & Time Drawer (Muncul jika pilih 'custom' atau klik tombol rentang) -->
+            <div x-show="showCustomTime || timePreset === 'custom'" x-cloak
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="bg-purple-50/60 p-2.5 rounded-lg border border-purple-200 grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs items-center">
+                <div>
+                    <label class="block text-[10px] font-bold text-purple-900 uppercase">Dari Tanggal:</label>
+                    <input type="date" x-model="customStartDate" @change="applyFilters(true)" 
+                           class="w-full mt-0.5 py-1 px-2 text-xs bg-white border border-purple-300 rounded focus:ring-1 focus:ring-purple-500">
                 </div>
-
-                <!-- Card Barang Hilang (Alert) -->
-                <div @click="filterByType('missing_item')"
-                     :class="selectedEventType === 'missing_item' ? 'ring-2 ring-rose-600 bg-rose-50/40 shadow-rose-100/60' : 'hover:border-rose-400'"
-                     class="bg-white rounded-2xl p-5 border border-rose-200 shadow-xs hover:shadow-md transition-all relative overflow-hidden group cursor-pointer select-none">
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-rose-500/10 rounded-full group-hover:scale-125 transition-transform"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                            Barang Hilang / Berpindah
-                        </span>
-                        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-xs">
-                            <i class="fas fa-box-open"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3 flex items-baseline gap-2">
-                        <span class="text-3xl font-black text-rose-600" x-text="stats.missing_items"></span>
-                        <span class="text-xs font-bold text-rose-600">Perlu Perhatian (Klik Filter)</span>
-                    </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-purple-900 uppercase">Jam Mulai:</label>
+                    <input type="time" step="1" x-model="customStartTime" @change="applyFilters(true)" 
+                           class="w-full mt-0.5 py-1 px-2 text-xs bg-white border border-purple-300 rounded focus:ring-1 focus:ring-purple-500">
                 </div>
-
-                <!-- Card Kendaraan -->
-                <div @click="filterByType('vehicle_flow')"
-                     :class="selectedEventType === 'vehicle_flow' ? 'ring-2 ring-blue-600 bg-blue-50/20' : 'hover:border-blue-300'"
-                     class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all cursor-pointer group select-none">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Lalu Lintas Kendaraan</span>
-                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center transition-colors">
-                            <i class="fas fa-car-side"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3 flex items-baseline gap-2">
-                        <span class="text-3xl font-black text-slate-800" x-text="stats.vehicles"></span>
-                        <span class="text-xs text-slate-500">mobil/motor</span>
-                    </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-purple-900 uppercase">Sampai Tanggal:</label>
+                    <input type="date" x-model="customEndDate" @change="applyFilters(true)" 
+                           class="w-full mt-0.5 py-1 px-2 text-xs bg-white border border-purple-300 rounded focus:ring-1 focus:ring-purple-500">
                 </div>
-
-                <!-- Card Pejalan Kaki -->
-                <div @click="filterByType('presence_detected')"
-                     :class="selectedEventType === 'presence_detected' ? 'ring-2 ring-emerald-600 bg-emerald-50/20' : 'hover:border-emerald-300'"
-                     class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all cursor-pointer group select-none">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">Deteksi Orang</span>
-                        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors">
-                            <i class="fas fa-person-walking"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3 flex items-baseline gap-2">
-                        <span class="text-3xl font-black text-slate-800" x-text="stats.persons"></span>
-                        <span class="text-xs text-slate-500">individu teramati</span>
-                    </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-purple-900 uppercase">Jam Selesai:</label>
+                    <input type="time" step="1" x-model="customEndTime" @change="applyFilters(true)" 
+                           class="w-full mt-0.5 py-1 px-2 text-xs bg-white border border-purple-300 rounded focus:ring-1 focus:ring-purple-500">
+                </div>
+                <div class="flex items-end gap-1.5 pt-3 sm:pt-0">
+                    <button type="button" @click="applyFilters(true)" 
+                            class="flex-1 py-1.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded text-xs transition-colors shadow-xs">
+                        Terapkan
+                    </button>
+                    <button type="button" @click="resetTimeFilter()" 
+                            class="py-1.5 px-2 bg-white hover:bg-slate-100 text-slate-600 font-semibold border border-slate-300 rounded text-xs transition-colors">
+                        Reset
+                    </button>
                 </div>
             </div>
 
-            <!-- 3. AI Executive Narrative Summary -->
-            <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-                <div class="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <!-- Row 3: Quick Filter Chips -->
+            <div class="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
+                <span class="text-[11px] font-bold text-slate-400 mr-1">Objek:</span>
+                
+                <button type="button" @click="filterByType('all')" 
+                        :class="selectedObject === 'all' && selectedEventType === 'all' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors">
+                    Semua
+                </button>
 
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-                    <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-purple-500/30 border border-purple-400/30 flex items-center justify-center text-purple-200 flex-shrink-0 mt-0.5">
-                            <i class="fas fa-wand-magic-sparkles text-lg"></i>
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-base font-bold text-white tracking-wide">Ringkasan Otomatis AI (Ollama Narrator)</h3>
-                                <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-purple-500/30 text-purple-200 border border-purple-400/20" x-text="summarySource"></span>
-                            </div>
-                            <p class="text-sm text-slate-300 mt-1.5 leading-relaxed max-w-4xl" x-text="summaryText"></p>
-                        </div>
-                    </div>
+                <!-- Tombol Cepat Barang Hilang (Prioritas Utama) -->
+                <button type="button" @click="filterByType('missing_item')" 
+                        :class="selectedEventType === 'missing_item' ? 'bg-rose-600 text-white font-extrabold shadow-xs' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-bold'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors inline-flex items-center gap-1">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    🚨 Barang Hilang (<span x-text="stats.missing_items"></span>)
+                </button>
 
-                    <div class="flex-shrink-0">
-                        <button type="button" @click="refreshSummary()" 
-                                :disabled="isGeneratingSummary"
-                                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all shadow-sm disabled:opacity-50">
-                            <i class="fas fa-rotate" :class="{'fa-spin': isGeneratingSummary}"></i>
-                            <span x-text="isGeneratingSummary ? 'Menganalisis...' : 'Perbarui Ringkasan'"></span>
+                <button type="button" @click="setObjectFilter('laptop')" 
+                        :class="selectedObject === 'laptop' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors">
+                    💻 Laptop
+                </button>
+                <button type="button" @click="setObjectFilter('backpack')" 
+                        :class="selectedObject === 'backpack' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors">
+                    🎒 Tas / Ransel
+                </button>
+                <button type="button" @click="setObjectFilter('car')" 
+                        :class="selectedObject === 'car' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors">
+                    🚗 Mobil
+                </button>
+                <button type="button" @click="setObjectFilter('motorcycle')" 
+                        :class="selectedObject === 'motorcycle' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors">
+                    🏍️ Motor
+                </button>
+                <button type="button" @click="setObjectFilter('person')" 
+                        :class="selectedObject === 'person' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-2.5 py-0.5 rounded text-[11px] transition-colors">
+                    🚶 Orang
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. Events Feed / Log Viewer -->
+        <div class="space-y-2">
+            <!-- Feed Sub-Header & Counter -->
+            <div id="events-feed-header" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-list text-slate-400"></i>
+                        Log Riwayat Aktivitas & Investigasi
+                    </span>
+                    <span x-show="isLoadingEvents" class="inline-flex items-center gap-1 text-[11px] text-purple-600 font-bold ml-1">
+                        <i class="fas fa-circle-notch fa-spin"></i> Memuat data...
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2 text-slate-500 font-medium">
+                    <span>Menampilkan <strong class="text-slate-800" x-text="paginatedEvents.length"></strong> dari <strong class="text-slate-800" x-text="filteredEvents.length"></strong> log</span>
+                    <span class="text-slate-300">|</span>
+                    <span class="font-bold text-purple-700" x-text="'Hal ' + currentPage + ' / ' + totalPages"></span>
+                    
+                    <!-- Quick Page Chevrons -->
+                    <div x-show="totalPages > 1" class="flex items-center gap-1 ml-1">
+                        <button type="button" @click="prevPage()" :disabled="currentPage === 1"
+                                class="w-6 h-6 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-left text-[9px]"></i>
+                        </button>
+                        <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
+                                class="w-6 h-6 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-right text-[9px]"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. Filter Toolbar & Smart Search Bar -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                    <!-- Search Input -->
-                    <div class="md:col-span-5 relative">
-                        <i class="fas fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="text" x-model="searchQuery" @input.debounce.300ms="applyFilters()"
-                               placeholder="Cari kejadian (misal: laptop, mobil merah, ransel, lab)..." 
-                               class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-800 placeholder-slate-400 font-medium">
-                    </div>
-
-                    <!-- Camera Dropdown -->
-                    <div class="md:col-span-4">
-                        <select x-model="selectedCctv" @change="applyFilters()" 
-                                class="w-full py-2.5 px-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-700 font-medium">
-                            <option value="">Semua Kamera CCTV</option>
-                            @foreach($cctvs as $cctv)
-                                <option value="{{ $cctv->id }}">{{ $cctv->nama_cctv }} ({{ $cctv->building->nama_gedung ?? 'Kampus' }})</option>
-                            @endforeach
-                            <!-- Demo fallback option -->
-                            <option value="1">CCTV 01 - Lab Komputer Lantai 2 (Demo)</option>
-                            <option value="2">CCTV 04 - Gerbang Masuk Utama (Demo)</option>
-                            <option value="3">CCTV 02 - Meja Baca Perpustakaan (Demo)</option>
-                        </select>
-                    </div>
-
-                    <!-- Event Category Filter -->
-                    <div class="md:col-span-3">
-                        <select x-model="selectedEventType" @change="applyFilters()"
-                                class="w-full py-2.5 px-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-700 font-medium">
-                            <option value="all">Semua Jenis Kejadian</option>
-                            <option value="missing_item">🚨 Barang Hilang / Berpindah</option>
-                            <option value="vehicle_flow">🚗 Lalu Lintas Kendaraan</option>
-                            <option value="presence_detected">🚶 Kehadiran Orang</option>
-                        </select>
-                    </div>
+            <!-- Empty State -->
+            <div x-show="filteredEvents.length === 0" class="bg-white rounded-xl p-8 text-center border border-slate-200/80">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl">
+                    <i class="fas fa-inbox"></i>
                 </div>
+                <h3 class="text-sm font-bold text-slate-700 mt-2">Tidak ada log kejadian yang cocok</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Ubah kata kunci, kamera, atau sesuaikan filter waktu Anda.</p>
+            </div>
 
-                <!-- Quick Filter Pills -->
-                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-                    <span class="text-xs font-bold text-slate-400 mr-1">Filter Objek:</span>
-                    <button type="button" @click="filterByType('all')" 
-                            :class="selectedObject === 'all' && selectedEventType === 'all' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        Semua Kejadian
-                    </button>
-                    <!-- Tombol Cepat Barang Hilang (Prioritas Utama) -->
-                    <button type="button" @click="filterByType('missing_item')" 
-                            :class="selectedEventType === 'missing_item' ? 'bg-rose-600 text-white font-black shadow-xs' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-bold'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors inline-flex items-center gap-1.5">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        🚨 Barang Hilang (<span x-text="stats.missing_items"></span>)
-                    </button>
-                    <button type="button" @click="setObjectFilter('laptop')" 
-                            :class="selectedObject === 'laptop' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        💻 Laptop & Gadget
-                    </button>
-                    <button type="button" @click="setObjectFilter('backpack')" 
-                            :class="selectedObject === 'backpack' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        🎒 Tas & Ransel
-                    </button>
-                    <button type="button" @click="setObjectFilter('car')" 
-                            :class="selectedObject === 'car' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        🚗 Mobil & Truk
-                    </button>
-                    <button type="button" @click="setObjectFilter('motorcycle')" 
-                            :class="selectedObject === 'motorcycle' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        🏍️ Motor
-                    </button>
-                    <button type="button" @click="setObjectFilter('person')" 
-                            :class="selectedObject === 'person' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="px-3 py-1 rounded-lg text-xs transition-colors">
-                        🚶 Orang
-                    </button>
+            <!-- MODE A: TABEL LOG PADAT (Default - Sleek High Density Table) -->
+            <div x-show="viewMode === 'table' && filteredEvents.length > 0" 
+                 class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                <th class="py-2.5 px-3">WAKTU</th>
+                                <th class="py-2.5 px-3">TIPE & STATUS</th>
+                                <th class="py-2.5 px-3">KAMERA & LOKASI</th>
+                                <th class="py-2.5 px-3">OBJEK</th>
+                                <th class="py-2.5 px-3">NARASI / DETAIL KEJADIAN</th>
+                                <th class="py-2.5 px-3 text-center">BUKTI FOTO</th>
+                                <th class="py-2.5 px-3 text-right">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <template x-for="event in paginatedEvents" :key="event.id">
+                                <tr class="hover:bg-purple-50/30 transition-colors group"
+                                    :class="event.event_type === 'missing_item' ? 'bg-rose-50/30 border-l-4 border-l-rose-500' : ''">
+                                    
+                                    <!-- 1. Waktu -->
+                                    <td class="py-2.5 px-3 whitespace-nowrap">
+                                        <div class="font-mono font-black text-slate-800 text-xs flex items-center gap-1"
+                                             :class="event.event_type === 'missing_item' ? 'text-rose-600' : ''">
+                                            <i class="far fa-clock text-[10px] text-slate-400"></i>
+                                            <span x-text="event.event_time"></span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 block font-medium" x-text="event.event_date"></span>
+                                    </td>
+
+                                    <!-- 2. Tipe & Status -->
+                                    <td class="py-2.5 px-3 whitespace-nowrap">
+                                        <template x-if="event.event_type === 'missing_item'">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-rose-600 text-white shadow-xs">
+                                                <i class="fas fa-triangle-exclamation"></i>
+                                                BARANG HILANG
+                                            </span>
+                                        </template>
+                                        <template x-if="event.event_type === 'vehicle_flow'">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                <i class="fas fa-car-side text-[9px]"></i>
+                                                KENDARAAN
+                                            </span>
+                                        </template>
+                                        <template x-if="event.event_type === 'presence_detected'">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <i class="fas fa-person-walking text-[9px]"></i>
+                                                ORANG
+                                            </span>
+                                        </template>
+                                    </td>
+
+                                    <!-- 3. Kamera & Lokasi -->
+                                    <td class="py-2.5 px-3">
+                                        <span class="font-bold text-slate-800 block truncate max-w-[150px]" x-text="event.cctv_name"></span>
+                                        <span class="text-[10px] text-slate-400 block truncate max-w-[150px]" x-text="event.building_name"></span>
+                                    </td>
+
+                                    <!-- 4. Objek & Warna -->
+                                    <td class="py-2.5 px-3 whitespace-nowrap">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-bold text-slate-800 capitalize" x-text="event.object_type"></span>
+                                            <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 capitalize font-medium" x-text="event.color"></span>
+                                        </div>
+                                        <span class="text-[10px] text-purple-600 font-semibold block" x-text="'AI ' + event.confidence + '%'"></span>
+                                    </td>
+
+                                    <!-- 5. Narasi Ringkas -->
+                                    <td class="py-2.5 px-3 max-w-md">
+                                        <p class="text-xs text-slate-700 line-clamp-1 leading-snug font-medium"
+                                           :class="event.event_type === 'missing_item' ? 'text-rose-950 font-bold' : ''"
+                                           :title="event.narrative"
+                                           x-text="event.narrative"></p>
+                                        <template x-if="event.last_seen_time">
+                                            <span class="text-[10px] text-rose-500 font-semibold mt-0.5 block">
+                                                Terakhir stabil di tempat: <span x-text="event.last_seen_time + ' WIB'"></span>
+                                            </span>
+                                        </template>
+                                    </td>
+
+                                    <!-- 6. Bukti Visual (Mini Preview Thumbnails) -->
+                                    <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                        <!-- Jika Missing Item: 3 Mini Thumbnails -->
+                                        <template x-if="event.event_type === 'missing_item'">
+                                            <div class="inline-flex items-center gap-1 cursor-pointer" 
+                                                 @click="openForensicModal(event)"
+                                                 title="Klik untuk membuka investigasi komparasi foto">
+                                                <!-- Thumb Sebelum -->
+                                                <div class="relative w-9 h-6 rounded overflow-hidden border border-emerald-400 bg-slate-900 shadow-2xs group-hover:scale-105 transition-transform" title="1. Sebelum">
+                                                    <img :src="event.snapshot_before_url" loading="lazy" class="w-full h-full object-cover">
+                                                </div>
+                                                <span class="text-[9px] text-slate-300">→</span>
+                                                <!-- Thumb Saat Kejadian -->
+                                                <div class="relative w-9 h-6 rounded overflow-hidden border border-amber-400 bg-slate-900 shadow-2xs group-hover:scale-105 transition-transform" title="2. Saat Kejadian">
+                                                    <img :src="event.snapshot_url" loading="lazy" class="w-full h-full object-cover">
+                                                </div>
+                                                <span class="text-[9px] text-slate-300">→</span>
+                                                <!-- Thumb Sesudah -->
+                                                <div class="relative w-9 h-6 rounded overflow-hidden border border-rose-500 bg-slate-900 shadow-2xs group-hover:scale-105 transition-transform" title="3. Sesudah">
+                                                    <img :src="event.snapshot_after_url" loading="lazy" class="w-full h-full object-cover">
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Jika Deteksi Biasa: 1 Mini Thumbnail -->
+                                        <template x-if="event.event_type !== 'missing_item' && event.snapshot_url">
+                                            <div class="inline-block relative w-10 h-7 rounded overflow-hidden border border-slate-200 bg-slate-900 cursor-pointer shadow-2xs group-hover:scale-105 transition-transform"
+                                                 @click="openForensicModal(event)">
+                                                <img :src="event.snapshot_url" loading="lazy" class="w-full h-full object-cover">
+                                            </div>
+                                        </template>
+                                    </td>
+
+                                    <!-- 7. Aksi Cepat -->
+                                    <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <button type="button" @click="openForensicModal(event)" 
+                                                    title="Lihat Detail Investigasi & Foto Resolusi Penuh"
+                                                    class="px-2.5 py-1 rounded bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-700 font-bold text-[11px] transition-colors border border-slate-200">
+                                                <i class="fas fa-eye mr-0.5"></i> Bukti
+                                            </button>
+                                            <a :href="'{{ route('playback.index') }}?cctv_id=' + event.cctv_id" 
+                                               target="_blank" title="Buka Rekaman Video di CCTV ini"
+                                               class="p-1 w-6 h-6 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] transition-colors border border-purple-200 inline-flex items-center justify-center">
+                                                <i class="fas fa-circle-play text-[11px]"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- 5. Events Feed / Timeline Cards -->
-            <div class="space-y-4">
-                <div id="events-feed-header" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fas fa-clock-rotate-left text-slate-400"></i>
-                        Linimasa Investigasi Visual
-                        <span x-show="isLoadingEvents" class="inline-flex items-center gap-1.5 text-xs text-purple-600 font-bold ml-2">
-                            <i class="fas fa-circle-notch fa-spin"></i> Mengambil data...
-                        </span>
-                    </h2>
-                    <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                        <span class="text-xs font-semibold text-slate-500 hidden sm:inline" 
-                              x-text="'Menampilkan ' + paginatedEvents.length + ' dari ' + filteredEvents.length + ' catatan kejadian'"></span>
-                        <span class="text-xs text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-xs font-bold text-purple-600" x-text="'Halaman ' + currentPage + ' / ' + totalPages"></span>
-
-                        <!-- Tombol Halaman Mini di Header -->
-                        <div x-show="totalPages > 1" class="flex items-center gap-1 ml-1">
-                            <button type="button" @click="prevPage()" :disabled="currentPage === 1"
-                                    title="Halaman Sebelumnya"
-                                    class="w-7 h-7 rounded-lg border border-slate-200 text-xs flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                                <i class="fas fa-chevron-left text-[10px]"></i>
-                            </button>
-                            <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
-                                    title="Halaman Berikutnya"
-                                    class="w-7 h-7 rounded-lg border border-slate-200 text-xs flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                                <i class="fas fa-chevron-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Empty State -->
-                <div x-show="filteredEvents.length === 0" class="bg-white rounded-2xl p-12 text-center border border-slate-200/80">
-                    <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
-                        <i class="fas fa-inbox"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-slate-700 mt-4">Tidak ada kejadian yang cocok</h3>
-                    <p class="text-sm text-slate-500 mt-1">Coba ubah kata kunci pencarian atau reset filter kamera Anda.</p>
-                </div>
-
-                <!-- Event Cards Repeater (Paginated for Ultra Fast Rendering) -->
+            <!-- MODE B: KARTU RAMPING (Compact Modern Cards) -->
+            <div x-show="viewMode === 'cards' && filteredEvents.length > 0" class="space-y-2.5">
                 <template x-for="event in paginatedEvents" :key="event.id">
-                    <div class="bg-white rounded-2xl border transition-all hover:shadow-md overflow-hidden"
-                         :class="event.event_type === 'missing_item' ? 'border-rose-300 shadow-rose-100/50 ring-1 ring-rose-200' : 'border-slate-200/80 shadow-xs'">
+                    <div class="bg-white rounded-xl border transition-all hover:shadow-sm p-3.5"
+                         :class="event.event_type === 'missing_item' ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/80 shadow-xs'">
                         
-                        <div class="p-5 md:p-6">
-                            <!-- Card Header -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
-                                <div class="flex items-center gap-3">
-                                    <!-- Badge Event Type -->
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <!-- Left: Info & Narasi -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1.5">
                                     <template x-if="event.event_type === 'missing_item'">
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-extrabold bg-rose-600 text-white shadow-xs">
-                                            <i class="fas fa-triangle-exclamation animate-bounce"></i>
-                                            BARANG HILANG / BERPINDAH
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-600 text-white shadow-xs">
+                                            🚨 BARANG HILANG
                                         </span>
                                     </template>
                                     <template x-if="event.event_type === 'vehicle_flow'">
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                            <i class="fas fa-car-side"></i>
-                                            LALU LINTAS KENDARAAN
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                            🚗 KENDARAAN
                                         </span>
                                     </template>
                                     <template x-if="event.event_type === 'presence_detected'">
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            <i class="fas fa-person"></i>
-                                            DETEKSI ORANG
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            🚶 ORANG
                                         </span>
                                     </template>
 
-                                    <!-- Camera & Location -->
-                                    <span class="text-sm font-black text-slate-800" x-text="event.cctv_name"></span>
-                                    <span class="text-xs text-slate-400 font-medium hidden sm:inline" x-text="'(' + event.building_name + ')'"></span>
+                                    <span class="font-black text-slate-800 text-xs" x-text="event.cctv_name"></span>
+                                    <span class="text-slate-400 text-[11px]" x-text="'(' + event.building_name + ')'"></span>
+
+                                    <span class="text-slate-300">•</span>
+                                    <span class="font-mono text-slate-600 font-bold text-xs" x-text="event.event_time + ' WIB'"></span>
+                                    <span class="text-slate-400 text-[10px]" x-text="event.event_date"></span>
                                 </div>
 
-                                <!-- Time stamp -->
-                                <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                    <i class="far fa-clock text-slate-400"></i>
-                                    <span class="font-mono text-slate-800 font-extrabold text-sm" x-text="event.event_time + ' WIB'"></span>
-                                    <span class="text-slate-400">|</span>
-                                    <span x-text="event.event_date"></span>
+                                <p class="text-xs font-semibold leading-relaxed"
+                                   :class="event.event_type === 'missing_item' ? 'text-rose-950 font-bold' : 'text-slate-700'"
+                                   x-text="event.narrative"></p>
+
+                                <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                                    <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold border border-slate-200">
+                                        Objek: <strong class="text-slate-900 capitalize" x-text="event.object_type"></strong>
+                                    </span>
+                                    <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold border border-slate-200">
+                                        Warna: <strong class="text-slate-900 capitalize" x-text="event.color"></strong>
+                                    </span>
+                                    <span class="px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 font-semibold border border-purple-200">
+                                        AI Conf: <strong x-text="event.confidence + '%'"></strong>
+                                    </span>
+                                    <template x-if="event.last_seen_time">
+                                        <span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 font-bold border border-rose-200">
+                                            Stabil Terakhir: <span x-text="event.last_seen_time + ' WIB'"></span>
+                                        </span>
+                                    </template>
                                 </div>
                             </div>
 
-                            <!-- Narrative Box -->
-                            <div class="mt-4 p-4 rounded-xl flex items-start gap-3"
-                                 :class="event.event_type === 'missing_item' ? 'bg-rose-50/70 border border-rose-200/60' : 'bg-slate-50 border border-slate-100'">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                                     :class="event.event_type === 'missing_item' ? 'bg-rose-100 text-rose-600' : 'bg-purple-100 text-purple-600'">
-                                    <i class="fas" :class="event.event_type === 'missing_item' ? 'fa-bell' : 'fa-comment-dots'"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold leading-relaxed"
-                                       :class="event.event_type === 'missing_item' ? 'text-rose-950 font-bold' : 'text-slate-700'"
-                                       x-text="event.narrative"></p>
-                                    
-                                    <!-- Badges Metadata -->
-                                    <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                                        <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-semibold text-slate-600">
-                                            Objek: <strong class="text-slate-900 capitalize" x-text="event.object_type"></strong>
-                                        </span>
-                                        <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-semibold text-slate-600">
-                                            Warna: <strong class="text-slate-900 capitalize" x-text="event.color"></strong>
-                                        </span>
-                                        <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-semibold text-slate-600">
-                                            AI Confidence: <strong class="text-purple-600" x-text="event.confidence + '%'"></strong>
-                                        </span>
-                                        <template x-if="event.last_seen_time">
-                                            <span class="px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200 font-semibold text-rose-700">
-                                                Terakhir Terlihat Stabil: <strong x-text="event.last_seen_time + ' WIB'"></strong>
-                                            </span>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Snapshots Area -->
-                            <div class="mt-5">
-                                <!-- Khusus Missing Item: 3 Komparasi Foto -->
+                            <!-- Right: Thumbnails Strip & Action -->
+                            <div class="flex items-center gap-2 flex-shrink-0 self-end md:self-center">
+                                <!-- Bukti 3 Foto untuk Missing Item -->
                                 <template x-if="event.event_type === 'missing_item'">
-                                    <div>
-                                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                            <i class="fas fa-camera text-slate-400"></i>
-                                            Bukti Visual Rekaman (Sebelum, Saat Kejadian, Sesudah)
-                                        </p>
-                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            <!-- Snapshot 1: Sebelum -->
-                                            <div class="relative rounded-xl overflow-hidden border border-slate-200 group bg-slate-900 cursor-pointer"
-                                                 @click="openImageModal(event.snapshot_before_url, 'Foto Sebelum Hilang: Objek Masih Berada di Tempat')">
-                                                <img :src="event.snapshot_before_url" loading="lazy" alt="Sebelum" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
-                                                <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[11px] font-bold text-emerald-400 backdrop-blur-xs">
-                                                    1. Sebelum (Stabil)
-                                                </div>
-                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
-                                                    <i class="fas fa-magnifying-glass-plus mr-1"></i> Perbesar
-                                                </div>
-                                            </div>
-
-                                            <!-- Snapshot 2: Saat Kejadian -->
-                                            <div class="relative rounded-xl overflow-hidden border border-rose-300 group bg-slate-900 cursor-pointer"
-                                                 @click="openImageModal(event.snapshot_url, 'Foto Saat Kejadian: Terdeteksi Interaksi Objek / Orang')">
-                                                <img :src="event.snapshot_url" loading="lazy" alt="Saat Kejadian" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
-                                                <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-rose-600 text-[11px] font-bold text-white shadow-xs">
-                                                    2. Saat Kejadian (Interaksi)
-                                                </div>
-                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
-                                                    <i class="fas fa-magnifying-glass-plus mr-1"></i> Perbesar
-                                                </div>
-                                            </div>
-
-                                            <!-- Snapshot 3: Sesudah (Kosong) -->
-                                            <div class="relative rounded-xl overflow-hidden border border-slate-200 group bg-slate-900 cursor-pointer"
-                                                 @click="openImageModal(event.snapshot_after_url, 'Foto Sesudah Hilang: Lokasi Meja / Area Kosong')">
-                                                <img :src="event.snapshot_after_url" loading="lazy" alt="Sesudah" class="w-full h-40 object-cover group-hover:scale-105 transition-transform">
-                                                <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[11px] font-bold text-rose-400 backdrop-blur-xs">
-                                                    3. Sesudah (Kosong/Hilang)
-                                                </div>
-                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
-                                                    <i class="fas fa-magnifying-glass-plus mr-1"></i> Perbesar
-                                                </div>
-                                            </div>
+                                    <div class="flex items-center gap-1.5 cursor-pointer" @click="openForensicModal(event)">
+                                        <div class="w-16 h-11 rounded-lg overflow-hidden border border-emerald-400 bg-slate-900" title="1. Sebelum">
+                                            <img :src="event.snapshot_before_url" loading="lazy" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="w-16 h-11 rounded-lg overflow-hidden border border-amber-400 bg-slate-900" title="2. Saat Kejadian">
+                                            <img :src="event.snapshot_url" loading="lazy" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="w-16 h-11 rounded-lg overflow-hidden border border-rose-500 bg-slate-900" title="3. Sesudah">
+                                            <img :src="event.snapshot_after_url" loading="lazy" class="w-full h-full object-cover">
                                         </div>
                                     </div>
                                 </template>
 
-                                <!-- Deteksi Biasa: 1 Snapshot -->
+                                <!-- Bukti 1 Foto untuk Normal -->
                                 <template x-if="event.event_type !== 'missing_item' && event.snapshot_url">
-                                    <div class="flex items-center gap-4">
-                                        <div class="relative w-48 h-28 rounded-xl overflow-hidden border border-slate-200 group bg-slate-900 cursor-pointer flex-shrink-0"
-                                             @click="openImageModal(event.snapshot_url, event.narrative)">
-                                            <img :src="event.snapshot_url" loading="lazy" alt="Snapshot" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
-                                                <i class="fas fa-magnifying-glass-plus mr-1"></i> Perbesar
-                                            </div>
-                                        </div>
-                                        <div class="text-xs text-slate-500">
-                                            <p class="font-bold text-slate-700 mb-1">Snapshot Cuplikan Kamera</p>
-                                            <p>Klik pada foto untuk melihat tangkapan layar beresolusi penuh dari kamera saat deteksi dipicu.</p>
-                                        </div>
+                                    <div class="w-20 h-12 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 cursor-pointer" @click="openForensicModal(event)">
+                                        <img :src="event.snapshot_url" loading="lazy" class="w-full h-full object-cover">
                                     </div>
                                 </template>
-                            </div>
 
-                            <!-- Card Action Footer -->
-                            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                                <div class="text-xs text-slate-400 font-medium flex items-center gap-2">
-                                    <span>ID Event: #AI-<span x-text="event.id"></span></span>
-                                    <span>•</span>
-                                    <span>Disimpan secara otomatis oleh AI Node</span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <!-- Direct Link to Playback -->
+                                <div class="flex flex-col gap-1 ml-1">
+                                    <button type="button" @click="openForensicModal(event)" 
+                                            class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] transition-colors shadow-xs">
+                                        Bukti
+                                    </button>
                                     <a :href="'{{ route('playback.index') }}?cctv_id=' + event.cctv_id" 
                                        target="_blank"
-                                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors shadow-xs">
-                                        <i class="fas fa-circle-play mr-1"></i> Buka Rekaman (Playback)
+                                       class="px-2.5 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] text-center border border-purple-200 transition-colors">
+                                        Video
                                     </a>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </template>
+            </div>
 
-                <!-- Pagination Controls Bar (Smooth & Fast) -->
-                <div x-show="filteredEvents.length > perPage" class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-                    <div class="text-xs text-slate-500 font-medium">
-                        Menampilkan <span class="font-bold text-slate-800" x-text="(currentPage - 1) * perPage + 1"></span> - 
-                        <span class="font-bold text-slate-800" x-text="Math.min(currentPage * perPage, filteredEvents.length)"></span> 
-                        dari <span class="font-bold text-slate-800" x-text="filteredEvents.length"></span> kejadian
-                    </div>
-
-                    <div class="flex items-center gap-1.5 flex-wrap justify-center">
-                        <!-- Tombol Sebelumnya -->
-                        <button type="button" @click="prevPage()" :disabled="currentPage === 1"
-                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                            <i class="fas fa-chevron-left mr-1"></i> Sebelumnya
-                        </button>
-
-                        <!-- Nomor Halaman -->
-                        <template x-for="(page, idx) in pageNumbers" :key="idx">
-                            <div class="inline-flex items-center">
-                                <span x-show="page === '...'" class="px-2 py-1 text-slate-400 text-xs font-bold select-none">...</span>
-                                <button x-show="page !== '...'" type="button" @click="goToPage(page)"
-                                        :class="currentPage === page ? 'bg-purple-600 text-white shadow-xs font-black' : 'border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold'"
-                                        class="w-8 h-8 rounded-xl text-xs flex items-center justify-center transition-all"
-                                        x-text="page">
-                                </button>
-                            </div>
-                        </template>
-
-                        <!-- Tombol Berikutnya -->
-                        <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
-                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                            Berikutnya <i class="fas fa-chevron-right ml-1"></i>
-                        </button>
-                    </div>
-
-                    <!-- Pilihan Jumlah Per Halaman -->
-                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                        <span>Per halaman:</span>
-                        <select x-model.number="perPage" @change="currentPage = 1"
-                                class="py-1 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-bold focus:ring-purple-500 focus:border-purple-500">
-                            <option value="12">12</option>
-                            <option value="24">24</option>
-                            <option value="48">48</option>
-                        </select>
-                    </div>
+            <!-- 6. Compact Pagination Controls -->
+            <div x-show="filteredEvents.length > perPage" 
+                 class="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
+                <div class="text-slate-500 font-medium text-[11px]">
+                    Menampilkan <span class="font-bold text-slate-800" x-text="(currentPage - 1) * perPage + 1"></span> - 
+                    <span class="font-bold text-slate-800" x-text="Math.min(currentPage * perPage, filteredEvents.length)"></span> 
+                    dari <span class="font-bold text-slate-800" x-text="filteredEvents.length"></span> log
                 </div>
 
-                <!-- Tombol Muat Data Tambahan dari Server (Jika DB memiliki ribuan data) -->
-                <div x-show="hasMoreServerData" class="text-center pt-2">
-                    <button type="button" @click="loadMoreFromServer()" :disabled="isLoadingMore"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs hover:border-purple-300 hover:text-purple-700 transition-all disabled:opacity-50">
-                        <template x-if="isLoadingMore">
-                            <i class="fas fa-circle-notch fa-spin text-purple-600"></i>
-                        </template>
-                        <template x-if="!isLoadingMore">
-                            <i class="fas fa-database text-purple-600"></i>
-                        </template>
-                        <span x-text="isLoadingMore ? 'Mengambil data dari server...' : 'Muat 250 Data Terdahulu dari Database'"></span>
+                <div class="flex items-center gap-1">
+                    <button type="button" @click="prevPage()" :disabled="currentPage === 1"
+                            class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-0.5"></i> Prev
+                    </button>
+
+                    <template x-for="(page, idx) in pageNumbers" :key="idx">
+                        <div>
+                            <span x-show="page === '...'" class="px-1 text-slate-400 font-bold">...</span>
+                            <button x-show="page !== '...'" type="button" @click="goToPage(page)"
+                                    :class="currentPage === page ? 'bg-purple-600 text-white font-black' : 'border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold'"
+                                    class="w-7 h-7 rounded-lg text-xs flex items-center justify-center transition-all"
+                                    x-text="page">
+                            </button>
+                        </div>
+                    </template>
+
+                    <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
+                            class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed">
+                        Next <i class="fas fa-chevron-right ml-0.5"></i>
                     </button>
                 </div>
+
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                    <span>Per hal:</span>
+                    <select x-model.number="perPage" @change="currentPage = 1"
+                            class="py-0.5 px-1.5 text-xs bg-slate-50 border border-slate-200 rounded font-bold text-slate-700">
+                        <option value="15">15</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Muat Data Terdahulu dari Server -->
+            <div x-show="hasMoreServerData" class="text-center pt-1">
+                <button type="button" @click="loadMoreFromServer()" :disabled="isLoadingMore"
+                        class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs hover:border-purple-300 hover:text-purple-700 transition-all disabled:opacity-50">
+                    <i class="fas" :class="isLoadingMore ? 'fa-circle-notch fa-spin text-purple-600' : 'fa-database text-purple-600'"></i>
+                    <span x-text="isLoadingMore ? 'Mengambil data dari server...' : 'Muat 250 Data Terdahulu dari Database'"></span>
+                </button>
             </div>
         </div>
 
-        <!-- 6. Modal Zoom Image -->
-        <div x-show="showImageModal" 
+        <!-- 7. Forensic Evidence Viewer Modal (Full Resolution Modal) -->
+        <div x-show="showForensicModal" 
              x-cloak
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-             @keydown.escape.window="showImageModal = false">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl relative"
-                 @click.outside="showImageModal = false">
-                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <p class="text-sm font-bold text-white" x-text="modalImageCaption"></p>
-                    <button @click="showImageModal = false" class="text-slate-400 hover:text-white text-lg">
+             class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/85 backdrop-blur-md"
+             @keydown.escape.window="showForensicModal = false">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[92vh]"
+                 @click.outside="showForensicModal = false">
+                
+                <!-- Modal Header -->
+                <div class="p-3.5 px-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+                    <div class="flex items-center gap-2.5">
+                        <template x-if="activeForensicEvent?.event_type === 'missing_item'">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-600 text-white">
+                                🚨 BARANG HILANG
+                            </span>
+                        </template>
+                        <template x-if="activeForensicEvent?.event_type !== 'missing_item'">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-600 text-white uppercase" x-text="activeForensicEvent?.event_type"></span>
+                        </template>
+                        <h3 class="text-sm font-black text-white" x-text="activeForensicEvent?.cctv_name"></h3>
+                        <span class="text-xs text-slate-400" x-text="'(' + activeForensicEvent?.building_name + ')'"></span>
+                    </div>
+
+                    <button @click="showForensicModal = false" class="text-slate-400 hover:text-white text-base w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-800 transition-colors">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <div class="p-2 bg-black flex items-center justify-center max-h-[75vh] overflow-hidden">
-                    <img :src="modalImageUrl" alt="Zoom" class="max-h-[70vh] w-auto object-contain rounded-lg">
+
+                <!-- Modal Body (Scrollable) -->
+                <div class="p-4 md:p-5 overflow-y-auto space-y-4 flex-1">
+                    
+                    <!-- Narrative & Meta Header -->
+                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs">
+                        <p class="text-slate-200 text-sm font-semibold leading-relaxed" x-text="activeForensicEvent?.narrative"></p>
+                        
+                        <div class="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-300 pt-2 border-t border-slate-700/50">
+                            <span>🕒 Waktu Deteksi: <strong class="text-white" x-text="activeForensicEvent?.event_time + ' WIB (' + activeForensicEvent?.event_date + ')'"></strong></span>
+                            <span>•</span>
+                            <span>Objek: <strong class="text-white capitalize" x-text="activeForensicEvent?.object_type + ' (' + activeForensicEvent?.color + ')'"></strong></span>
+                            <span>•</span>
+                            <span>Confidence: <strong class="text-purple-400" x-text="activeForensicEvent?.confidence + '%'"></strong></span>
+                            <template x-if="activeForensicEvent?.last_seen_time">
+                                <span class="text-rose-400 font-bold">• Terakhir Stabil: <span x-text="activeForensicEvent?.last_seen_time + ' WIB'"></span></span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- 3 Forensic Visual Snapshots (Khusus Missing Item) -->
+                    <template x-if="activeForensicEvent?.event_type === 'missing_item'">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <i class="fas fa-camera text-slate-500"></i>
+                                Komparasi Kronologis (Sebelum, Saat Kejadian, Sesudah)
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <!-- 1. Sebelum -->
+                                <div class="relative rounded-xl overflow-hidden border border-emerald-500/80 group bg-black">
+                                    <img :src="activeForensicEvent?.snapshot_before_url" class="w-full h-56 object-contain bg-black">
+                                    <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-bold text-emerald-400 border border-emerald-500/50">
+                                        1. SEBELUM (STABIL)
+                                    </div>
+                                </div>
+
+                                <!-- 2. Saat Kejadian -->
+                                <div class="relative rounded-xl overflow-hidden border border-amber-500/80 group bg-black">
+                                    <img :src="activeForensicEvent?.snapshot_url" class="w-full h-56 object-contain bg-black">
+                                    <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-amber-600 text-[10px] font-bold text-white shadow-xs">
+                                        2. SAAT KEJADIAN (INTERAKSI)
+                                    </div>
+                                </div>
+
+                                <!-- 3. Sesudah -->
+                                <div class="relative rounded-xl overflow-hidden border border-rose-500/80 group bg-black">
+                                    <img :src="activeForensicEvent?.snapshot_after_url" class="w-full h-56 object-contain bg-black">
+                                    <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-rose-600 text-[10px] font-bold text-white shadow-xs">
+                                        3. SESUDAH (HILANG / KOSONG)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 1 Snapshot (Deteksi Normal) -->
+                    <template x-if="activeForensicEvent?.event_type !== 'missing_item' && activeForensicEvent?.snapshot_url">
+                        <div class="rounded-xl overflow-hidden border border-slate-800 bg-black flex items-center justify-center p-2">
+                            <img :src="activeForensicEvent?.snapshot_url" class="max-h-[60vh] w-auto object-contain rounded-lg">
+                        </div>
+                    </template>
                 </div>
+
+                <!-- Modal Footer -->
+                <div class="p-3 px-5 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between">
+                    <span class="text-xs text-slate-500">ID Event: #AI-<span x-text="activeForensicEvent?.id"></span></span>
+                    
+                    <div class="flex items-center gap-2">
+                        <a :href="'{{ route('playback.index') }}?cctv_id=' + activeForensicEvent?.cctv_id" 
+                           target="_blank"
+                           class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white transition-colors shadow-xs">
+                            <i class="fas fa-circle-play mr-0.5"></i> Putar Rekaman Video (Playback)
+                        </a>
+                        <button type="button" @click="showForensicModal = false"
+                                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- 7. Modal Panduan PoC AI -->
+        <!-- 8. Modal Panduan PoC AI -->
         <div x-show="showPoCModal" 
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
              @keydown.escape.window="showPoCModal = false">
-            <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative space-y-4"
+            <div class="bg-white rounded-2xl max-w-xl w-full p-5 shadow-2xl relative space-y-3"
                  @click.outside="showPoCModal = false">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
                         <i class="fas fa-terminal text-purple-600"></i>
                         Panduan Menjalankan AI Analyzer
                     </h3>
                     <button @click="showPoCModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i class="fas fa-times text-lg"></i>
+                        <i class="fas fa-times text-base"></i>
                     </button>
                 </div>
 
-                <div class="text-sm text-slate-600 space-y-3 leading-relaxed">
-                    <p>Sistem AI ini ditenagai skrip Python yang sudah siap di dalam folder <code>scripts/ai_analyzer.py</code>. Anda dapat mengujinya dengan skenario berikut:</p>
+                <div class="text-xs text-slate-600 space-y-2.5 leading-relaxed">
+                    <p>Sistem AI ditenagai Python YOLOv8 + ByteTrack + Ollama LLM yang berjalan terisolasi di <code>cctv-ai.service</code>.</p>
                     
-                    <div class="bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-xs space-y-2">
-                        <p class="text-slate-400"># 1. Jalankan Uji Coba Demo Sintetis (Tanpa kamera/video asli):</p>
-                        <p class="text-emerald-400">python scripts/ai_analyzer.py --demo</p>
-                        <p class="text-slate-400 mt-2"># 2. Jalankan pada 1 File Video MP4 Rekaman CCTV riil:</p>
-                        <p class="text-emerald-400">python scripts/ai_analyzer.py --video /path/to/record.mp4 --cctv-id 1</p>
-                        <p class="text-slate-400 mt-2"># 3. Jalankan dan langsung push hasil deteksi ke Web Master:</p>
-                        <p class="text-emerald-400">python scripts/ai_analyzer.py --video record.mp4 --master-url https://cctv.unpad.net</p>
+                    <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px] space-y-1.5">
+                        <p class="text-slate-400"># Uji coba mode watcher otomatis:</p>
+                        <p class="text-emerald-400">python scripts/run_node_ai.py --watch</p>
+                        <p class="text-slate-400 mt-1"># Uji coba pada 1 rekaman video riil:</p>
+                        <p class="text-emerald-400">python scripts/ai_analyzer.py --video rekaman.mp4 --cctv-id 89</p>
                     </div>
 
-                    <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 text-xs text-purple-900">
-                        <strong>Integrasi Ollama:</strong> Jika Ollama berjalan di <code>http://localhost:11434</code>, skrip akan otomatis memanggil model (seperti <code>qwen2.5:1.5b</code>) untuk narasi bahasa manusia. Jika Ollama tidak aktif, skrip tetap berjalan lancar dengan kalimat template otomatis.
+                    <div class="bg-purple-50 p-2.5 rounded-lg border border-purple-100 text-[11px] text-purple-900">
+                        <strong>Perlindungan Okulasi:</strong> Deteksi barang hilang dilengkapi <em>Human Occlusion Guard</em> dan <em>Visual Patch Verification</em> agar tidak memicu alarm palsu saat orang melintas.
                     </div>
                 </div>
 
                 <div class="text-right pt-2 border-t border-slate-100">
-                    <button @click="showPoCModal = false" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800">
-                        Tutup Panduan
+                    <button @click="showPoCModal = false" class="px-3.5 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800">
+                        Tutup
                     </button>
                 </div>
             </div>
@@ -561,19 +741,36 @@
                 selectedCctv: '',
                 selectedObject: 'all',
                 selectedEventType: 'all',
-                summaryText: 'Ringkasan Aktivitas Terpantau: Sepanjang hari ini tercatat beberapa pergerakan kendaraan normal di area gerbang masuk serta aktivitas di ruang laboratorium. Terdeteksi 1 anomali perpindahan barang (laptop warna silver di Lab Komputer pada pukul 11:15 WIB) yang memerlukan atensi petugas piket.',
+
+                // Time Filter States
+                timePreset: 'all', // 'all', 'today', 'yesterday', 'last_7_days', 'custom'
+                showCustomTime: false,
+                customStartDate: '',
+                customEndDate: '',
+                customStartTime: '',
+                customEndTime: '',
+
+                // View Mode ('table' | 'cards')
+                viewMode: 'table',
+
+                // Narrative Summary
+                summaryText: 'Aktivitas Normal Terpantau: Tercatat pergerakan rutin kendaraan di area gerbang dan orang melintas. Terdeteksi beberapa objek barang berharga yang dipantau stabil di area kamera.',
                 summarySource: 'AI Synthesizer',
                 isGeneratingSummary: false,
-                showImageModal: false,
-                modalImageUrl: '',
-                modalImageCaption: '',
+
+                // Forensic Evidence Modal
+                showForensicModal: false,
+                activeForensicEvent: null,
+
                 showPoCModal: false,
 
+                // Pagination
                 currentPage: 1,
-                perPage: 12,
+                perPage: 15,
                 serverPage: 1,
                 hasMoreServerData: false,
                 isLoadingMore: false,
+                isLoadingEvents: false,
 
                 init() {
                     this.filteredEvents = this.events;
@@ -624,7 +821,24 @@
                     this.goToPage(this.currentPage + 1);
                 },
 
-                isLoadingEvents: false,
+                handleTimePresetChange() {
+                    if (this.timePreset === 'custom') {
+                        this.showCustomTime = true;
+                    } else {
+                        this.showCustomTime = false;
+                        this.applyFilters(true);
+                    }
+                },
+
+                resetTimeFilter() {
+                    this.timePreset = 'all';
+                    this.showCustomTime = false;
+                    this.customStartDate = '';
+                    this.customEndDate = '';
+                    this.customStartTime = '';
+                    this.customEndTime = '';
+                    this.applyFilters(true);
+                },
 
                 filterByType(type) {
                     this.selectedEventType = type;
@@ -648,6 +862,16 @@
                     const cctv = this.selectedCctv;
                     const obj = this.selectedObject;
                     const type = this.selectedEventType;
+                    const preset = this.timePreset;
+
+                    // Hitung tanggal acuan untuk preset
+                    const now = new Date();
+                    const todayStr = now.toISOString().slice(0, 10);
+                    const yesterday = new Date(now);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+                    const sevenDaysAgo = new Date(now);
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
                     // 1. Filter di memori lokal browser
                     this.filteredEvents = this.events.filter(item => {
@@ -668,6 +892,26 @@
                             return false;
                         }
 
+                        // Filter Waktu Preset
+                        const itemDate = item.date_ymd || (item.raw_datetime ? item.raw_datetime.slice(0, 10) : '');
+                        const itemTime = item.event_time || (item.raw_datetime ? item.raw_datetime.slice(11, 19) : '');
+
+                        if (preset === 'today') {
+                            if (itemDate && itemDate !== todayStr) return false;
+                        } else if (preset === 'yesterday') {
+                            if (itemDate && itemDate !== yesterdayStr) return false;
+                        } else if (preset === 'last_7_days') {
+                            if (itemDate) {
+                                const d = new Date(itemDate);
+                                if (d < sevenDaysAgo) return false;
+                            }
+                        } else if (preset === 'custom') {
+                            if (this.customStartDate && itemDate && itemDate < this.customStartDate) return false;
+                            if (this.customEndDate && itemDate && itemDate > this.customEndDate) return false;
+                            if (this.customStartTime && itemTime && itemTime < this.customStartTime) return false;
+                            if (this.customEndTime && itemTime && itemTime > this.customEndTime) return false;
+                        }
+
                         // Search Query
                         if (q) {
                             const hay = (item.narrative + ' ' + item.object_type + ' ' + item.color + ' ' + item.cctv_name + ' ' + item.building_name).toLowerCase();
@@ -678,7 +922,7 @@
                     });
 
                     // 2. Jika filter aktif ATAU hasil lokal tidak ditemukan, ambil real-time dari database server!
-                    if (forceServer || this.filteredEvents.length === 0 || type === 'missing_item' || (obj !== 'all' && this.filteredEvents.length < 5)) {
+                    if (forceServer || this.filteredEvents.length === 0 || type === 'missing_item' || preset === 'custom') {
                         await this.fetchFilteredFromServer();
                     }
                 },
@@ -691,6 +935,11 @@
                             cctv_id: this.selectedCctv || '',
                             event_type: this.selectedEventType || 'all',
                             object_type: this.selectedObject || 'all',
+                            time_preset: this.timePreset || 'all',
+                            start_date: this.customStartDate || '',
+                            end_date: this.customEndDate || '',
+                            start_time: this.customStartTime || '',
+                            end_time: this.customEndTime || '',
                             search: this.searchQuery || ''
                         });
                         const resp = await fetch(`{{ route('intelligent.events') }}?${params.toString()}`);
@@ -709,11 +958,10 @@
                     }
                 },
 
-                openImageModal(url, caption) {
-                    if (!url) return;
-                    this.modalImageUrl = url;
-                    this.modalImageCaption = caption || 'Detail Foto Kejadian';
-                    this.showImageModal = true;
+                openForensicModal(event) {
+                    if (!event) return;
+                    this.activeForensicEvent = event;
+                    this.showForensicModal = true;
                 },
 
                 async refreshSummary() {

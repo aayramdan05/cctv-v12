@@ -72,8 +72,40 @@ class AiEvent extends Model
             }
         }
 
-        if (!empty($filters['date'])) {
-            $query->whereDate('event_time', $filters['date']);
+        if (!empty($filters['time_preset'])) {
+            if ($filters['time_preset'] === 'today') {
+                $query->whereDate('event_time', \Carbon\Carbon::today());
+            } elseif ($filters['time_preset'] === 'yesterday') {
+                $query->whereDate('event_time', \Carbon\Carbon::yesterday());
+            } elseif ($filters['time_preset'] === 'last_7_days') {
+                $query->where('event_time', '>=', \Carbon\Carbon::now()->subDays(7));
+            }
+        } elseif (!empty($filters['date']) && $filters['date'] !== 'all') {
+            if ($filters['date'] === 'today') {
+                $query->whereDate('event_time', \Carbon\Carbon::today());
+            } elseif ($filters['date'] === 'yesterday') {
+                $query->whereDate('event_time', \Carbon\Carbon::yesterday());
+            } elseif ($filters['date'] === 'last_7_days') {
+                $query->where('event_time', '>=', \Carbon\Carbon::now()->subDays(7));
+            } else {
+                $query->whereDate('event_time', $filters['date']);
+            }
+        }
+
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('event_time', '>=', $filters['start_date']);
+        }
+
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('event_time', '<=', $filters['end_date']);
+        }
+
+        if (!empty($filters['start_time'])) {
+            $query->whereTime('event_time', '>=', $filters['start_time']);
+        }
+
+        if (!empty($filters['end_time'])) {
+            $query->whereTime('event_time', '<=', $filters['end_time']);
         }
 
         if (!empty($filters['search'])) {
