@@ -569,7 +569,7 @@ class CctvAiAnalyzer:
 
         cap = cv2.VideoCapture(video_source)
         if not cap.isOpened():
-            print(f"[ERROR] Gagal membuka video: {video_source}")
+            print(f"⚠️ [LEWATI] Video tidak dapat dibuka (file rekaman terpotong / stream RTSP kamera sempat drop): {base_name}")
             return []
 
         orig_fps = cap.get(cv2.CAP_PROP_FPS) or 25

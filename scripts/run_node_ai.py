@@ -180,8 +180,14 @@ def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, m
                         # Cek apakah FFmpeg sudah selesai menulis dan menutup file (moov atom ada)
                         if has_moov_atom(filepath):
                             size_mb = os.path.getsize(filepath) / (1024 * 1024)
-                            print(f"\n🎬 [REKAMAN SELESAI] {os.path.basename(filepath)} ({size_mb:.1f} MB)")
                             processed_files.add(filepath)
+
+                            # Lewati file cuplikan yang terlalu kecil (< 2MB) karena biasanya akibat stream kamera putus beberapa detik
+                            if size_mb < 2.0:
+                                print(f"ℹ️ [LEWATI CUPLIKAN PENDEK] {os.path.basename(filepath)} ({size_mb:.1f} MB < 2MB, kamera sempat terputus sesaat).")
+                                continue
+
+                            print(f"\n🎬 [REKAMAN SELESAI] {os.path.basename(filepath)} ({size_mb:.1f} MB)")
 
                             # Ekstrak CCTV ID
                             base = os.path.basename(filepath)
