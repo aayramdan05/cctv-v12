@@ -22,15 +22,10 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     YOLOv8 Active
                 </span>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hidden md:inline-flex">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
                     <i class="fas fa-robot text-purple-500 text-[11px]"></i>
                     Ollama Narrator
                 </span>
-                <button type="button" @click="showPoCModal = true" 
-                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-xs">
-                    <i class="fas fa-terminal text-cyan-400 text-[11px]"></i>
-                    Panduan PoC
-                </button>
             </div>
         </header>
 
@@ -141,10 +136,10 @@
                 <div class="sm:col-span-3">
                     <select x-model="timePreset" @change="handleTimePresetChange()" 
                             class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 font-bold text-slate-700">
-                        <option value="all">🕒 Waktu: Semua Waktu</option>
-                        <option value="today">📅 Waktu: Hari Ini (Today)</option>
+                        <option value="today">📅 Waktu: Hari Ini (Default)</option>
                         <option value="yesterday">⏪ Waktu: Kemarin</option>
                         <option value="last_7_days">🗓️ Waktu: 7 Hari Terakhir</option>
+                        <option value="all">🕒 Waktu: Semua Waktu</option>
                         <option value="custom">⚙️ Waktu: Rentang Kustom (Jam/Tgl)...</option>
                     </select>
                 </div>
@@ -289,7 +284,17 @@
                     <i class="fas fa-inbox"></i>
                 </div>
                 <h3 class="text-sm font-bold text-slate-700 mt-2">Tidak ada log kejadian yang cocok</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Ubah kata kunci, kamera, atau sesuaikan filter waktu Anda.</p>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    <span x-show="timePreset === 'today'">Belum ada kejadian tercatat untuk <strong>Hari Ini</strong>.</span>
+                    <span x-show="timePreset !== 'today'">Ubah kata kunci, kamera, atau sesuaikan filter waktu Anda.</span>
+                </p>
+                <div class="mt-3">
+                    <button type="button" @click="timePreset = 'all'; applyFilters(true)" 
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors inline-flex items-center gap-1.5">
+                        <i class="fas fa-clock-rotate-left"></i>
+                        <span>Tampilkan Semua Riwayat Waktu</span>
+                    </button>
+                </div>
             </div>
 
             <!-- MODE A: TABEL LOG PADAT (Default - Sleek High Density Table) -->
@@ -689,46 +694,6 @@
             </div>
         </div>
 
-        <!-- 8. Modal Panduan PoC AI -->
-        <div x-show="showPoCModal" 
-             x-cloak
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-             @keydown.escape.window="showPoCModal = false">
-            <div class="bg-white rounded-2xl max-w-xl w-full p-5 shadow-2xl relative space-y-3"
-                 @click.outside="showPoCModal = false">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
-                        <i class="fas fa-terminal text-purple-600"></i>
-                        Panduan Menjalankan AI Analyzer
-                    </h3>
-                    <button @click="showPoCModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i class="fas fa-times text-base"></i>
-                    </button>
-                </div>
-
-                <div class="text-xs text-slate-600 space-y-2.5 leading-relaxed">
-                    <p>Sistem AI ditenagai Python YOLOv8 + ByteTrack + Ollama LLM yang berjalan terisolasi di <code>cctv-ai.service</code>.</p>
-                    
-                    <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px] space-y-1.5">
-                        <p class="text-slate-400"># Uji coba mode watcher otomatis:</p>
-                        <p class="text-emerald-400">python scripts/run_node_ai.py --watch</p>
-                        <p class="text-slate-400 mt-1"># Uji coba pada 1 rekaman video riil:</p>
-                        <p class="text-emerald-400">python scripts/ai_analyzer.py --video rekaman.mp4 --cctv-id 89</p>
-                    </div>
-
-                    <div class="bg-purple-50 p-2.5 rounded-lg border border-purple-100 text-[11px] text-purple-900">
-                        <strong>Perlindungan Okulasi:</strong> Deteksi barang hilang dilengkapi <em>Human Occlusion Guard</em> dan <em>Visual Patch Verification</em> agar tidak memicu alarm palsu saat orang melintas.
-                    </div>
-                </div>
-
-                <div class="text-right pt-2 border-t border-slate-100">
-                    <button @click="showPoCModal = false" class="px-3.5 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800">
-                        Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script>
@@ -742,8 +707,8 @@
                 selectedObject: 'all',
                 selectedEventType: 'all',
 
-                // Time Filter States
-                timePreset: 'all', // 'all', 'today', 'yesterday', 'last_7_days', 'custom'
+                // Time Filter States - Default Hari Ini (Today)
+                timePreset: 'today', // 'today', 'yesterday', 'last_7_days', 'all', 'custom'
                 showCustomTime: false,
                 customStartDate: '',
                 customEndDate: '',
@@ -762,8 +727,6 @@
                 showForensicModal: false,
                 activeForensicEvent: null,
 
-                showPoCModal: false,
-
                 // Pagination
                 currentPage: 1,
                 perPage: 15,
@@ -773,7 +736,8 @@
                 isLoadingEvents: false,
 
                 init() {
-                    this.filteredEvents = this.events;
+                    this.timePreset = 'today';
+                    this.applyFilters();
                     if (this.stats && this.stats.total > this.events.length) {
                         this.hasMoreServerData = true;
                     }
@@ -831,7 +795,7 @@
                 },
 
                 resetTimeFilter() {
-                    this.timePreset = 'all';
+                    this.timePreset = 'today';
                     this.showCustomTime = false;
                     this.customStartDate = '';
                     this.customEndDate = '';
@@ -864,12 +828,20 @@
                     const type = this.selectedEventType;
                     const preset = this.timePreset;
 
-                    // Hitung tanggal acuan untuk preset
+                    // Hitung tanggal acuan lokal browser (WIB) untuk preset
                     const now = new Date();
-                    const todayStr = now.toISOString().slice(0, 10);
-                    const yesterday = new Date(now);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const todayStr = `${year}-${month}-${day}`;
+
+                    const yDate = new Date(now);
+                    yDate.setDate(yDate.getDate() - 1);
+                    const yYear = yDate.getFullYear();
+                    const yMonth = String(yDate.getMonth() + 1).padStart(2, '0');
+                    const yDay = String(yDate.getDate()).padStart(2, '0');
+                    const yesterdayStr = `${yYear}-${yMonth}-${yDay}`;
+
                     const sevenDaysAgo = new Date(now);
                     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -998,7 +970,20 @@
                     this.isLoadingMore = true;
                     try {
                         this.serverPage++;
-                        const resp = await fetch(`{{ route('intelligent.events') }}?limit=250&page=${this.serverPage}`);
+                        const params = new URLSearchParams({
+                            limit: 250,
+                            page: this.serverPage,
+                            cctv_id: this.selectedCctv || '',
+                            event_type: this.selectedEventType || 'all',
+                            object_type: this.selectedObject || 'all',
+                            time_preset: this.timePreset || 'today',
+                            start_date: this.customStartDate || '',
+                            end_date: this.customEndDate || '',
+                            start_time: this.customStartTime || '',
+                            end_time: this.customEndTime || '',
+                            search: this.searchQuery || ''
+                        });
+                        const resp = await fetch(`{{ route('intelligent.events') }}?${params.toString()}`);
                         const res = await resp.json();
                         if (res.status === 'success' && res.data && res.data.length > 0) {
                             const existingIds = new Set(this.events.map(e => e.id));

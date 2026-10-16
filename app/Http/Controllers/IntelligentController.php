@@ -99,7 +99,7 @@ class IntelligentController extends Controller
             'end_date' => $request->input('end_date'),
             'start_time' => $request->input('start_time'),
             'end_time' => $request->input('end_time'),
-            'time_preset' => $request->input('time_preset'),
+            'time_preset' => $request->input('time_preset', 'today'),
             'search' => $request->input('search'),
         ];
 
@@ -140,6 +140,9 @@ class IntelligentController extends Controller
                             'metadata' => $ev->metadata,
                         ];
                     })->toArray();
+                } elseif (AiEvent::exists()) {
+                    // Database memiliki data, tetapi filter (misal: Hari Ini) belum memiliki rekaman kejadian
+                    return [];
                 }
             }
         } catch (\Throwable $e) {
