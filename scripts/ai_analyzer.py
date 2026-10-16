@@ -103,42 +103,120 @@ OBJECT_NAMES_ID = {
 }
 
 
-def detect_dominant_color(bgr_crop):
+def detect_dominant_color(bgr_crop, cls_name='other'):
     """
-    Ekstraksi warna dominan sederhana berbasis ruang warna HSV
+    Ekstraksi warna dominan cerdas berbasis ruang warna HSV & voting piksel terarah (Smart ROI):
+    - Khusus 'person': Memfokuskan deteksi pada area torso/baju (menghindari background samping, rambut, dan celana)
+      serta memfilter piksel warna kulit agar tidak salah terdeteksi sebagai pakaian oranye/cokelat.
+    - Khusus kendaraan ('car', 'truck', 'bus'): Memfokuskan deteksi pada bodi/kap mesin (menghindari ban hitam,
+      kolong aspal, dan kaca film/refleksi langit).
+    - Khusus 'motorcycle': Mengambil area tengah proporsional bodi motor dan pengendara.
+    - Khusus barang berharga ('laptop', 'backpack', dll): Mengambil area tengah 80% untuk menghindari meja/lantai.
+    - Voting piksel terarah dengan pembobotan persepsi kromatik vs netral (menghilangkan bias palsu 'silver/abu-abu').
     """
     if bgr_crop is None or bgr_crop.size == 0:
         return "tidak teridentifikasi"
 
-    hsv = cv2.cvtColor(bgr_crop, cv2.COLOR_BGR2HSV)
-    h, s, v = cv2.split(hsv)
+    h_orig, w_orig = bgr_crop.shape[:2]
+    if h_orig < 5 or w_orig < 5:
+        return "tidak teridentifikasi"
 
-    mean_s = np.mean(s)
-    mean_v = np.mean(v)
-    mean_h = np.mean(h)
+    # 1. Smart ROI Selection berdasarkan kelas objek
+    if cls_name == 'person':
+        # Torso / Baju: 20% - 60% tinggi, 18% - 82% lebar (hindari kepala/rambut, celana, dan background samping)
+        y1 = int(h_orig * 0.20)
+        y2 = int(h_orig * 0.60)
+        x1 = int(w_orig * 0.18)
+        x2 = int(w_orig * 0.82)
+    elif cls_name in ['car', 'truck', 'bus']:
+        # Bodi utama: 22% - 78% tinggi, 15% - 85% lebar (hindari roda/aspal bawah dan tepi atap/langit)
+        y1 = int(h_orig * 0.22)
+        y2 = int(h_orig * 0.78)
+        x1 = int(w_orig * 0.15)
+        x2 = int(w_orig * 0.85)
+    elif cls_name == 'motorcycle':
+        # Bodi motor & pengendara tengah: 20% - 80%
+        y1 = int(h_orig * 0.20)
+        y2 = int(h_orig * 0.80)
+        x1 = int(w_orig * 0.20)
+        x2 = int(w_orig * 0.80)
+    else:
+        # Objek umum (laptop, tas, koper): Area tengah 80% (buang tepi meja/background)
+        y1 = int(h_orig * 0.10)
+        y2 = int(h_orig * 0.90)
+        x1 = int(w_orig * 0.10)
+        x2 = int(w_orig * 0.90)
 
-    if mean_v < 45:
-        return "hitam"
-    if mean_s < 35 and mean_v > 190:
-        return "putih"
-    if mean_s < 45:
-        return "silver/abu-abu"
+    # Validasi batas ROI
+    if y2 <= y1 or x2 <= x1:
+        roi = bgr_crop
+    else:
+        roi = bgr_crop[y1:y2, x1:x2]
 
-    # Hue ranges (0-179 in OpenCV)
-    if mean_h < 10 or mean_h > 165:
-        return "merah"
-    elif 10 <= mean_h < 25:
-        return "oranye"
-    elif 25 <= mean_h < 35:
-        return "kuning"
-    elif 35 <= mean_h < 85:
-        return "hijau"
-    elif 85 <= mean_h < 130:
-        return "biru"
-    elif 130 <= mean_h < 165:
-        return "ungu"
+    if roi.size == 0:
+        roi = bgr_crop
 
-    return "berwarna"
+    # 2. Downsampling kecil untuk efisiensi CPU dan reduksi noise specular (48x48)
+    small_roi = cv2.resize(roi, (48, 48), interpolation=cv2.INTER_AREA)
+    hsv = cv2.cvtColor(small_roi, cv2.COLOR_BGR2HSV)
+    h = hsv[:, :, 0]
+    s = hsv[:, :, 1]
+    v = hsv[:, :, 2]
+
+    # 3. Klasifikasi Masking Netral (Achromatic)
+    # Hitam: intensitas sangat rendah atau gelap redup tanpa saturasi
+    black_mask = (v < 55) | ((v < 75) & (s < 45))
+    # Putih: kecerahan tinggi dengan saturasi sangat rendah
+    white_mask = (v > 175) & (s < 45)
+    # Silver / Abu-abu: saturasi rendah di antara hitam dan putih
+    gray_mask = (s < 45) & (v >= 75) & (v <= 175)
+
+    # 4. Masking Kulit Manusia (khusus orang agar leher/lengan tidak disangka pakaian oranye/cokelat)
+    skin_mask = np.zeros_like(black_mask)
+    if cls_name == 'person':
+        skin_mask = (h >= 5) & (h <= 25) & (s >= 30) & (s <= 140) & (v >= 85)
+
+    # 5. Basis Kromatik (Warna Terang & Jelas)
+    chrom_base = (~black_mask) & (~white_mask) & (~gray_mask) & (~skin_mask)
+
+    # 6. Hitung Suara Piksel untuk Setiap Kategori Warna
+    votes = {
+        'hitam': np.count_nonzero(black_mask),
+        'putih': np.count_nonzero(white_mask),
+        'silver/abu-abu': np.count_nonzero(gray_mask),
+        # Merah: Hue ujung 0-8 dan 168-179 dengan V cukup terang
+        'merah': np.count_nonzero(chrom_base & (((h < 8) & (v >= 110)) | ((h >= 168) & (v >= 110)))),
+        # Cokelat: Hue 0-22 dengan V redup (warna tanah / jaket kulit / kayu)
+        'cokelat': np.count_nonzero(chrom_base & (h < 22) & (v < 110)),
+        # Oranye: Hue 8-24 dengan V terang
+        'oranye': np.count_nonzero(chrom_base & (h >= 8) & (h < 24) & (v >= 110)),
+        # Kuning: Hue 24-38
+        'kuning': np.count_nonzero(chrom_base & (h >= 24) & (h < 38)),
+        # Hijau: Hue 38-85
+        'hijau': np.count_nonzero(chrom_base & (h >= 38) & (h < 85)),
+        # Biru (termasuk cyan/biru muda): Hue 85-135
+        'biru': np.count_nonzero(chrom_base & (h >= 85) & (h < 135)),
+        # Ungu: Hue 135-160
+        'ungu': np.count_nonzero(chrom_base & (h >= 135) & (h < 160)),
+        # Pink / Merah Muda: Hue 160-168
+        'pink': np.count_nonzero(chrom_base & (h >= 160) & (h < 168)),
+    }
+
+    # 7. Pembobotan Persepsi Manusia (Perceptual Weighting)
+    # Warna kromatik (baju/cat mobil) diberi bobot 1.25x agar tidak terkalahkan oleh bayangan kolong/kaca
+    # Warna bayangan/aspal (hitam & abu-abu) diberi diskon 0.85x
+    weighted_votes = {}
+    for color_name, count in votes.items():
+        if count == 0:
+            weighted_votes[color_name] = 0
+        elif color_name in ['hitam', 'silver/abu-abu']:
+            weighted_votes[color_name] = count * 0.85
+        elif color_name == 'putih':
+            weighted_votes[color_name] = count * 1.0
+        else:
+            weighted_votes[color_name] = count * 1.25
+
+    return max(weighted_votes, key=weighted_votes.get)
 
 
 def draw_detection_box(frame, bbox, label=None, color_bgr=(34, 197, 94), is_alert=False, is_dashed=False):
@@ -730,7 +808,7 @@ class CctvAiAnalyzer:
                         current_frame_tracks.add(track_id)
 
                         crop = frame[max(0, y1):min(frame.shape[0], y2), max(0, x1):min(frame.shape[1], x2)]
-                        color = detect_dominant_color(crop)
+                        color = detect_dominant_color(crop, cls_name=cls_name)
 
                         if track_id not in self.tracked_objects:
                             # Jika barang berharga (laptop, tas), siapkan snapshot_before dengan bounding box langsung sejak awal
@@ -798,6 +876,7 @@ class CctvAiAnalyzer:
                                 if cls_name in ['laptop', 'backpack', 'handbag', 'suitcase', 'cell phone']:
                                     if (obj['frames_stationary'] <= 15 or obj['snapshot_before'] is None) and not is_occluded_by_person(xyxy, current_persons_boxes):
                                         badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%) - {color.capitalize()}"
+                                        obj['color'] = color
                                         obj['snapshot_before'] = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
                                         obj['raw_frame_before'] = frame.copy()
                                         obj['baseline_crop'] = frame[max(0, y1):min(frame.shape[0], y2), max(0, x1):min(frame.shape[1], x2)].copy()
