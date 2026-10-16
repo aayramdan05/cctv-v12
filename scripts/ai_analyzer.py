@@ -217,7 +217,7 @@ def draw_detection_box(frame, bbox, label=None, color_bgr=(34, 197, 94), is_aler
     return img
 
 
-def is_spatially_present(target_bbox, current_boxes, current_classes, target_cls, max_dist=60, min_iou=0.15):
+def is_spatially_present(target_bbox, current_boxes, current_classes, target_cls, max_dist=90, min_iou=0.10):
     """
     Cek apakah objek secara fisik masih berada di koordinat yang sama meskipun ID tracker ByteTrack berganti.
     Mencegah alarm barang hilang palsu jika laptop/tas masih berada di atas meja.
@@ -244,6 +244,108 @@ def is_spatially_present(target_bbox, current_boxes, current_classes, target_cls
                     return True, (x1, y1, x2, y2)
 
     return False, None
+
+
+def is_occluded_by_person(target_bbox, person_boxes, min_overlap_ratio=0.08, proximity_margin=50):
+    """
+    Memeriksa apakah koordinat objek berharga sedang terhalang / tertutup oleh seseorang,
+    atau seseorang sedang duduk/berdiri di dekat area meja objek tersebut.
+    Jika seseorang berada di depan atau dekat meja objek, objek tidak boleh
+    dianggap hilang karena:
+    1. Pandangan kamera sedang terhalang (occlusion) oleh tubuh manusia, ATAU
+    2. Seseorang sedang beraktivitas/duduk di meja tersebut.
+    """
+    if target_bbox is None or not person_boxes:
+        return False
+
+    tx1, ty1, tx2, ty2 = [int(v) for v in target_bbox]
+    t_area = max(1.0, float((tx2 - tx1) * (ty2 - ty1)))
+
+    # Box objek yang diperluas margin kedekatan (proximity)
+    etx1 = tx1 - proximity_margin
+    ety1 = ty1 - proximity_margin
+    etx2 = tx2 + proximity_margin
+    ety2 = ty2 + proximity_margin
+
+    for pbox in person_boxes:
+        px1, py1, px2, py2 = [int(v) for v in pbox]
+
+        # 1. Cek irisan langsung (direct overlap)
+        ix1 = max(tx1, px1)
+        iy1 = max(ty1, py1)
+        ix2 = min(tx2, px2)
+        iy2 = min(ty2, py2)
+
+        if ix2 > ix1 and iy2 > iy1:
+            inter_area = float((ix2 - ix1) * (iy2 - iy1))
+            # Jika irisan menutupi >= 8% dari luas objek
+            if (inter_area / t_area) >= min_overlap_ratio:
+                return True
+
+            # Atau jika titik tengah objek berada di dalam box manusia
+            tcx, tcy = (tx1 + tx2) / 2.0, (ty1 + ty2) / 2.0
+            if px1 <= tcx <= px2 and py1 <= tcy <= py2:
+                return True
+
+        # 2. Cek kedekatan meja (proximity: orang berdiri/duduk di dekat laptop)
+        e_ix1 = max(etx1, px1)
+        e_iy1 = max(ety1, py1)
+        e_ix2 = min(etx2, px2)
+        e_iy2 = min(ety2, py2)
+        if e_ix2 > e_ix1 and e_iy2 > e_iy1:
+            return True
+
+    return False
+
+
+def is_patch_visually_similar(frame, baseline_crop, bbox, max_diff_ratio=0.28, min_ncc=0.45):
+    """
+    Memeriksa apakah citra pixel di koordinat bbox masih mirip dengan saat objek stabil di tempat.
+    Mencegah alarm palsu jika YOLO gagal mendeteksi objek padahal secara visual objek masih ada di meja.
+    Menggunakan kombinasi Pixel Difference dan Normalized Cross-Correlation (Template Matching).
+    """
+    if frame is None or baseline_crop is None or bbox is None:
+        return False
+
+    h, w = frame.shape[:2]
+    x1, y1, x2, y2 = [int(v) for v in bbox]
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(w, x2), min(h, y2)
+
+    if x2 <= x1 or y2 <= y1:
+        return False
+
+    curr_crop = frame[y1:y2, x1:x2]
+    bh, bw = baseline_crop.shape[:2]
+    if bh <= 4 or bw <= 4 or curr_crop.shape[0] <= 4 or curr_crop.shape[1] <= 4:
+        return False
+
+    try:
+        curr_resized = cv2.resize(curr_crop, (bw, bh))
+        diff = cv2.absdiff(baseline_crop, curr_resized)
+        gray_diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+        # Hitung persentase pixel yang berbeda secara signifikan (> 40 intensitas)
+        changed_pixels = np.sum(gray_diff > 40)
+        total_pixels = float(bw * bh)
+        diff_ratio = changed_pixels / total_pixels
+
+        # 1. Jika pixel difference rendah (< 28%), objek secara visual masih ada di meja
+        if diff_ratio < max_diff_ratio:
+            return True
+
+        # 2. Template Matching (Normalized Cross-Correlation)
+        # Tahan terhadap perubahan pencahayaan global atau bayangan di meja
+        gray_base = cv2.cvtColor(baseline_crop, cv2.COLOR_BGR2GRAY)
+        gray_curr = cv2.cvtColor(curr_resized, cv2.COLOR_BGR2GRAY)
+        res = cv2.matchTemplate(gray_curr, gray_base, cv2.TM_CCOEFF_NORMED)
+        score = float(res[0][0]) if res is not None and res.size > 0 else 0.0
+
+        if score >= min_ncc:
+            return True
+
+        return False
+    except Exception:
+        return False
 
 
 def frame_to_base64(frame):
@@ -590,8 +692,10 @@ class CctvAiAnalyzer:
                         'first_seen': frame_time,
                         'last_seen': frame_time,
                         'bbox': laptop_bbox,
-                        'frames_stationary': 12,
+                        'frames_stationary': 20,
                         'snapshot_before': demo_snap_before,
+                        'raw_frame_before': frame.copy() if frame is not None else None,
+                        'baseline_crop': frame[320:390, 280:380].copy() if frame is not None else None,
                         'snapshot_during': None,
                         'snapshot_after': None,
                         'status': 'active'
@@ -631,9 +735,11 @@ class CctvAiAnalyzer:
                         if track_id not in self.tracked_objects:
                             # Jika barang berharga (laptop, tas), siapkan snapshot_before dengan bounding box langsung sejak awal
                             init_snap_before = None
+                            init_crop = None
                             if cls_name in ['laptop', 'backpack', 'handbag', 'suitcase', 'cell phone']:
                                 badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%) - {color.capitalize()}"
                                 init_snap_before = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
+                                init_crop = frame[max(0, y1):min(frame.shape[0], y2), max(0, x1):min(frame.shape[1], x2)].copy()
 
                             # Objek baru terdaftar
                             self.tracked_objects[track_id] = {
@@ -647,6 +753,7 @@ class CctvAiAnalyzer:
                                 'frames_stationary': 0,
                                 'snapshot_before': init_snap_before,
                                 'raw_frame_before': frame.copy(),
+                                'baseline_crop': init_crop,
                                 'snapshot_during': None,
                                 'snapshot_after': None,
                                 'status': 'active'
@@ -689,10 +796,11 @@ class CctvAiAnalyzer:
                                 obj['frames_stationary'] += 1
                                 # Update snapshot awal saat masih stabil di tempat (perbarui dengan frame diam terbaik)
                                 if cls_name in ['laptop', 'backpack', 'handbag', 'suitcase', 'cell phone']:
-                                    if obj['frames_stationary'] <= 8 or obj['snapshot_before'] is None:
+                                    if (obj['frames_stationary'] <= 15 or obj['snapshot_before'] is None) and not is_occluded_by_person(xyxy, current_persons_boxes):
                                         badge_label = f"OBJEK SEMULA: {OBJECT_NAMES_ID.get(cls_name, cls_name).upper()} ({int(conf * 100)}%) - {color.capitalize()}"
                                         obj['snapshot_before'] = draw_detection_box(frame, xyxy, badge_label, color_bgr=(0, 215, 255))
                                         obj['raw_frame_before'] = frame.copy()
+                                        obj['baseline_crop'] = frame[max(0, y1):min(frame.shape[0], y2), max(0, x1):min(frame.shape[1], x2)].copy()
                             else:
                                 obj['frames_stationary'] = 0
 
@@ -708,15 +816,15 @@ class CctvAiAnalyzer:
                     if obj_cls not in ['laptop', 'backpack', 'handbag', 'suitcase']:
                         continue
 
-                    # Filter Sensitivitas 1: Objek HARUS pernah diam minimal 8 frame (~8-10 detik)
-                    # Jika barang hanya lewat dibawa orang, JANGAN pernah anggap hilang!
-                    if obj.get('frames_stationary', 0) < 8:
+                    # Filter Sensitivitas 1: Objek HARUS pernah diam minimal 15 frame (~15 detik stabil)
+                    # Jika barang hanya lewat dibawa orang jalan, JANGAN pernah anggap hilang!
+                    if obj.get('frames_stationary', 0) < 15:
                         continue
 
                     # Filter Sensitivitas 2: Cek apakah secara fisik objek masih ada di koordinat meja yang sama
                     # (Meski ID tracker-nya berganti atau terdeteksi oleh bounding box lain)
                     is_present, matched_box = is_spatially_present(
-                        obj['bbox'], current_frame_all_boxes, current_frame_all_classes, obj_cls
+                        obj['bbox'], current_frame_all_boxes, current_frame_all_classes, obj_cls, max_dist=90, min_iou=0.10
                     )
                     if is_present:
                         # Laptop MASIH ADA DI LOKASI! Hanya jitter tracker ID. Reset counter hilang!
@@ -726,7 +834,24 @@ class CctvAiAnalyzer:
                         obj['frames_stationary'] += 1
                         continue
 
-                    # Objek benar-benar tidak terdeteksi secara fisik di koordinat tersebut
+                    # Filter Sensitivitas 3: Deteksi Okulasi Manusia (Human Occlusion & Proximity Guard)
+                    # Jika ada manusia yang berdiri, duduk, atau bergerak menutupi atau di dekat area meja laptop:
+                    # Objek TIDAK BISA dinyatakan hilang karena pandangan kamera sedang terhalang manusia atau meja sedang dipakai!
+                    if is_occluded_by_person(obj['bbox'], current_persons_boxes):
+                        # Reset status hilang - objek tidak boleh dihitung hilang selama ada manusia di area meja
+                        self.disappeared_candidates.pop(track_id, None)
+                        obj['last_seen'] = frame_time
+                        continue
+
+                    # Filter Sensitivitas 4: Verifikasi Visual Citra Pixel (Visual Patch Verification)
+                    # Cek apakah pixel di koordinat meja masih sama/mirip dengan citra laptop aslinya (YOLO hanya drop deteksi)
+                    if track_id != 999 and is_patch_visually_similar(frame, obj.get('baseline_crop'), obj['bbox']):
+                        # Laptop masih secara visual ada di atas meja!
+                        self.disappeared_candidates.pop(track_id, None)
+                        obj['last_seen'] = frame_time
+                        continue
+
+                    # Objek benar-benar tidak terdeteksi secara fisik, TIDAK terhalang orang, dan pixel meja telah berubah!
                     if track_id not in self.disappeared_candidates:
                         self.disappeared_candidates[track_id] = {
                             'missing_count': 1,
@@ -737,9 +862,9 @@ class CctvAiAnalyzer:
                         self.disappeared_candidates[track_id]['missing_count'] += 1
                         self.disappeared_candidates[track_id]['last_frame'] = frame.copy()
 
-                    # Filter Sensitivitas 3: Harus hilang konsisten minimal 15 frame berturut-turut (15 detik)
-                    # Menghindari alarm palsu akibat orang melintas sesaat menghalangi pandangan (occlusion)
-                    if self.disappeared_candidates[track_id]['missing_count'] >= 15:
+                    # Filter Sensitivitas 5: Harus hilang konsisten minimal 25 frame berturut-turut (25 detik tanpa orang)
+                    # Memastikan area benar-benar kosong dan barang benar-benar berpindah/hilang
+                    if self.disappeared_candidates[track_id]['missing_count'] >= 25:
                         obj['status'] = 'disappeared'
 
                         # 1. Foto Sebelum: WAJIB memiliki Bounding Box pada objek aslinya
