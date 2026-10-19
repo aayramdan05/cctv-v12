@@ -113,17 +113,17 @@
                 <!-- Search Box -->
                 <div class="sm:col-span-4 relative">
                     <i class="fas fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                    <input type="text" x-model="searchQuery" @input.debounce.300ms="applyFilters()"
+                    <input type="text" x-model="searchQuery" @input.debounce.350ms="applyFilters(true)"
                            placeholder="Cari objek, warna, narasi, lokasi..." 
                            class="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-purple-500 font-medium text-slate-800 placeholder-slate-400">
-                    <button x-show="searchQuery" @click="searchQuery = ''; applyFilters()" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600">
+                    <button x-show="searchQuery" @click="searchQuery = ''; applyFilters(true)" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600">
                         <i class="fas fa-times text-[10px]"></i>
                     </button>
                 </div>
 
                 <!-- Camera Select -->
                 <div class="sm:col-span-3">
-                    <select x-model="selectedCctv" @change="applyFilters()" 
+                    <select x-model="selectedCctv" @change="applyFilters(true)" 
                             class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 font-medium text-slate-700">
                         <option value="">Semua Kamera CCTV</option>
                         @foreach($cctvs as $cctv)
@@ -921,6 +921,9 @@
                             const newEvents = res.data.filter(e => !existingIds.has(e.id));
                             this.events = [...newEvents, ...this.events];
                             this.filteredEvents = res.data;
+                            if (res.stats) {
+                                this.stats = res.stats;
+                            }
                             this.currentPage = 1;
                         }
                     } catch (e) {
@@ -989,6 +992,9 @@
                             const existingIds = new Set(this.events.map(e => e.id));
                             const newEvents = res.data.filter(e => !existingIds.has(e.id));
                             this.events = [...this.events, ...newEvents];
+                            if (res.stats) {
+                                this.stats = res.stats;
+                            }
                             this.applyFilters();
                             if (this.events.length >= res.total || res.data.length < 250) {
                                 this.hasMoreServerData = false;

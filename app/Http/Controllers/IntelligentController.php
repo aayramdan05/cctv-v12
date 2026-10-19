@@ -30,35 +30,24 @@ class IntelligentController extends Controller
             Log::warning('Gagal mengambil data CCTV untuk AI Intelligent: ' . $e->getMessage());
         }
 
+        $filters = [
+            'cctv_id' => $request->input('cctv_id'),
+            'object_type' => $request->input('object_type', 'all'),
+            'event_type' => $request->input('event_type', 'all'),
+            'date' => $request->input('date'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'start_time' => $request->input('start_time'),
+            'end_time' => $request->input('end_time'),
+            'time_preset' => $request->input('time_preset', 'today'),
+            'search' => $request->input('search'),
+        ];
+
         // Ambil event dari Database, fallback ke Demo Data jika kosong / local laptop tanpa DB
         $events = $this->getEventsData($request);
         
-        // Hitung statistik kumulatif riil langsung dari Database (Bukan dari array slice 50)
-        // Mencegah total deteksi mentok di 50 dan mencegah counter barang hilang reset ke 0
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events') && AiEvent::exists()) {
-                $stats = [
-                    'total' => AiEvent::count(),
-                    'missing_items' => AiEvent::where('event_type', 'missing_item')->count(),
-                    'vehicles' => AiEvent::whereIn('object_type', ['car', 'motorcycle', 'truck', 'bus'])->count(),
-                    'persons' => AiEvent::where('object_type', 'person')->count(),
-                ];
-            } else {
-                $stats = [
-                    'total' => count($events),
-                    'missing_items' => count(array_filter($events, fn($e) => $e['event_type'] === 'missing_item')),
-                    'vehicles' => count(array_filter($events, fn($e) => in_array($e['object_type'], ['car', 'motorcycle', 'truck', 'bus']))),
-                    'persons' => count(array_filter($events, fn($e) => $e['object_type'] === 'person')),
-                ];
-            }
-        } catch (\Throwable $e) {
-            $stats = [
-                'total' => count($events),
-                'missing_items' => count(array_filter($events, fn($e) => $e['event_type'] === 'missing_item')),
-                'vehicles' => count(array_filter($events, fn($e) => in_array($e['object_type'], ['car', 'motorcycle', 'truck', 'bus']))),
-                'persons' => count(array_filter($events, fn($e) => $e['object_type'] === 'person')),
-            ];
-        }
+        // Hitung statistik terfilter secara akurat sesuai kriteria filter waktu dan kamera yang aktif
+        $stats = $this->getStatsData($filters, $events);
 
         return view('intelligent.index', [
             'cctvs' => $cctvs,
@@ -72,17 +61,63 @@ class IntelligentController extends Controller
      */
     public function getEvents(Request $request)
     {
+        $filters = [
+            'cctv_id' => $request->input('cctv_id'),
+            'object_type' => $request->input('object_type', 'all'),
+            'event_type' => $request->input('event_type', 'all'),
+            'date' => $request->input('date'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'start_time' => $request->input('start_time'),
+            'end_time' => $request->input('end_time'),
+            'time_preset' => $request->input('time_preset', 'today'),
+            'search' => $request->input('search'),
+        ];
+
         $events = $this->getEventsData($request);
-        $totalDb = class_exists(AiEvent::class) && \Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events')
-            ? AiEvent::count()
-            : count($events);
+        $stats = $this->getStatsData($filters, $events);
 
         return response()->json([
             'status' => 'success',
             'data' => $events,
             'count' => count($events),
-            'total' => $totalDb,
+            'total' => $stats['total'],
+            'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Internal: Menghitung statistik KPI terfilter sesuai filter waktu dan kamera aktif
+     */
+    private function getStatsData(array $filters, array $events = []): array
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events') && AiEvent::exists()) {
+                // Untuk kartu statistik KPI, pertahankan filter waktu, kamera, dan search,
+                // bebaskan event_type dan object_type agar kartu KPI menampilkan proporsi seluruh kategori
+                $statsFilters = $filters;
+                $statsFilters['event_type'] = 'all';
+                $statsFilters['object_type'] = 'all';
+
+                $baseQuery = AiEvent::filter($statsFilters);
+
+                return [
+                    'total' => (clone $baseQuery)->count(),
+                    'missing_items' => (clone $baseQuery)->where('event_type', 'missing_item')->count(),
+                    'vehicles' => (clone $baseQuery)->whereIn('object_type', ['car', 'motorcycle', 'truck', 'bus'])->count(),
+                    'persons' => (clone $baseQuery)->where('object_type', 'person')->count(),
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Gagal menghitung statistik AI terfilter: ' . $e->getMessage());
+        }
+
+        return [
+            'total' => count($events),
+            'missing_items' => count(array_filter($events, fn($e) => $e['event_type'] === 'missing_item')),
+            'vehicles' => count(array_filter($events, fn($e) => in_array($e['object_type'], ['car', 'motorcycle', 'truck', 'bus']))),
+            'persons' => count(array_filter($events, fn($e) => $e['object_type'] === 'person')),
+        ];
     }
 
     /**
@@ -107,10 +142,7 @@ class IntelligentController extends Controller
             if (\Illuminate\Support\Facades\Schema::hasTable('cctv_ai_events')) {
                 $query = AiEvent::with('cctv')->filter($filters);
                 
-                // Prioritaskan peringatan barang hilang (missing_item) di posisi atas
-                if (empty($filters['event_type']) || $filters['event_type'] === 'all') {
-                    $query->orderByRaw("CASE WHEN event_type = 'missing_item' THEN 0 ELSE 1 END");
-                }
+                // Urutkan kronologis terbaru ke terlama secara murni agar kejadian terkini selalu tampil di atas
                 $query->orderBy('event_time', 'desc');
                 $limit = (int) $request->input('limit', 250);
                 $page = max(1, (int) $request->input('page', 1));
