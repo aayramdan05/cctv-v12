@@ -150,104 +150,70 @@ def find_recording_files(base_dir, date_str=None, cctv_id=None, latest_only=True
     return selected_files
 
 
-def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec, imgsz=480, min_contour_area=150, max_age_hours=2.0):
+def watch_and_process(analyzer, base_dir, sample_fps, conf, use_motion_filter, motion_thresh, limit_sec, imgsz=480, min_contour_area=150):
     """
-    Mode Watcher Real-Time Cerdas:
-    - Memantau rekaman terbaru dari CCTV secara real-time.
-    - Prioritas LIFO (Terbaru ke Terlama): Memproses chunk rekaman paling baru terlebih dahulu agar dashboard selalu update waktu terkini.
-    - Otomatis melewati rekaman basi (> 2 jam yang lalu) jika terjadi antrean/backlog, agar sistem segera sinkron dengan waktu sekarang (LIVE).
-    - Adaptif terhadap pergantian hari (midnight rollover).
-    - Memproses 1 file terbaru per iterasi, lalu memindai ulang direktori agar file baru yang baru saja selesai langsung terdeteksi seketika.
+    Mode Watcher: Memantau folder rekaman secara real-time dan menganalisis rekaman baru
+    begitu FFmpeg selesai menulis chunk 15 menit (moov atom telah ditulis).
     """
-    print(f"\n👀 [WATCHER MODE AKTIF - REAL-TIME PRIORITY] Memantau rekaman di: {base_dir}")
-    print(f"ℹ️ Batas umur rekaman: {max_age_hours:.1f} jam (rekaman lebih lama dilewati agar tetap real-time)")
+    print(f"\n👀 [WATCHER MODE AKTIF] Memantau rekaman baru di: {base_dir}")
     print("Tekan Ctrl+C untuk berhenti.\n")
 
     processed_files = set()
-    last_cleaned_day = None
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    today_folder = os.path.join(base_dir, today_str)
+
+    # Catat file yang sudah ada agar tidak dianalisa ulang
+    if os.path.exists(today_folder):
+        existing = glob.glob(os.path.join(today_folder, "*.mp4"))
+        processed_files.update(existing)
+        print(f"ℹ️ Terdeteksi {len(existing)} file rekaman lama (dilewati, menunggu rekaman baru selesai)...")
 
     while True:
         try:
-            now = datetime.now()
-            today_str = now.strftime('%Y-%m-%d')
+            today_str = datetime.now().strftime('%Y-%m-%d')
             today_folder = os.path.join(base_dir, today_str)
 
-            # Jika hari berganti, sinkronkan ke hari baru dan bersihkan memori set
-            if last_cleaned_day != today_str:
-                last_cleaned_day = today_str
-                if len(processed_files) > 5000:
-                    processed_files.clear()
-                print(f"📅 [PERGANTIAN TANGGAL] Memantau folder rekaman hari ini: {today_str}")
+            if os.path.exists(today_folder):
+                current_files = glob.glob(os.path.join(today_folder, "*.mp4"))
+                for filepath in sorted(current_files, key=os.path.getmtime):
+                    if filepath not in processed_files:
+                        # Cek apakah FFmpeg sudah selesai menulis dan menutup file (moov atom ada)
+                        if has_moov_atom(filepath):
+                            size_mb = os.path.getsize(filepath) / (1024 * 1024)
+                            processed_files.add(filepath)
 
-            if not os.path.exists(today_folder):
-                time.sleep(5)
-                continue
+                            # Lewati file cuplikan yang terlalu kecil (< 2MB) karena biasanya akibat stream kamera putus beberapa detik
+                            if size_mb < 2.0:
+                                print(f"ℹ️ [LEWATI CUPLIKAN PENDEK] {os.path.basename(filepath)} ({size_mb:.1f} MB < 2MB, kamera sempat terputus sesaat).")
+                                continue
 
-            all_files = glob.glob(os.path.join(today_folder, "*.mp4"))
-            if not all_files:
-                time.sleep(5)
-                continue
+                            print(f"\n🎬 [REKAMAN SELESAI] {os.path.basename(filepath)} ({size_mb:.1f} MB)")
 
-            # Saring file yang belum pernah diproses
-            unprocessed = [f for f in all_files if f not in processed_files]
-            if not unprocessed:
-                time.sleep(3)
-                continue
+                            # Ekstrak CCTV ID
+                            base = os.path.basename(filepath)
+                            parts = base.split('_')
+                            cam_id = int(parts[1]) if len(parts) >= 2 and parts[1].isdigit() else 1
 
-            # Prioritaskan rekaman TERBARU terlebih dahulu (LIFO - Real-Time First!)
-            unprocessed.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                            t0 = time.time()
+                            events = analyzer.process_video(
+                                video_source=filepath,
+                                sample_fps=sample_fps,
+                                max_duration_sec=limit_sec,
+                                conf_threshold=conf,
+                                use_motion_filter=use_motion_filter,
+                                min_motion_ratio=motion_thresh,
+                                cctv_id=cam_id,
+                                imgsz=imgsz,
+                                min_contour_area=min_contour_area
+                            )
+                            dur = time.time() - t0
+                            print(f"✅ Selesai analisa dalam {dur:.1f} detik. {len(events)} event dicatat ke Master.\n")
+                            time.sleep(2.0)  # Cooldown 2 detik agar CPU istirahat sebelum memproses rekaman berikutnya
+                        else:
+                            # File masih dalam proses perekaman oleh FFmpeg, tunggu loop berikutnya
+                            pass
 
-            cutoff_mtime = now.timestamp() - (max_age_hours * 3600)
-
-            # Cari 1 file rekaman terbaru yang sudah selesai (memiliki moov atom)
-            target_file = None
-            for filepath in unprocessed:
-                mtime = os.path.getmtime(filepath)
-                # Jika file lebih tua dari batas maksimal (misal server sempat tertinggal berhari-hari),
-                # lewati dan tandai selesai agar AI langsung lompat ke rekaman jam terkini
-                if mtime < cutoff_mtime:
-                    processed_files.add(filepath)
-                    continue
-
-                if has_moov_atom(filepath):
-                    size_mb = os.path.getsize(filepath) / (1024 * 1024)
-                    processed_files.add(filepath)
-
-                    # Lewati cuplikan terlalu pendek (< 2MB)
-                    if size_mb < 2.0:
-                        continue
-
-                    target_file = filepath
-                    break
-
-            if target_file is None:
-                time.sleep(3)
-                continue
-
-            size_mb = os.path.getsize(target_file) / (1024 * 1024)
-            print(f"\n🎬 [REKAMAN TERBARU SELESAI] {os.path.basename(target_file)} ({size_mb:.1f} MB)")
-
-            # Ekstrak CCTV ID
-            base = os.path.basename(target_file)
-            parts = base.split('_')
-            cam_id = int(parts[1]) if len(parts) >= 2 and parts[1].isdigit() else 1
-
-            t0 = time.time()
-            events = analyzer.process_video(
-                video_source=target_file,
-                sample_fps=sample_fps,
-                max_duration_sec=limit_sec,
-                conf_threshold=conf,
-                use_motion_filter=use_motion_filter,
-                min_motion_ratio=motion_thresh,
-                cctv_id=cam_id,
-                imgsz=imgsz,
-                min_contour_area=min_contour_area
-            )
-            dur = time.time() - t0
-            print(f"✅ Selesai analisa dalam {dur:.1f} detik. {len(events)} event dicatat ke Master.\n")
-            time.sleep(1.0) # Jeda singkat sebelum re-scan file baru kamera lain
-
+            time.sleep(5)
         except KeyboardInterrupt:
             print("\n🛑 Watcher dihentikan oleh pengguna.")
             break
@@ -288,8 +254,6 @@ def main():
                         help="Ambang batas ukuran gumpalan objek pixel area (default: 150 px, gunakan 250-400 untuk abaikan daun/angin)")
     parser.add_argument("--watch", action="store_true",
                         help="Jalankan dalam mode Watcher (otomatis analisa file baru saat selesai direkam)")
-    parser.add_argument("--max-age-hours", type=float, default=2.0,
-                        help="Batas umur maksimal file rekaman dalam mode watch (default: 2.0 jam). File lebih lama dilewati agar AI selalu real-time.")
 
     args = parser.parse_args()
 
@@ -325,8 +289,7 @@ def main():
             motion_thresh=args.motion_thresh,
             limit_sec=args.limit_sec,
             imgsz=args.imgsz,
-            min_contour_area=args.motion_area,
-            max_age_hours=args.max_age_hours
+            min_contour_area=args.motion_area
         )
         return
 
