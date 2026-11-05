@@ -22,8 +22,8 @@ class SyncGo2rtcConfig extends Command
             return;
         }
 
-        // 2. Header Config Standar + TUNING HLS
-        $content = "api:\n  listen: \":1984\"\n  origin: \"*\"\n\n";
+        // 2. Header Config Standar + TUNING HLS (Bind ke 127.0.0.1 demi keamanan F1 pentest)
+        $content = "api:\n  listen: \"127.0.0.1:1984\"\n  origin: \"*\"\n\n";
         
         $content .= "rtsp:\n  listen: \":8554\"\n\n";
 

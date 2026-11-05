@@ -9,6 +9,11 @@ class StreamController extends Controller
 {
     public function play(Request $request, Cctv $cctv)
     {
+        // Otorisasi: Pastikan user berhak melihat stream kamera ini
+        if (!Cctv::accessibleByAuth()->where('cctvs.id', $cctv->id)->exists()) {
+            abort(403, 'Anda tidak memiliki hak akses ke streaming CCTV ini.');
+        }
+
         // 1. Ambil URL RTSP yang sudah aman (Model sudah handle encoding karakter @ jadi %40)
         // Contoh hasil: rtsp://admin:cctv%40J4t1nangor@10.67...
         $rtspUrl = $cctv->stream_url;

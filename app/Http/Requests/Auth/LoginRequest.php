@@ -42,35 +42,23 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // 1. CEK EMAIL DULU (Manual Check)
         $user = User::where('email', $this->input('email'))->first();
 
-        if (! $user) {
-            // Jika user tidak ditemukan di database
+        // Jika akun terhubung SSO PAUS, arahkan untuk login via PAUS ID
+        if ($user && $user->paus_id) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Email ini tidak terdaftar dalam sistem.',
+                'email' => 'Akun ini terdaftar melalui SSO Unpad. Silakan masuk menggunakan tombol "Login dengan PAUS ID".',
             ]);
         }
 
-        // 2. CEK APAKAH AKUN SSO
-        if ($user->paus_id) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => 'Akun ini telah terhubung dengan SSO. Silakan gunakan tombol "Login dengan PAUS ID".',
-            ]);
-        }
-
-        // 3. CEK PASSWORD (Auth Attempt)
-        // Jika sampai sini, berarti email ada. Sekarang kita coba login.
+        // Autentikasi kredensial lokal (Pesan generik untuk mencegah User Enumeration)
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                // Kita lempar errornya spesifik ke field 'password'
-                'password' => 'Password yang Anda masukkan salah.',
+                'email' => 'Email atau kata sandi yang Anda masukkan salah.',
             ]);
         }
 

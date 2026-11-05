@@ -62,13 +62,23 @@ class MonitoringController extends Controller
 
     public function getTimelineJson(Request $request, $cctvId)
     {
-        // 1. Ambil Tanggal (Default Hari Ini)
-        $date = $request->input('date', now()->format('Y-m-d'));
-        $cctvInfo = Cctv::with('building')->find($cctvId);
+        // Validasi format ID (harus integer positif untuk mencegah error SQL type bigint)
+        if (!is_numeric($cctvId) || (int)$cctvId <= 0) {
+            return response()->json(['error' => 'ID CCTV tidak valid.'], 400);
+        }
+
+        // Cek otorisasi kamera: hanya kamera yang berhak diakses oleh user yang sedang login
+        $cctvInfo = Cctv::accessibleByAuth()->with('building')->find((int)$cctvId);
 
         if (!$cctvInfo) {
-            return response()->json([]);
+            return response()->json(['error' => 'Kamera tidak ditemukan atau Anda tidak memiliki hak akses.'], 403);
         }
+
+        // 1. Ambil Tanggal (Default Hari Ini) dan sanitasi
+        $rawDate = $request->input('date');
+        $date = ($rawDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $rawDate)) 
+            ? $rawDate 
+            : now()->format('Y-m-d');
 
         // Ambil riwayat rekaman dari Database (hanya yang sudah selesai: size_mb > 0)
         $recordings = \App\Models\Recording::where('cctv_id', $cctvId)

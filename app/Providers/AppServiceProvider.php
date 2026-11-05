@@ -22,6 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Konfigurasi Standar Keamanan Password Kuat (F8)
+        \Illuminate\Validation\Rules\Password::defaults(function () {
+            return \Illuminate\Validation\Rules\Password::min(8)
+                ->letters()
+                ->mixedCase()
+                ->numbers()
+                ->symbols();
+        });
+
         // Deteksi header dari Proxy Kampus
         if (request()->header('X-Forwarded-Proto') == 'https' || request()->getHost() === 'cctv.unpad.net') {
             \Illuminate\Support\Facades\URL::forceScheme('https');

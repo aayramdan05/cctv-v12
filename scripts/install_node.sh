@@ -161,7 +161,7 @@ systemctl restart nginx
 echo -e "${GREEN}>>> Mengatur konfigurasi Go2RTC...${NC}"
 cat <<EOF > "$HOME_DIR/go2rtc.yaml"
 api:
-  listen: ":1984"
+  listen: "127.0.0.1:1984"
   origin: "*"
 rtsp:
   listen: ":8554"

@@ -58,13 +58,20 @@ class PlaybackController extends Controller
     public function getRecordings(Request $request)
     {
         try {
-            $date = $request->input('date', now()->format('Y-m-d'));
+            $rawDate = $request->input('date');
+            $date = ($rawDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $rawDate))
+                ? $rawDate
+                : now()->format('Y-m-d');
             $targetCamId = $request->input('cctv_id');
+
+            if (!$targetCamId || !is_numeric($targetCamId)) {
+                return response()->json([]);
+            }
             
-            $cctvInfo = Cctv::with('building')->find($targetCamId);
+            $cctvInfo = Cctv::accessibleByAuth()->with('building')->find((int)$targetCamId);
             
             if (!$cctvInfo) {
-                return response()->json([]);
+                return response()->json(['error' => 'Kamera tidak ditemukan atau Anda tidak memiliki hak akses.'], 403);
             }
 
             // Ambil dari database Recording berdasarkan tanggal (hanya yang sudah selesai: size_mb > 0)
@@ -103,7 +110,11 @@ class PlaybackController extends Controller
 
     public function getLiveBuffer($cctv_id, Request $request)
     {
-        $cctv = Cctv::findOrFail($cctv_id);
+        if (!is_numeric($cctv_id)) {
+            return response()->json(['error' => 'Invalid camera ID'], 400);
+        }
+
+        $cctv = Cctv::accessibleByAuth()->findOrFail((int)$cctv_id);
         $date = now()->format('Y-m-d');
         
         $activeRecording = \App\Models\Recording::where('cctv_id', $cctv_id)
