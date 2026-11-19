@@ -89,10 +89,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/welcome-test', function () {
-    return view('welcome-test');
-});
-
 Route::get('/pending-approval', function () {
     if (!auth()->check()) {
         return redirect()->route('login');
@@ -255,111 +251,7 @@ Route::get('/auth-video', function (Request $request) {
     return response('OK', 200);
 });
 
-// API untuk Node menarik konfigurasi (DIPROTEKSI)
-Route::get('/api/node-config', function (Request $request) {
-    $nodeIp = $request->query('ip');
-    $token = $request->query('token');
-    
-    // 1. Validasi Token (Gunakan APP_KEY sebagai secret sederhana atau string custom)
-    $secret = env('SYNC_TOKEN', 'secret_unpad_cctv_2026'); 
-    if ($token !== $secret) {
-        return response()->json(['error' => 'Unauthorized: Invalid Token'], 401);
-    }
-
-    // 2. Validasi IP Pemanggil (Hanya boleh dari IP Node itu sendiri)
-    if ($request->ip() !== $nodeIp && $request->ip() !== '127.0.0.1') {
-         // return response()->json(['error' => 'Forbidden: IP Mismatch'], 403);
-         // Catatan: Jika lewat proxy, mungkin perlu check X-Forwarded-For
-    }
-
-    $server = \App\Models\Server::where('ip_address', $nodeIp)->first();
-    if (!$server) {
-        return response()->json(['error' => 'Server Node tidak terdaftar'], 404);
-    }
-
-    $cameras = \App\Models\Cctv::where('server_id', $server->id)->get();
-    
-    $config = [
-        'streams' => [],
-        'cameras_list' => []
-    ];
-
-    foreach ($cameras as $cam) {
-        $fullUrl = $cam->stream_url; 
-        
-        // Gunakan RTSP asli (Native) tanpa ffmpeg wrapper untuk meringankan go2rtc
-        $urlWithSuffix = "{$fullUrl}#rtsp_transport=tcp";
-        
-        $config['streams']["camera_{$cam->id}"] = [$urlWithSuffix];
-        
-        $config['cameras_list'][] = [
-            'id' => $cam->id,
-            'kode_cctv' => $cam->kode_cctv ?? "CAM-{$cam->id}", // Gunakan fallback jika null
-            'nama_cctv' => $cam->nama_cctv ?? "Camera {$cam->id}",
-            'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}",
-            'ip' => $cam->ip,
-            'onvif' => [
-                'port' => $cam->onvif_port ?? 80,
-                'user' => $cam->onvif_user ?? $cam->rtsp_user,
-                'password' => $cam->onvif_password ?: $cam->rtsp_password
-            ]
-        ];
-    }
-
-    return response()->json($config);
-});
-
-// API untuk Node melaporkan kejadian (Motion Detection, dll)
-Route::get('/api/report-event', function (Request $request) {
-    $token = $request->query('token');
-    $secret = env('SYNC_TOKEN', 'secret_unpad_cctv_2026'); 
-    
-    if ($token !== $secret) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
-    $cctvId = $request->query('cctv_id');
-    $type = $request->query('type', 'motion');
-    
-    if (!$cctvId) return response()->json(['error' => 'Missing CCTV ID'], 400);
-    
-    $cctv = \App\Models\Cctv::find($cctvId);
-    if ($cctv && $type === 'onvif_status') {
-        $status = $request->query('status');
-        $error = $request->query('error');
-        
-        $statusChanged = $cctv->onvif_status !== $status || $cctv->onvif_error !== $error;
-        
-        if ($statusChanged) {
-            try {
-                $cctv->update([
-                    'onvif_status' => $status,
-                    'onvif_error' => $error
-                ]);
-            } catch (\Exception $e) {
-                // Ignore if migration not run
-            }
-            
-            \App\Models\CameraEvent::create([
-                'cctv_id' => $cctvId,
-                'event_type' => 'onvif',
-                'event_time' => now(),
-                'metadata' => ['status' => $status, 'error' => $error]
-            ]);
-        }
-        
-        return response()->json(['status' => 'Status Updated']);
-    }
-
-    \App\Models\CameraEvent::create([
-        'cctv_id' => $cctvId,
-        'event_type' => $type,
-        'event_time' => now(),
-        'metadata' => $request->all()
-    ]);
-
-    return response()->json(['status' => 'Event Recorded']);
-});
+// (Catatan: Rute API Node Sinkronisasi /api/node-config & /api/report-event telah dipindahkan secara terpusat ke routes/api.php)
 
 require __DIR__.'/auth.php';
 

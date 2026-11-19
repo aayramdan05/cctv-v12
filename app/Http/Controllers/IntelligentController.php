@@ -419,17 +419,23 @@ class IntelligentController extends Controller
     private function saveBase64Image(string $base64Data, string $prefix): ?string
     {
         try {
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+            $ext = 'jpg';
+
             if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
                 $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
-                $ext = strtolower($type[1]);
-            } else {
-                $ext = 'jpg';
+                $detectedExt = strtolower($type[1]);
+                if (in_array($detectedExt, $allowedExtensions, true)) {
+                    $ext = $detectedExt;
+                }
             }
 
-            $imageData = base64_decode($base64Data);
-            if ($imageData === false) return null;
+            $imageData = base64_decode($base64Data, true);
+            if ($imageData === false || strlen($imageData) < 10) return null;
 
-            $filename = "ai_events/{$prefix}_" . uniqid() . ".{$ext}";
+            // Sanitasi prefix agar tidak mengandung path traversal
+            $safePrefix = preg_replace('/[^a-zA-Z0-9_\-]/', '', $prefix);
+            $filename = "ai_events/{$safePrefix}_" . bin2hex(random_bytes(16)) . ".{$ext}";
             Storage::disk('public')->put($filename, $imageData);
             return Storage::url($filename);
         } catch (\Throwable $e) {

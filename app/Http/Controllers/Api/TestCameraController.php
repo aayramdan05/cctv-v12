@@ -11,14 +11,27 @@ class TestCameraController extends Controller
 {
     public function test(Request $request)
     {
+        // Otorisasi: Hanya user dengan hak kelola/buat CCTV yang boleh mengetes koneksi (Cegah SSRF)
+        if (\Illuminate\Support\Facades\Gate::denies('cctv_create') && \Illuminate\Support\Facades\Gate::denies('cctv_edit')) {
+            return response()->json(['error' => 'Unauthorized: Anda tidak memiliki izin untuk menguji kamera.'], 403);
+        }
+
         $request->validate([
             'rtsp_url' => 'required|string',
         ]);
 
         // 1. Ambil Data
-        $url = $request->rtsp_url;
+        $url = trim($request->rtsp_url);
         $user = $request->rtsp_user;
         $pass = $request->rtsp_password;
+
+        // Cegah skema berbahaya (hanya izinkan rtsp, http, https)
+        if (preg_match('/^[a-zA-Z0-9]+:\/\//', $url, $matches)) {
+            $scheme = strtolower($matches[0]);
+            if (!in_array($scheme, ['rtsp://', 'http://', 'https://'], true)) {
+                return response()->json(['error' => 'Protokol tidak diizinkan. Gunakan rtsp:// atau http://.'], 400);
+            }
+        }
 
         // 2. RAKIT URL (Merge Credentials)
         // Jika user & pass diisi, kita gabungkan ke URL

@@ -13,14 +13,19 @@ Route::post('/LAPI/{any}', [IntelligentController::class, 'receiveWebhook'])->wh
 Route::post('/ai-events', [IntelligentController::class, 'storeEvent']);
 
 // Endpoint untuk Node mengambil config
-// Contoh akses: http://ip-master/api/node-config?ip=192.168.1.1&token=secret_unpad_cctv_2026
 Route::get('/node-config', function (Request $request) {
-    // 1. Validasi Token (Harus sama dengan SYNC_TOKEN di Node)
-    if ($request->query('token') !== 'secret_unpad_cctv_2026') {
-        return response()->json(['error' => 'Unauthorized'], 401);
+    $secret = env('SYNC_TOKEN', 'secret_unpad_cctv_2026');
+    $token = $request->bearerToken() ?: $request->query('token');
+
+    // 1. Validasi Token
+    if (!$token || $token !== $secret) {
+        return response()->json(['error' => 'Unauthorized: Invalid Token'], 401);
     }
 
     $ip = $request->query('ip');
+    if (!$ip) {
+        return response()->json(['error' => 'Missing node IP'], 400);
+    }
     
     // 2. Cari Server ID berdasarkan IP
     $server = \App\Models\Server::where('ip_address', $ip)->first();
@@ -29,22 +34,90 @@ Route::get('/node-config', function (Request $request) {
     }
 
     // 3. Ambil kamera khusus untuk server tersebut
-    $cctvs = Cctv::where('server_id', $server->id)
+    $cameras = Cctv::where('server_id', $server->id)
                  ->where('status', 'online')
-                 ->get(['id', 'kode_cctv', 'nama_cctv', 'stream_url']); 
+                 ->get(); 
 
     // 4. Susun format untuk Go2RTC & Log Node
     $streams = [];
-    foreach ($cctvs as $cam) {
-        $streams["camera_{$cam->id}"] = [
-            "{$cam->stream_url}#rtsp_transport=tcp"
+    $camerasList = [];
+
+    foreach ($cameras as $cam) {
+        $fullUrl = $cam->stream_url;
+        $urlWithSuffix = "{$fullUrl}#rtsp_transport=tcp";
+        $streams["camera_{$cam->id}"] = [$urlWithSuffix];
+
+        $camerasList[] = [
+            'id' => $cam->id,
+            'kode_cctv' => $cam->kode_cctv ?? "CAM-{$cam->id}",
+            'nama_cctv' => $cam->nama_cctv ?? "Camera {$cam->id}",
+            'url' => "rtsp://127.0.0.1:8554/camera_{$cam->id}",
+            'ip' => $cam->ip,
+            'onvif' => [
+                'port' => $cam->onvif_port ?? 80,
+                'user' => $cam->onvif_user ?? $cam->rtsp_user,
+                'password' => $cam->onvif_password ?: $cam->rtsp_password
+            ]
         ];
     }
 
     return response()->json([
         'streams' => $streams,
-        'cameras_list' => $cctvs
+        'cameras_list' => $camerasList
     ]);
+});
+
+// Endpoint untuk Node melaporkan event (Motion Detection, ONVIF status, dll)
+Route::get('/report-event', function (Request $request) {
+    $secret = env('SYNC_TOKEN', 'secret_unpad_cctv_2026');
+    $token = $request->bearerToken() ?: $request->query('token');
+
+    if (!$token || $token !== $secret) {
+        return response()->json(['error' => 'Unauthorized: Invalid Token'], 401);
+    }
+
+    $cctvId = $request->query('cctv_id');
+    $type = $request->query('type', 'motion');
+
+    if (!$cctvId) {
+        return response()->json(['error' => 'Missing CCTV ID'], 400);
+    }
+
+    $cctv = Cctv::find($cctvId);
+    if ($cctv && $type === 'onvif_status') {
+        $status = $request->query('status');
+        $error = $request->query('error');
+
+        $statusChanged = $cctv->onvif_status !== $status || $cctv->onvif_error !== $error;
+        if ($statusChanged) {
+            try {
+                $cctv->update([
+                    'onvif_status' => $status,
+                    'onvif_error' => $error
+                ]);
+            } catch (\Exception $e) {
+                // Ignore if column missing
+            }
+
+            \App\Models\CameraEvent::create([
+                'cctv_id' => $cctvId,
+                'event_type' => 'onvif',
+                'event_time' => now(),
+                'metadata' => ['status' => $status, 'error' => $error]
+            ]);
+        }
+
+        return response()->json(['status' => 'Status Updated']);
+    }
+
+    \App\Models\CameraEvent::create([
+        'cctv_id' => $cctvId,
+        'event_type' => $type,
+        'event_time' => now(),
+        'metadata' => $request->all()
+    ]);
+
+    return response()->json(['status' => 'Event Recorded']);
 });
 
 // Endpoint Data CCTV (Protected by Sanctum)

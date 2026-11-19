@@ -211,10 +211,20 @@ class PlaybackController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('playback_export');
 
-        // Download file yang sudah jadi di folder storage/app/public/exports
-        $path = storage_path("app/public/exports/{$filename}");
+        // Cegah Path Traversal (CWE-22 / F-Audit): Validasi nama file murni
+        $cleanFilename = basename($filename);
+        if ($cleanFilename !== $filename || !preg_match('/^[a-zA-Z0-9_\-\.]+\.(mp4|avi|mkv|zip|csv|xlsx|json)$/i', $cleanFilename)) {
+            abort(400, 'Format nama file tidak valid.');
+        }
 
-        if (!File::exists($path)) {
+        $exportDir = storage_path('app/public/exports');
+        $path = $exportDir . DIRECTORY_SEPARATOR . $cleanFilename;
+
+        // Pastikan file benar-benar ada dan berada di dalam direktori exports
+        $realPath = realpath($path);
+        $realBase = realpath($exportDir);
+
+        if (!$realPath || !$realBase || !str_starts_with($realPath, $realBase) || !File::exists($realPath)) {
             return back()->with('error', 'File belum siap atau sudah dihapus.');
         }
 
@@ -222,12 +232,12 @@ class PlaybackController extends Controller
             'user_id'       => auth()->id(),
             'activity_type' => 'cctv_download',
             'cctv_id'       => null,
-            'details'       => json_encode(['filename' => $filename]),
+            'details'       => json_encode(['filename' => $cleanFilename]),
             'ip_address'    => request()->ip(),
             'created_at'    => now(),
         ]);
 
-        return response()->download($path);
+        return response()->download($realPath, $cleanFilename);
     }
 
     public function logDownload(Request $request)
